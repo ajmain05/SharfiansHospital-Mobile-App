@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381008282202",
+    "project_id": "sharfianshospital-c2a4e",
+    "storage_bucket": "sharfianshospital-c2a4e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381008282202:android:b2fdeac9d1529d61534e63",
+        "android_client_info": {
+          "package_name": "com.sharfianshospital.sharfian_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1cTZXNQMlG_kBsHr3VhyydjxlJ7Bhvgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

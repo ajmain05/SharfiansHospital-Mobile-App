@@ -10,7 +10,11 @@ class CircularProgressRing extends StatelessWidget {
   final double percent;
   final double size;
 
-  const CircularProgressRing({super.key, required this.percent, this.size = 140});
+  const CircularProgressRing({
+    super.key,
+    required this.percent,
+    this.size = 140,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +29,16 @@ class CircularProgressRing extends StatelessWidget {
             children: [
               Text(
                 '${percent.round()}%',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              const Text('Completed', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+              const Text(
+                'Completed',
+                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+              ),
             ],
           ),
         ),
@@ -55,16 +66,23 @@ class _RingPainter extends CustomPainter {
 
     final sweep = 2 * math.pi * (percent / 100);
     final progress = Paint()
-      ..shader = const LinearGradient(colors: [AppColors.primary500, AppColors.accent500]).createShader(
-        Rect.fromCircle(center: center, radius: radius),
-      )
+      ..shader = const LinearGradient(
+        colors: [AppColors.primary500, AppColors.accent500],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -math.pi / 2, sweep, false, progress);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      sweep,
+      false,
+      progress,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter oldDelegate) => oldDelegate.percent != percent;
+  bool shouldRepaint(covariant _RingPainter oldDelegate) =>
+      oldDelegate.percent != percent;
 }

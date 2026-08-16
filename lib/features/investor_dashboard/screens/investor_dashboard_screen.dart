@@ -15,15 +15,18 @@ import '../../../models/investor.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
   const InvestorDashboardScreen({super.key});
 
   @override
-  ConsumerState<InvestorDashboardScreen> createState() => _InvestorDashboardScreenState();
+  ConsumerState<InvestorDashboardScreen> createState() =>
+      _InvestorDashboardScreenState();
 }
 
-class _InvestorDashboardScreenState extends ConsumerState<InvestorDashboardScreen> {
+class _InvestorDashboardScreenState
+    extends ConsumerState<InvestorDashboardScreen> {
   int _tabIndex = 0;
 
   @override
@@ -43,12 +46,20 @@ class _InvestorDashboardScreenState extends ConsumerState<InvestorDashboardScree
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(t(ref, 'welcomeComma', params: {'name': account.displayName.split(' ').first})),
+        title: Text(
+          t(
+            ref,
+            'welcomeComma',
+            params: {'name': account.displayName.split(' ').first},
+          ),
+        ),
         actions: [
+          ThemeToggleButton(color: Theme.of(context).appBarTheme.foregroundColor),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: t(ref, 'refresh'),
-            onPressed: () => ref.read(investorSessionProvider.notifier).refresh(),
+            onPressed: () =>
+                ref.read(investorSessionProvider.notifier).refresh(),
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -66,8 +77,14 @@ class _InvestorDashboardScreenState extends ConsumerState<InvestorDashboardScree
           index: _tabIndex,
           children: [
             _OverviewTab(account: account, summary: summary),
-            _AccountsTab(accounts: session.accounts, activeAccountId: session.activeAccountId),
-            _PaymentsTab(deposits: summary.deposits, totalPaid: summary.totalPaid),
+            _AccountsTab(
+              accounts: session.accounts,
+              activeAccountId: session.activeAccountId,
+            ),
+            _PaymentsTab(
+              deposits: summary.deposits,
+              totalPaid: summary.totalPaid,
+            ),
           ],
         ),
       ),
@@ -75,9 +92,18 @@ class _InvestorDashboardScreenState extends ConsumerState<InvestorDashboardScree
         currentIndex: _tabIndex,
         onTap: (i) => setState(() => _tabIndex = i),
         items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.dashboard_outlined), label: t(ref, 'overview')),
-          BottomNavigationBarItem(icon: const Icon(Icons.people_outline_rounded), label: t(ref, 'accounts')),
-          BottomNavigationBarItem(icon: const Icon(Icons.receipt_long_outlined), label: t(ref, 'payments')),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.dashboard_outlined),
+            label: t(ref, 'overview'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.people_outline_rounded),
+            label: t(ref, 'accounts'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: t(ref, 'payments'),
+          ),
         ],
       ),
     );
@@ -101,7 +127,10 @@ class _OverviewTab extends ConsumerWidget {
           children: [
             Text(
               category.isDirector ? '⭐ ${category.label}' : category.label,
-              style: TextStyle(color: category.color, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: category.color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -120,13 +149,30 @@ class _OverviewTab extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _statBlock(t(ref, 'totalCommitted'), Formatters.bdt(summary.totalCommitted), AppColors.primary900, big: true),
+                          _statBlock(
+                            t(ref, 'totalCommitted'),
+                            Formatters.bdt(summary.totalCommitted),
+                            AppColors.primary900,
+                            big: true,
+                          ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Expanded(child: _statBlock(t(ref, 'paid'), Formatters.bdt(summary.totalPaid), AppColors.accent600)),
+                              Expanded(
+                                child: _statBlock(
+                                  t(ref, 'paid'),
+                                  Formatters.bdt(summary.totalPaid),
+                                  AppColors.accent600,
+                                ),
+                              ),
                               const SizedBox(width: 10),
-                              Expanded(child: _statBlock(t(ref, 'remaining'), Formatters.bdt(summary.totalRemaining), const Color(0xFFB45309))),
+                              Expanded(
+                                child: _statBlock(
+                                  t(ref, 'remaining'),
+                                  Formatters.bdt(summary.totalRemaining),
+                                  const Color(0xFFB45309),
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -141,28 +187,73 @@ class _OverviewTab extends ConsumerWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _infoCard(Icons.account_balance_wallet_outlined, t(ref, 'totalDeposits'), '${summary.deposits.length}', AppColors.primary600)),
+            Expanded(
+              child: _infoCard(
+                Icons.account_balance_wallet_outlined,
+                t(ref, 'totalDeposits'),
+                '${summary.deposits.length}',
+                AppColors.primary600,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _infoCard(Icons.event_outlined, t(ref, 'lastPayment'), summary.lastPaymentDate ?? '—', AppColors.accent600)),
+            Expanded(
+              child: _infoCard(
+                Icons.event_outlined,
+                t(ref, 'lastPayment'),
+                summary.lastPaymentDate ?? '—',
+                AppColors.accent600,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
-        _infoCard(Icons.schedule_outlined, t(ref, 'monthly'), Formatters.bdt(account.monthlyPayment), AppColors.primary700, fullWidth: true),
+        _infoCard(
+          Icons.schedule_outlined,
+          t(ref, 'monthly'),
+          Formatters.bdt(account.monthlyPayment),
+          AppColors.primary700,
+          fullWidth: true,
+        ),
       ],
     );
   }
 
-  Widget _statBlock(String label, String value, Color color, {bool big = false}) {
+  Widget _statBlock(
+    String label,
+    String value,
+    Color color, {
+    bool big = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
-        Text(value, style: TextStyle(fontSize: big ? 22 : 16, fontWeight: FontWeight.w800, color: color)),
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: big ? 22 : 16,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _infoCard(IconData icon, String label, String value, Color color, {bool fullWidth = false}) {
+  Widget _infoCard(
+    IconData icon,
+    String label,
+    String value,
+    Color color, {
+    bool fullWidth = false,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -171,9 +262,19 @@ class _OverviewTab extends ConsumerWidget {
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(height: 8),
-            Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -199,11 +300,16 @@ class _AccountsTab extends ConsumerWidget {
         final category = InvestorCategory.of(acc.shareAmount);
         return InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => ref.read(investorSessionProvider.notifier).setActiveAccount(acc.id),
+          onTap: () => ref
+              .read(investorSessionProvider.notifier)
+              .setActiveAccount(acc.id),
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: active ? AppColors.primary600 : AppColors.border, width: active ? 2 : 1),
+              side: BorderSide(
+                color: active ? AppColors.primary600 : AppColors.border,
+                width: active ? 2 : 1,
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -217,25 +323,66 @@ class _AccountsTab extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(acc.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text(acc.investorId, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontFamily: 'monospace')),
+                            Text(
+                              acc.displayName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            Text(
+                              acc.investorId,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       if (category.isDirector)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(gradient: category.gradient, borderRadius: BorderRadius.circular(20)),
-                          child: Text(category.label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: category.gradient,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            category.label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                     ],
                   ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      Expanded(child: _miniStat(t(ref, 'shareAmount'), Formatters.bdt(acc.shareAmount))),
-                      Expanded(child: _miniStat(t(ref, 'monthly'), Formatters.bdt(acc.monthlyPayment))),
-                      Expanded(child: _miniStat(t(ref, 'duration'), '${acc.totalMonths} ${t(ref, 'months')}')),
+                      Expanded(
+                        child: _miniStat(
+                          t(ref, 'shareAmount'),
+                          Formatters.bdt(acc.shareAmount),
+                        ),
+                      ),
+                      Expanded(
+                        child: _miniStat(
+                          t(ref, 'monthly'),
+                          Formatters.bdt(acc.monthlyPayment),
+                        ),
+                      ),
+                      Expanded(
+                        child: _miniStat(
+                          t(ref, 'duration'),
+                          '${acc.totalMonths} ${t(ref, 'months')}',
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -251,13 +398,26 @@ class _AccountsTab extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 9,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -279,7 +439,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
 
   Future<String> _receiptPath(Deposit dep) async {
     final dir = await getTemporaryDirectory();
-    final receiptNo = dep.id.length >= 6 ? dep.id.substring(dep.id.length - 6).toUpperCase() : dep.id.toUpperCase();
+    final receiptNo = dep.id.length >= 6
+        ? dep.id.substring(dep.id.length - 6).toUpperCase()
+        : dep.id.toUpperCase();
     final path = '${dir.path}/MR-$receiptNo.pdf';
     await ApiClient().download('/deposits/${dep.id}/receipt', path);
     return path;
@@ -293,7 +455,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
       await OpenFilex.open(path);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t(ref, 'downloadFailed'))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t(ref, 'downloadFailed'))));
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -307,7 +471,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
       await Share.shareXFiles([XFile(path)]);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t(ref, 'downloadFailed'))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t(ref, 'downloadFailed'))));
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -322,9 +488,16 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.account_balance_wallet_outlined, size: 48, color: AppColors.primary400),
+              const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 48,
+                color: AppColors.primary400,
+              ),
               const SizedBox(height: 12),
-              Text(t(ref, 'noPaymentRecords'), style: const TextStyle(color: AppColors.textSecondary)),
+              Text(
+                t(ref, 'noPaymentRecords'),
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
             ],
           ),
         ),
@@ -344,30 +517,58 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(dep.dateOfDeposit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(
+                          dep.dateOfDeposit,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                         if (dep.batchNo != null)
-                          Text(dep.batchNo!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontFamily: 'monospace')),
+                          Text(
+                            dep.batchNo!,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                  Text(Formatters.bdt(dep.totalAmount), style: const TextStyle(color: AppColors.accent600, fontWeight: FontWeight.bold)),
+                  Text(
+                    Formatters.bdt(dep.totalAmount),
+                    style: const TextStyle(
+                      color: AppColors.accent600,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   if (_downloadingId == dep.id)
                     const SizedBox(
                       height: 18,
                       width: 18,
-                      child: Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2)),
+                      child: Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     )
                   else ...[
                     IconButton(
                       tooltip: t(ref, 'download'),
                       onPressed: () => _downloadReceipt(dep),
-                      icon: const Icon(Icons.download_rounded, color: AppColors.primary600),
+                      icon: const Icon(
+                        Icons.download_rounded,
+                        color: AppColors.primary600,
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Share',
                       onPressed: () => _shareReceipt(dep),
-                      icon: const Icon(Icons.share_rounded, color: AppColors.textSecondary),
+                      icon: const Icon(
+                        Icons.share_rounded,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ],
@@ -380,8 +581,18 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(t(ref, 'totalPaid'), style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(Formatters.bdt(widget.totalPaid), style: const TextStyle(color: AppColors.accent600, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              t(ref, 'totalPaid'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              Formatters.bdt(widget.totalPaid),
+              style: const TextStyle(
+                color: AppColors.accent600,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ],

@@ -43,28 +43,36 @@ class Event {
     return deadline != null && DateTime.now().isAfter(deadline);
   }
 
-  bool get isCapacityFull => maxCapacity != null && totalRegistered >= maxCapacity!;
+  bool get isCapacityFull =>
+      maxCapacity != null && totalRegistered >= maxCapacity!;
 
-  int? get remainingSeats => maxCapacity != null ? (maxCapacity! - totalRegistered).clamp(0, maxCapacity!) : null;
+  int? get remainingSeats => maxCapacity != null
+      ? (maxCapacity! - totalRegistered).clamp(0, maxCapacity!)
+      : null;
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
-        id: json['id'] as String,
-        title: (json['title'] ?? '').toString(),
-        slug: (json['slug'] ?? '').toString(),
-        description: json['description'] as String?,
-        date: (json['date'] ?? '').toString(),
-        location: (json['location'] ?? '').toString(),
-        feePerPerson: (json['feePerPerson'] as num?) ?? 0,
-        imageUrl: json['imageUrl'] as String?,
-        isActive: json['isActive'] as bool? ?? true,
-        paymentConfig: (json['paymentConfig'] as Map?)?.cast<String, dynamic>() ?? const {},
-        branches: (json['branches'] as List?)?.map((b) => (b as Map).cast<String, dynamic>()).toList() ?? const [],
-        maxCapacity: (json['maxCapacity'] as num?)?.toInt(),
-        registrationDeadline: json['registrationDeadline'] as String?,
-        formTitle: json['formTitle'] as String?,
-        offlineNotice: json['offlineNotice'] as String?,
-        totalRegistered: (json['totalRegistered'] as num?)?.toInt() ?? 0,
-      );
+    id: json['id'] as String,
+    title: (json['title'] ?? '').toString(),
+    slug: (json['slug'] ?? '').toString(),
+    description: json['description'] as String?,
+    date: (json['date'] ?? '').toString(),
+    location: (json['location'] ?? '').toString(),
+    feePerPerson: (json['feePerPerson'] as num?) ?? 0,
+    imageUrl: json['imageUrl'] as String?,
+    isActive: json['isActive'] as bool? ?? true,
+    paymentConfig:
+        (json['paymentConfig'] as Map?)?.cast<String, dynamic>() ?? const {},
+    branches:
+        (json['branches'] as List?)
+            ?.map((b) => (b as Map).cast<String, dynamic>())
+            .toList() ??
+        const [],
+    maxCapacity: (json['maxCapacity'] as num?)?.toInt(),
+    registrationDeadline: json['registrationDeadline'] as String?,
+    formTitle: json['formTitle'] as String?,
+    offlineNotice: json['offlineNotice'] as String?,
+    totalRegistered: (json['totalRegistered'] as num?)?.toInt() ?? 0,
+  );
 }
 
 /// `GET /events/public/live-snapshot/:id` — polled on pull-to-refresh
@@ -88,12 +96,14 @@ class EventLiveSnapshot {
     this.lastUpdatedAt,
   });
 
-  factory EventLiveSnapshot.fromJson(Map<String, dynamic> json) => EventLiveSnapshot(
+  factory EventLiveSnapshot.fromJson(Map<String, dynamic> json) =>
+      EventLiveSnapshot(
         eventId: (json['eventId'] ?? '').toString(),
         title: (json['title'] ?? '').toString(),
         maxCapacity: (json['maxCapacity'] as num?)?.toInt() ?? 0,
         totalRegistrations: (json['totalRegistrations'] as num?)?.toInt() ?? 0,
-        confirmedRegistrations: (json['confirmedRegistrations'] as num?)?.toInt() ?? 0,
+        confirmedRegistrations:
+            (json['confirmedRegistrations'] as num?)?.toInt() ?? 0,
         remainingSeats: (json['remainingSeats'] as num?)?.toInt(),
         lastUpdatedAt: json['lastUpdatedAt'] as String?,
       );
@@ -107,7 +117,12 @@ class EventPaymentMethod {
   final String channel;
   final String? number;
 
-  const EventPaymentMethod({required this.id, required this.label, required this.channel, this.number});
+  const EventPaymentMethod({
+    required this.id,
+    required this.label,
+    required this.channel,
+    this.number,
+  });
 
   static List<EventPaymentMethod> fromPaymentConfig(Map<String, dynamic> pc) {
     final methods = <EventPaymentMethod>[];
@@ -129,7 +144,11 @@ class EventPaymentMethod {
       void addIfPresent(String key, String provider, String type) {
         final number = pc[key];
         if (number != null && number.toString().isNotEmpty) {
-          mobileAccounts.add({'provider': provider, 'type': type, 'number': number.toString()});
+          mobileAccounts.add({
+            'provider': provider,
+            'type': type,
+            'number': number.toString(),
+          });
         }
       }
 
@@ -142,20 +161,36 @@ class EventPaymentMethod {
     for (final acc in mobileAccounts) {
       final id = '${acc['provider']}-${acc['type']}';
       if (seen.add(id)) {
-        methods.add(EventPaymentMethod(
-          id: id,
-          label: '${acc['provider']} (${acc['type']})',
-          channel: '${acc['provider']} ${acc['type']}',
-          number: acc['number'],
-        ));
+        methods.add(
+          EventPaymentMethod(
+            id: id,
+            label: '${acc['provider']} (${acc['type']})',
+            channel: '${acc['provider']} ${acc['type']}',
+            number: acc['number'],
+          ),
+        );
       }
     }
 
-    final hasBank = (pc['bankName']?.toString().isNotEmpty ?? false) || (pc['bankAccount']?.toString().isNotEmpty ?? false);
+    final hasBank =
+        (pc['bankName']?.toString().isNotEmpty ?? false) ||
+        (pc['bankAccount']?.toString().isNotEmpty ?? false);
     if (hasBank) {
-      methods.add(const EventPaymentMethod(id: 'Bank', label: 'Bank', channel: 'Bank Transfer'));
+      methods.add(
+        const EventPaymentMethod(
+          id: 'Bank',
+          label: 'Bank',
+          channel: 'Bank Transfer',
+        ),
+      );
     }
-    methods.add(const EventPaymentMethod(id: 'Cheque', label: 'Cheque', channel: 'Cheque'));
+    methods.add(
+      const EventPaymentMethod(
+        id: 'Cheque',
+        label: 'Cheque',
+        channel: 'Cheque',
+      ),
+    );
 
     if (methods.length == 1) {
       methods.insertAll(0, const [

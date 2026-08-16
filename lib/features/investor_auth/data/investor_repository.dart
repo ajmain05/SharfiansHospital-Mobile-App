@@ -13,7 +13,12 @@ class InvestorRepository {
   /// number, each with its `deposits` embedded.
   Future<List<Map<String, dynamic>>> loginWithPhone(String phone) async {
     final res = await _api.post('/investors/auth-phone', {'phone': phone});
-    if (!res.success) throw ApiException(res.error ?? 'Login failed', statusCode: res.statusCode);
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Login failed',
+        statusCode: res.statusCode,
+      );
+    }
     final data = res.data;
     if (data is List) return data.cast<Map<String, dynamic>>();
     return const [];
@@ -22,15 +27,28 @@ class InvestorRepository {
   /// `POST /investors` — public registration.
   Future<Map<String, dynamic>> register(Map<String, dynamic> payload) async {
     final res = await _api.post('/investors', payload);
-    if (!res.success) throw ApiException(res.error ?? 'Registration failed', statusCode: res.statusCode);
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Registration failed',
+        statusCode: res.statusCode,
+      );
+    }
     return res.data as Map<String, dynamic>;
   }
 
   /// `PUT /investors/public-update/:id` — nominee/charity-% self-edit,
   /// gated by a phone match on the backend.
-  Future<Map<String, dynamic>> updatePublicProfile(String id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updatePublicProfile(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     final res = await _api.put('/investors/public-update/$id', data);
-    if (!res.success) throw ApiException(res.error ?? 'Update failed', statusCode: res.statusCode);
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Update failed',
+        statusCode: res.statusCode,
+      );
+    }
     return res.data as Map<String, dynamic>;
   }
 

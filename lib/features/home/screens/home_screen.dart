@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/language_toggle_button.dart';
+import '../../../core/widgets/theme_toggle_button.dart';
 import '../../../models/site_settings.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../../settings/providers/site_settings_provider.dart';
@@ -35,67 +36,115 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 60, 24, 48),
-                decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+                decoration: const BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: const [LanguageToggleButton()],
+                      children: const [
+                        ThemeToggleButton(),
+                        LanguageToggleButton(),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
                         settingsAsync.maybeWhen(
-                          data: (s) => lang == 'bn' ? s.badgeTextBn : s.badgeText,
+                          data: (s) =>
+                              lang == 'bn' ? s.badgeTextBn : s.badgeText,
                           orElse: () => t(ref, 'badgeText'),
                         ),
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      settingsAsync.maybeWhen(data: (s) => lang == 'bn' ? s.heroTitleBn : s.heroTitle, orElse: () => t(ref, 'heroTitle')),
-                      style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
+                      settingsAsync.maybeWhen(
+                        data: (s) => lang == 'bn' ? s.heroTitleBn : s.heroTitle,
+                        orElse: () => t(ref, 'heroTitle'),
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       settingsAsync.maybeWhen(
-                        data: (s) => lang == 'bn' ? s.heroSubtitleBn : s.heroSubtitle,
+                        data: (s) =>
+                            lang == 'bn' ? s.heroSubtitleBn : s.heroSubtitle,
                         orElse: () => t(ref, 'heroSubtitle'),
                       ),
-                      style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       settingsAsync.maybeWhen(
-                        data: (s) => lang == 'bn' ? s.heroDescriptionBn : s.heroDescription,
+                        data: (s) => lang == 'bn'
+                            ? s.heroDescriptionBn
+                            : s.heroDescription,
                         orElse: () => t(ref, 'heroDescription'),
                       ),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 28),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppColors.primary700),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.primary700,
+                      ),
                       onPressed: () => context.go('/register'),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [Text(t(ref, 'becomeInvestor')), const SizedBox(width: 6), const Icon(Icons.arrow_forward_rounded, size: 18)],
+                        children: [
+                          Text(t(ref, 'becomeInvestor')),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_forward_rounded, size: 18),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton(
-                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white54, width: 2), foregroundColor: Colors.white),
-                      onPressed: () => context.go(loggedIn ? '/investor/dashboard' : '/investor/login'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white54, width: 2),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => context.go(
+                        loggedIn ? '/investor/dashboard' : '/investor/login',
+                      ),
                       child: Text(t(ref, 'viewMyPortal')),
                     ),
                     const SizedBox(height: 10),
                     Center(
                       child: TextButton.icon(
                         onPressed: () => context.push('/events'),
-                        style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                        ),
                         icon: const Icon(Icons.event_outlined, size: 18),
                         label: Text(t(ref, 'events')),
                       ),
@@ -104,12 +153,35 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               publicStatsAsync.when(
-                data: (stats) => _StatsSection(stats: stats, settingsAsync: settingsAsync, lang: lang),
+                data: (stats) => _StatsSection(
+                  stats: stats,
+                  settingsAsync: settingsAsync,
+                  lang: lang,
+                ),
                 loading: () => const Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (err, stack) => ErrorRetryView(onRetry: () => ref.invalidate(publicStatsProvider)),
+                error: (err, stack) => ErrorRetryView(
+                  onRetry: () => ref.invalidate(publicStatsProvider),
+                ),
+              ),
+              const _PublicLinksSection(),
+              const SizedBox(height: 48),
+              
+              // Staff Portal Link
+              Center(
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                  ),
+                  icon: const Icon(Icons.shield_outlined, size: 16),
+                  label: Text(
+                    t(ref, 'staffPortal'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  onPressed: () => context.push('/admin/login'),
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -120,16 +192,104 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _PublicLinksSection extends ConsumerWidget {
+  const _PublicLinksSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final links = [
+      (
+        Icons.photo_library_outlined,
+        t(ref, 'gallery'),
+        '/gallery',
+        AppColors.primary600,
+      ),
+      (Icons.help_outline_rounded, t(ref, 'faq'), '/faq', AppColors.accent600),
+      (
+        Icons.account_balance_outlined,
+        t(ref, 'bankDetails'),
+        '/bank-details',
+        const Color(0xFFB45309),
+      ),
+      (
+        Icons.work_outline_rounded,
+        t(ref, 'career'),
+        '/career',
+        const Color(0xFF7C3AED),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t(ref, 'explore'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: links.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.55,
+            ),
+            itemBuilder: (context, i) {
+              final link = links[i];
+              return InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => context.push(link.$3),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(link.$1, color: link.$4),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          link.$2,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatsSection extends ConsumerWidget {
   final Map<String, dynamic> stats;
   final AsyncValue<SiteSettings> settingsAsync;
   final String lang;
 
-  const _StatsSection({required this.stats, required this.settingsAsync, required this.lang});
+  const _StatsSection({
+    required this.stats,
+    required this.settingsAsync,
+    required this.lang,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final InvestorStatsSection? section = settingsAsync.maybeWhen(data: (s) => s.investorStatsSection, orElse: () => null);
+    final InvestorStatsSection? section = settingsAsync.maybeWhen(
+      data: (s) => s.investorStatsSection,
+      orElse: () => null,
+    );
     final totalInvestors = (stats['totalInvestors'] as num?) ?? 0;
     final totalAmount = (stats['totalAmount'] as num?) ?? 0;
 
@@ -138,7 +298,9 @@ class _StatsSection extends ConsumerWidget {
       child: Column(
         children: [
           Text(
-            section != null ? (lang == 'bn' ? section.titleBn : section.title) : t(ref, 'totalInvestors'),
+            section != null
+                ? (lang == 'bn' ? section.titleBn : section.title)
+                : t(ref, 'totalInvestors'),
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -147,7 +309,11 @@ class _StatsSection extends ConsumerWidget {
               Expanded(
                 child: _statCard(
                   Icons.groups_rounded,
-                  section != null ? (lang == 'bn' ? section.investorLabelBn : section.investorLabel) : t(ref, 'totalInvestors'),
+                  section != null
+                      ? (lang == 'bn'
+                            ? section.investorLabelBn
+                            : section.investorLabel)
+                      : t(ref, 'totalInvestors'),
                   Formatters.number(totalInvestors),
                   AppColors.primary600,
                 ),
@@ -156,7 +322,11 @@ class _StatsSection extends ConsumerWidget {
               Expanded(
                 child: _statCard(
                   Icons.savings_rounded,
-                  section != null ? (lang == 'bn' ? section.amountLabelBn : section.amountLabel) : t(ref, 'committedAmount'),
+                  section != null
+                      ? (lang == 'bn'
+                            ? section.amountLabelBn
+                            : section.amountLabel)
+                      : t(ref, 'committedAmount'),
                   Formatters.bdt(totalAmount),
                   AppColors.accent600,
                 ),
@@ -181,9 +351,23 @@ class _StatsSection extends ConsumerWidget {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 10),
-          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

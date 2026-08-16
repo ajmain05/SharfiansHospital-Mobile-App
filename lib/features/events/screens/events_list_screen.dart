@@ -21,7 +21,10 @@ class EventsListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
         title: Text(t(ref, 'events')),
         actions: [
           IconButton(
@@ -44,9 +47,18 @@ class EventsListScreen extends ConsumerWidget {
                     child: Center(
                       child: Column(
                         children: [
-                          const Icon(Icons.event_busy_outlined, size: 48, color: AppColors.textSecondary),
+                          const Icon(
+                            Icons.event_busy_outlined,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(height: 12),
-                          Text(t(ref, 'noEvents'), style: const TextStyle(color: AppColors.textSecondary)),
+                          Text(
+                            t(ref, 'noEvents'),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -63,7 +75,9 @@ class EventsListScreen extends ConsumerWidget {
             );
           },
           loading: () => const ShimmerLoader(),
-          error: (err, stack) => ErrorRetryView(onRetry: () => ref.invalidate(publicEventsProvider)),
+          error: (err, stack) => ErrorRetryView(
+            onRetry: () => ref.invalidate(publicEventsProvider),
+          ),
         ),
       ),
     );
@@ -78,7 +92,9 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(event.date);
-    final dateLabel = date != null ? DateFormat('MMM d, yyyy · h:mm a').format(date) : event.date;
+    final dateLabel = date != null
+        ? DateFormat('MMM d, yyyy · h:mm a').format(date)
+        : event.date;
 
     return InkWell(
       borderRadius: BorderRadius.circular(20),
@@ -95,7 +111,8 @@ class _EventCard extends StatelessWidget {
                   imageUrl: event.imageUrl!,
                   fit: BoxFit.cover,
                   placeholder: (_, _) => Container(color: AppColors.surface2),
-                  errorWidget: (_, _, _) => Container(color: AppColors.surface2),
+                  errorWidget: (_, _, _) =>
+                      Container(color: AppColors.surface2),
                 ),
               ),
             Padding(
@@ -103,13 +120,22 @@ class _EventCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(
+                    event.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   _metaRow(Icons.calendar_today_outlined, dateLabel),
                   const SizedBox(height: 4),
                   _metaRow(Icons.location_on_outlined, event.location),
                   const SizedBox(height: 4),
-                  _metaRow(Icons.payments_outlined, '${Formatters.bdt(event.feePerPerson)} / person'),
+                  _metaRow(
+                    Icons.payments_outlined,
+                    '${Formatters.bdt(event.feePerPerson)} / person',
+                  ),
                 ],
               ),
             ),
@@ -125,7 +151,15 @@ class _EventCard extends StatelessWidget {
       children: [
         Icon(icon, size: 15, color: AppColors.textSecondary),
         const SizedBox(width: 6),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary))),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
       ],
     );
   }

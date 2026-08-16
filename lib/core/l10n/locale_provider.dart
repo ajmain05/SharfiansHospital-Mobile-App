@@ -16,14 +16,19 @@ class LocaleNotifier extends StateNotifier<Locale> {
   }
 }
 
-final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) => LocaleNotifier());
+final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>(
+  (ref) => LocaleNotifier(),
+);
 
 /// Admin-edited overrides from `GET /api/settings` -> `customTranslations`.
 /// Starts empty until settings load, then the UI naturally rebuilds once
 /// this resolves (Riverpod re-runs anything watching it).
 final customTranslationsProvider = Provider((ref) {
   final settings = ref.watch(siteSettingsProvider);
-  return settings.maybeWhen(data: (s) => s.customTranslations, orElse: () => const []);
+  return settings.maybeWhen(
+    data: (s) => s.customTranslations,
+    orElse: () => const [],
+  );
 });
 
 /// Resolves a translation key through the same order as the website's
@@ -38,7 +43,9 @@ String t(WidgetRef ref, String key, {Map<String, String>? params}) {
   String? resolved;
   for (final c in custom) {
     final matchesKey = c.key == key;
-    final matchesEnglishText = c.en != null && c.en!.toLowerCase().trim() == fallbackEn.toLowerCase().trim();
+    final matchesEnglishText =
+        c.en != null &&
+        c.en!.toLowerCase().trim() == fallbackEn.toLowerCase().trim();
     if (matchesKey || matchesEnglishText) {
       final val = c.forLang(lang);
       if (val != null && val.isNotEmpty) resolved = val;

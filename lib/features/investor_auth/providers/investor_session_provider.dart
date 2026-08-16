@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../models/investor.dart';
 import '../data/investor_repository.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class InvestorSessionState {
   final List<Investor> accounts;
@@ -21,7 +22,10 @@ class InvestorSessionState {
 
   Investor? get activeAccount {
     if (accounts.isEmpty) return null;
-    return accounts.firstWhere((a) => a.id == activeAccountId, orElse: () => accounts.first);
+    return accounts.firstWhere(
+      (a) => a.id == activeAccountId,
+      orElse: () => accounts.first,
+    );
   }
 
   InvestorSessionState copyWith({
@@ -45,8 +49,9 @@ class InvestorSessionState {
 /// the same pattern as the website's `InvestorDashboard.jsx`.
 class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   final InvestorRepository _repo;
+  final PushNotificationService _pushService;
 
-  InvestorSessionNotifier(this._repo) : super(const InvestorSessionState()) {
+  InvestorSessionNotifier(this._repo, this._pushService) : super(const InvestorSessionState()) {
     _restoreFromCache();
   }
 
@@ -54,7 +59,10 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
     final cached = LocalStorage.getInvestorAccounts();
     if (cached == null || cached.isEmpty) return;
     final accounts = cached.map(Investor.fromJson).toList();
-    state = state.copyWith(accounts: accounts, activeAccountId: accounts.first.id);
+    state = state.copyWith(
+      accounts: accounts,
+      activeAccountId: accounts.first.id,
+    );
     _silentRefresh();
   }
 
@@ -66,10 +74,14 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
       if (raw.isNotEmpty) {
         await LocalStorage.saveInvestorAccounts(raw);
         final accounts = raw.map(Investor.fromJson).toList();
-        final keepActive = state.activeAccountId != null && accounts.any((a) => a.id == state.activeAccountId);
+        final keepActive =
+            state.activeAccountId != null &&
+            accounts.any((a) => a.id == state.activeAccountId);
         state = state.copyWith(
           accounts: accounts,
-          activeAccountId: keepActive ? state.activeAccountId : accounts.first.id,
+          activeAccountId: keepActive
+              ? state.activeAccountId
+              : accounts.first.id,
         );
       }
     } catch (_) {
@@ -89,7 +101,14 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
       await LocalStorage.saveInvestorAccounts(raw);
       await LocalStorage.saveInvestorPhone(phone);
       final accounts = raw.map(Investor.fromJson).toList();
-      state = InvestorSessionState(accounts: accounts, activeAccountId: accounts.first.id);
+      state = InvestorSessionState(
+        accounts: accounts,
+        activeAccountId: accounts.first.id,
+      );
+      
+      // Register FCM token for this phone
+      _pushService.registerToken(phone: phone);
+      
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -104,9 +123,13 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   }
 
   Future<void> updateActiveAccountProfile(Map<String, dynamic> updated) async {
-    final accounts = state.accounts.map((a) => a.id == updated['id'] ? Investor.fromJson(updated) : a).toList();
+    final accounts = state.accounts
+        .map((a) => a.id == updated['id'] ? Investor.fromJson(updated) : a)
+        .toList();
     final raw = LocalStorage.getInvestorAccounts() ?? [];
-    final newRaw = raw.map((j) => j['id'] == updated['id'] ? updated : j).toList();
+    final newRaw = raw
+        .map((j) => j['id'] == updated['id'] ? updated : j)
+        .toList();
     await LocalStorage.saveInvestorAccounts(newRaw);
     state = state.copyWith(accounts: accounts);
   }
@@ -117,8 +140,14 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   }
 }
 
-final investorRepositoryProvider = Provider<InvestorRepository>((ref) => InvestorRepository());
+final investorRepositoryProvider = Provider<InvestorRepository>(
+  (ref) => InvestorRepository(),
+);
 
-final investorSessionProvider = StateNotifierProvider<InvestorSessionNotifier, InvestorSessionState>((ref) {
-  return InvestorSessionNotifier(ref.watch(investorRepositoryProvider));
-});
+final investorSessionProvider =
+    StateNotifierProvider<InvestorSessionNotifier, InvestorSessionState>((ref) {
+      return InvestorSessionNotifier(
+        ref.watch(investorRepositoryProvider),
+        ref.watch(pushNotificationServiceProvider),
+      );
+    });

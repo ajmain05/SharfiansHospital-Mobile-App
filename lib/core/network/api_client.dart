@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/env.dart';
+import '../storage/local_storage.dart';
 
 class ApiResponse {
   final bool success;
@@ -26,18 +27,34 @@ class ApiClient {
   late final Dio _dio;
 
   ApiClient._internal() {
-    _dio = Dio(BaseOptions(
-      baseUrl: Env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: Env.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final token = LocalStorage.getAdminToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+      ),
+    );
 
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+      _dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
     }
   }
 
@@ -90,11 +107,17 @@ class ApiClient {
     final data = e.response?.data;
     String message;
     if (data is Map<String, dynamic>) {
-      message = (data['message'] ?? data['error'] ?? _networkMessage(e)).toString();
+      message = (data['message'] ?? data['error'] ?? _networkMessage(e))
+          .toString();
     } else {
       message = _networkMessage(e);
     }
-    return ApiResponse(success: false, error: message, statusCode: e.response?.statusCode);
+    return ApiResponse(
+      success: false,
+      data: data, // Preserve raw data for things like scanResult
+      error: message,
+      statusCode: e.response?.statusCode,
+    );
   }
 
   String _networkMessage(DioException e) {

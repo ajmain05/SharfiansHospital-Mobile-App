@@ -7,7 +7,11 @@ class ShimmerLoader extends StatelessWidget {
   final double height;
   final EdgeInsetsGeometry padding;
 
-  const ShimmerLoader({super.key, this.height = double.infinity, this.padding = const EdgeInsets.all(16)});
+  const ShimmerLoader({
+    super.key,
+    this.height = double.infinity,
+    this.padding = const EdgeInsets.all(16),
+  });
 
   @override
   Widget build(BuildContext context) {

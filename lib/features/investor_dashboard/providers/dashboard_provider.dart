@@ -24,18 +24,30 @@ class DashboardSummary {
   });
 }
 
-DateTime _parseDate(String s) => DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+DateTime _parseDate(String s) =>
+    DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
 
 final dashboardSummaryProvider = Provider<DashboardSummary?>((ref) {
   final account = ref.watch(investorSessionProvider).activeAccount;
   if (account == null) return null;
 
-  final deposits = [...account.deposits]..sort((a, b) => _parseDate(b.dateOfDeposit).compareTo(_parseDate(a.dateOfDeposit)));
+  final deposits = [...account.deposits]
+    ..sort(
+      (a, b) =>
+          _parseDate(b.dateOfDeposit).compareTo(_parseDate(a.dateOfDeposit)),
+    );
 
-  final totalPaid = account.deposits.fold<num>(0, (sum, d) => sum + d.totalAmount);
+  final totalPaid = account.deposits.fold<num>(
+    0,
+    (sum, d) => sum + d.totalAmount,
+  );
   final totalCommitted = account.shareAmount;
-  final totalRemaining = (totalCommitted - totalPaid) < 0 ? 0 : totalCommitted - totalPaid;
-  final progressPercent = totalCommitted > 0 ? (totalPaid / totalCommitted * 100).clamp(0, 100).toDouble() : 0.0;
+  final totalRemaining = (totalCommitted - totalPaid) < 0
+      ? 0
+      : totalCommitted - totalPaid;
+  final progressPercent = totalCommitted > 0
+      ? (totalPaid / totalCommitted * 100).clamp(0, 100).toDouble()
+      : 0.0;
 
   return DashboardSummary(
     totalCommitted: totalCommitted,

@@ -11,7 +11,8 @@ class InvestorLoginScreen extends ConsumerStatefulWidget {
   const InvestorLoginScreen({super.key});
 
   @override
-  ConsumerState<InvestorLoginScreen> createState() => _InvestorLoginScreenState();
+  ConsumerState<InvestorLoginScreen> createState() =>
+      _InvestorLoginScreenState();
 }
 
 class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
@@ -28,7 +29,9 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _error = null);
-    final ok = await ref.read(investorSessionProvider.notifier).loginWithPhone(_phoneController.text.trim());
+    final ok = await ref
+        .read(investorSessionProvider.notifier)
+        .loginWithPhone(_phoneController.text.trim());
     if (!mounted) return;
     if (ok) {
       context.go('/investor/dashboard');
@@ -43,9 +46,17 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
         title: Text(t(ref, 'myPortal')),
-        actions: const [Padding(padding: EdgeInsets.only(right: 12), child: LanguageToggleButton())],
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: LanguageToggleButton(),
+          ),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -58,11 +69,23 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: const BoxDecoration(gradient: AppColors.brandGradient, shape: BoxShape.circle),
-                  child: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 32),
+                  decoration: const BoxDecoration(
+                    gradient: AppColors.brandGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.account_circle_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                Text(t(ref, 'myPortalTitle'), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  t(ref, 'myPortalTitle'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   t(ref, 'myPortalSubtitle'),
@@ -80,10 +103,20 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: AppColors.primary600, size: 18),
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.primary600,
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(t(ref, 'loginHelpText'), style: const TextStyle(fontSize: 13, color: AppColors.primary900)),
+                        child: Text(
+                          t(ref, 'loginHelpText'),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.primary900,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -102,7 +135,10 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                           hintText: 'e.g. 017XXXXXXXX',
                         ),
                         validator: (v) {
-                          final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
+                          final digits = (v ?? '').replaceAll(
+                            RegExp(r'\D'),
+                            '',
+                          );
                           if (digits.length < 10) return t(ref, 'invalidPhone');
                           return null;
                         },
@@ -116,7 +152,10 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                               ? const SizedBox(
                                   height: 18,
                                   width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 )
                               : Text(t(ref, 'continueBtn')),
                         ),
@@ -136,9 +175,21 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(_error!, style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w600))),
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(
+                              color: Color(0xFF991B1B),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

@@ -24,7 +24,9 @@ class InvestorCategory {
         id: 'diamond',
         label: 'Diamond Director',
         color: const Color(0xFF0E7490),
-        gradient: const LinearGradient(colors: [Color(0xFF06B6D4), Color(0xFF2563EB)]),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF06B6D4), Color(0xFF2563EB)],
+        ),
         isDirector: true,
       );
     }
@@ -33,7 +35,9 @@ class InvestorCategory {
         id: 'platinum',
         label: 'Platinum Director',
         color: const Color(0xFF334155),
-        gradient: const LinearGradient(colors: [Color(0xFF64748B), Color(0xFF334155)]),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF64748B), Color(0xFF334155)],
+        ),
         isDirector: true,
       );
     }
@@ -42,7 +46,9 @@ class InvestorCategory {
         id: 'golden',
         label: 'Golden Director',
         color: const Color(0xFFB45309),
-        gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFF97316)]),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF59E0B), Color(0xFFF97316)],
+        ),
         isDirector: true,
       );
     }
@@ -51,7 +57,9 @@ class InvestorCategory {
         id: 'silver',
         label: 'Silver Director',
         color: const Color(0xFF374151),
-        gradient: const LinearGradient(colors: [Color(0xFF9CA3AF), Color(0xFF64748B)]),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF9CA3AF), Color(0xFF64748B)],
+        ),
         isDirector: true,
       );
     }
@@ -59,7 +67,9 @@ class InvestorCategory {
       id: 'regular',
       label: 'Regular Investor',
       color: const Color(0xFF047857),
-      gradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF0D9488)]),
+      gradient: const LinearGradient(
+        colors: [Color(0xFF10B981), Color(0xFF0D9488)],
+      ),
       isDirector: false,
     );
   }

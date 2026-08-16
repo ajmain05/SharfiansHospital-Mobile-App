@@ -18,12 +18,12 @@ class Deposit {
   });
 
   factory Deposit.fromJson(Map<String, dynamic> json) => Deposit(
-        id: json['id'] as String,
-        batchNo: json['batchNo'] as String?,
-        name: json['name'] as String?,
-        phone: json['phone'] as String?,
-        dateOfDeposit: (json['dateOfDeposit'] ?? '').toString(),
-        totalAmount: (json['totalAmount'] as num?) ?? 0,
-        shareAmount: json['shareAmount'] as num?,
-      );
+    id: json['id'] as String,
+    batchNo: json['batchNo'] as String?,
+    name: json['name'] as String?,
+    phone: json['phone'] as String?,
+    dateOfDeposit: (json['dateOfDeposit'] ?? '').toString(),
+    totalAmount: (json['totalAmount'] as num?) ?? 0,
+    shareAmount: json['shareAmount'] as num?,
+  );
 }

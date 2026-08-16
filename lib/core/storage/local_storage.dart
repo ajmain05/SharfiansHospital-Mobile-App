@@ -10,7 +10,10 @@ class LocalStorage {
 
   static const _kInvestorData = 'sharfians_investor_data';
   static const _kInvestorPhone = 'sharfians_investor_phone';
+  static const _kAdminToken = 'sharfians_admin_token';
+  static const _kAdminData = 'sharfians_admin_data';
   static const _kAppLang = 'appLang';
+  static const _kAppTheme = 'appThemeMode';
 
   static SharedPreferences? _prefs;
 
@@ -26,7 +29,9 @@ class LocalStorage {
     return p;
   }
 
-  static Future<void> saveInvestorAccounts(List<Map<String, dynamic>> accounts) {
+  static Future<void> saveInvestorAccounts(
+    List<Map<String, dynamic>> accounts,
+  ) {
     return _p.setString(_kInvestorData, jsonEncode(accounts));
   }
 
@@ -41,7 +46,8 @@ class LocalStorage {
     }
   }
 
-  static Future<void> saveInvestorPhone(String phone) => _p.setString(_kInvestorPhone, phone);
+  static Future<void> saveInvestorPhone(String phone) =>
+      _p.setString(_kInvestorPhone, phone);
 
   static String? getInvestorPhone() => _p.getString(_kInvestorPhone);
 
@@ -53,4 +59,32 @@ class LocalStorage {
   static Future<void> saveLang(String lang) => _p.setString(_kAppLang, lang);
 
   static String getLang() => _p.getString(_kAppLang) ?? 'en';
+
+  static Future<void> saveThemeMode(String theme) => _p.setString(_kAppTheme, theme);
+
+  static String getThemeMode() => _p.getString(_kAppTheme) ?? 'system';
+  // ─── ADMIN AUTH ────────────────────────────────────────────────────────────
+
+  static Future<void> saveAdminToken(String token) =>
+      _p.setString(_kAdminToken, token);
+
+  static String? getAdminToken() => _p.getString(_kAdminToken);
+
+  static Future<void> saveAdminData(Map<String, dynamic> data) =>
+      _p.setString(_kAdminData, jsonEncode(data));
+
+  static Map<String, dynamic>? getAdminData() {
+    final str = _p.getString(_kAdminData);
+    if (str == null) return null;
+    try {
+      return jsonDecode(str) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> clearAdminSession() async {
+    await _p.remove(_kAdminToken);
+    await _p.remove(_kAdminData);
+  }
 }

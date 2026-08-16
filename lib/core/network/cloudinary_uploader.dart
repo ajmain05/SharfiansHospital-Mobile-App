@@ -17,7 +17,8 @@ class CloudinaryUploader {
     String? folder,
     void Function(double progress)? onProgress,
   }) async {
-    final url = 'https://api.cloudinary.com/v1_1/${Env.cloudinaryCloudName}/auto/upload';
+    final url =
+        'https://api.cloudinary.com/v1_1/${Env.cloudinaryCloudName}/auto/upload';
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(file.path),
       'upload_preset': uploadPreset,

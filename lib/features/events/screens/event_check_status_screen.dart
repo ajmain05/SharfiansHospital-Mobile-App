@@ -13,10 +13,12 @@ class EventCheckStatusScreen extends ConsumerStatefulWidget {
   const EventCheckStatusScreen({super.key});
 
   @override
-  ConsumerState<EventCheckStatusScreen> createState() => _EventCheckStatusScreenState();
+  ConsumerState<EventCheckStatusScreen> createState() =>
+      _EventCheckStatusScreenState();
 }
 
-class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen> {
+class _EventCheckStatusScreenState
+    extends ConsumerState<EventCheckStatusScreen> {
   final _phoneCtrl = TextEditingController();
   bool _loading = false;
   String? _error;
@@ -37,7 +39,9 @@ class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen>
       _results = null;
     });
     try {
-      final results = await ref.read(eventsRepositoryProvider).checkByPhone(phone);
+      final results = await ref
+          .read(eventsRepositoryProvider)
+          .checkByPhone(phone);
       setState(() {
         _results = results;
         if (results.isEmpty) _error = t(ref, 'noRegistrationsFound');
@@ -53,7 +57,10 @@ class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: Text(t(ref, 'checkStatusTitle')),
       ),
       body: SingleChildScrollView(
@@ -61,7 +68,10 @@ class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(t(ref, 'checkStatusSubtitle'), style: const TextStyle(color: AppColors.textSecondary)),
+            Text(
+              t(ref, 'checkStatusSubtitle'),
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 18),
             Row(
               children: [
@@ -69,7 +79,10 @@ class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen>
                   child: TextField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(labelText: t(ref, 'phoneNumber'), prefixIcon: const Icon(Icons.phone_outlined)),
+                    decoration: InputDecoration(
+                      labelText: t(ref, 'phoneNumber'),
+                      prefixIcon: const Icon(Icons.phone_outlined),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -78,7 +91,14 @@ class _EventCheckStatusScreenState extends ConsumerState<EventCheckStatusScreen>
                   child: ElevatedButton(
                     onPressed: _loading ? null : _check,
                     child: _loading
-                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Icon(Icons.search_rounded),
                   ),
                 ),
@@ -107,13 +127,17 @@ class _ResultCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cfg = _statusConfig(result.status);
-    final date = result.eventDate != null ? DateTime.tryParse(result.eventDate!) : null;
+    final date = result.eventDate != null
+        ? DateTime.tryParse(result.eventDate!)
+        : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: result.qrCodeToken != null ? () => context.push('/events/status/${result.qrCodeToken}') : null,
+        onTap: result.qrCodeToken != null
+            ? () => context.push('/events/status/${result.qrCodeToken}')
+            : null,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -122,20 +146,56 @@ class _ResultCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(result.eventTitle ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(
+                      result.eventTitle ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    if (date != null) Text(DateFormat('MMM d, yyyy').format(date), style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                    if (date != null)
+                      Text(
+                        DateFormat('MMM d, yyyy').format(date),
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     const SizedBox(height: 4),
-                    Text(Formatters.bdt(result.totalAmount), style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                    Text(
+                      Formatters.bdt(result.totalAmount),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: cfg.$2, borderRadius: BorderRadius.circular(20)),
-                child: Text(cfg.$1, style: TextStyle(color: cfg.$3, fontSize: 11.5, fontWeight: FontWeight.bold)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: cfg.$2,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  cfg.$1,
+                  style: TextStyle(
+                    color: cfg.$3,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              if (result.qrCodeToken != null) const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+              if (result.qrCodeToken != null)
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary,
+                ),
             ],
           ),
         ),
