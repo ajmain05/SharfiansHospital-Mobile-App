@@ -91,6 +91,15 @@ class HomeScreen extends ConsumerWidget {
                       onPressed: () => context.go(loggedIn ? '/investor/dashboard' : '/investor/login'),
                       child: Text(t(ref, 'viewMyPortal')),
                     ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.push('/events'),
+                        style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                        icon: const Icon(Icons.event_outlined, size: 18),
+                        label: Text(t(ref, 'events')),
+                      ),
+                    ),
                   ],
                 ),
               ),
