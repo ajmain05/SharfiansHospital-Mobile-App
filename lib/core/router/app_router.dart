@@ -1,3 +1,5 @@
+// ignore: unused_import
+import 'package:flutter/material.dart' show BuildContext, Animation, Widget;
 import 'package:go_router/go_router.dart';
 
 import '../../features/events/screens/event_check_status_screen.dart';
@@ -19,41 +21,188 @@ import '../../features/event_dashboard/screens/live_event_dashboard_screen.dart'
 import '../../features/admin_dashboard/screens/staff_dashboard_screen.dart';
 import '../../features/admin_dashboard/screens/staff_approvals_screen.dart';
 import '../../features/admin_dashboard/screens/staff_directory_screen.dart';
+import '../../features/splash/screens/splash_screen.dart';
 import '../storage/local_storage.dart';
+import '../widgets/tap_scale.dart';
+import '../widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+    // ── Splash ──────────────────────────────────────────────────────────────
+    GoRoute(
+      path: '/splash',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const SplashScreen(),
+        transitionsBuilder: fadeTransition,
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    ),
+
+    // ── Main Shell (Bottom Nav) ─────────────────────────────────────────────
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) => MainScaffold(navigationShell: navigationShell),
+      branches: [
+        // Tab 1: Home
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const HomeScreen(),
+                transitionsBuilder: fadeTransition,
+                transitionDuration: const Duration(milliseconds: 350),
+              ),
+            ),
+          ],
+        ),
+        // Tab 2: Events
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/events',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const EventsListScreen(),
+                transitionsBuilder: fadeTransition,
+                transitionDuration: const Duration(milliseconds: 350),
+              ),
+              routes: [
+                GoRoute(
+                  path: 'check',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const EventCheckStatusScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: 'status/:token',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: EventStatusScreen(token: state.pathParameters['token']!),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: ':slug/register',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: EventRegistrationScreen(slug: state.pathParameters['slug']!),
+                    transitionsBuilder: scaleUpTransition,
+                    transitionDuration: const Duration(milliseconds: 350),
+                  ),
+                ),
+                GoRoute(
+                  path: ':slug',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: EventDetailScreen(slug: state.pathParameters['slug']!),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        // Tab 3: Portal
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/investor/dashboard',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const InvestorDashboardScreen(),
+                transitionsBuilder: fadeTransition,
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+
+    // ── Public ──────────────────────────────────────────────────────────────
     GoRoute(
       path: '/gallery',
-      builder: (context, state) => const GalleryScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const GalleryScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
     ),
-    GoRoute(path: '/faq', builder: (context, state) => const FaqScreen()),
+    GoRoute(
+      path: '/faq',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const FaqScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
+    ),
     GoRoute(
       path: '/bank-details',
-      builder: (context, state) => const BankDetailsScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const BankDetailsScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
     ),
-    GoRoute(path: '/career', builder: (context, state) => const CareerScreen()),
+    GoRoute(
+      path: '/career',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const CareerScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
+    ),
+
+    // ── Investor (Non-tab routes) ────────────────────────────────────────────
     GoRoute(
       path: '/register',
-      builder: (context, state) => const InvestorRegistrationScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const InvestorRegistrationScreen(),
+        transitionsBuilder: scaleUpTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
     ),
     GoRoute(
       path: '/investor/login',
-      builder: (context, state) => const InvestorLoginScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const InvestorLoginScreen(),
+        transitionsBuilder: scaleUpTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
     ),
-    GoRoute(
-      path: '/investor/dashboard',
-      builder: (context, state) => const InvestorDashboardScreen(),
-    ),
+
+    // ── Admin ────────────────────────────────────────────────────────────────
     GoRoute(
       path: '/admin/login',
-      builder: (context, state) => const StaffLoginScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const StaffLoginScreen(),
+        transitionsBuilder: scaleUpTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
     ),
     GoRoute(
       path: '/admin/dashboard',
-      builder: (context, state) => const StaffDashboardScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const StaffDashboardScreen(),
+        transitionsBuilder: fadeTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
       redirect: (context, state) {
         final token = LocalStorage.getAdminToken();
         if (token == null) return '/admin/login';
@@ -62,7 +211,12 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/admin/approvals',
-      builder: (context, state) => const StaffApprovalsScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const StaffApprovalsScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
       redirect: (context, state) {
         final token = LocalStorage.getAdminToken();
         if (token == null) return '/admin/login';
@@ -71,7 +225,12 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/admin/directory',
-      builder: (context, state) => const StaffDirectoryScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const StaffDirectoryScreen(),
+        transitionsBuilder: slideUpTransition,
+        transitionDuration: const Duration(milliseconds: 320),
+      ),
       redirect: (context, state) {
         final token = LocalStorage.getAdminToken();
         if (token == null) return '/admin/login';
@@ -80,7 +239,12 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/admin/scanner',
-      builder: (context, state) => const EventScannerScreen(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const EventScannerScreen(),
+        transitionsBuilder: scaleUpTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
       redirect: (context, state) {
         final token = LocalStorage.getAdminToken();
         if (token == null) return '/admin/login';
@@ -89,37 +253,17 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/admin/live-dashboard/:id',
-      builder: (context, state) => LiveEventDashboardScreen(eventId: state.pathParameters['id']!),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: LiveEventDashboardScreen(eventId: state.pathParameters['id']!),
+        transitionsBuilder: scaleUpTransition,
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
       redirect: (context, state) {
         final token = LocalStorage.getAdminToken();
         if (token == null) return '/admin/login';
         return null;
       },
-    ),
-    GoRoute(
-      path: '/events',
-      builder: (context, state) => const EventsListScreen(),
-    ),
-    // Static segments (/events/check, /events/status/:token) are declared
-    // before the dynamic /events/:slug catch-all so go_router prefers them.
-    GoRoute(
-      path: '/events/check',
-      builder: (context, state) => const EventCheckStatusScreen(),
-    ),
-    GoRoute(
-      path: '/events/status/:token',
-      builder: (context, state) =>
-          EventStatusScreen(token: state.pathParameters['token']!),
-    ),
-    GoRoute(
-      path: '/events/:slug/register',
-      builder: (context, state) =>
-          EventRegistrationScreen(slug: state.pathParameters['slug']!),
-    ),
-    GoRoute(
-      path: '/events/:slug',
-      builder: (context, state) =>
-          EventDetailScreen(slug: state.pathParameters['slug']!),
     ),
   ],
 );

@@ -27,7 +27,6 @@ class InvestorDashboardScreen extends ConsumerStatefulWidget {
 
 class _InvestorDashboardScreenState
     extends ConsumerState<InvestorDashboardScreen> {
-  int _tabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +42,18 @@ class _InvestorDashboardScreenState
     final account = session.activeAccount!;
     final summary = ref.watch(dashboardSummaryProvider)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(
-          t(
-            ref,
-            'welcomeComma',
-            params: {'name': account.displayName.split(' ').first},
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Text(
+            t(
+              ref,
+              'welcomeComma',
+              params: {'name': account.displayName.split(' ').first},
+            ),
           ),
-        ),
         actions: [
           ThemeToggleButton(color: Theme.of(context).appBarTheme.foregroundColor),
           IconButton(
@@ -70,41 +71,33 @@ class _InvestorDashboardScreenState
             },
           ),
         ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(investorSessionProvider.notifier).refresh(),
-        child: IndexedStack(
-          index: _tabIndex,
-          children: [
-            _OverviewTab(account: account, summary: summary),
-            _AccountsTab(
-              accounts: session.accounts,
-              activeAccountId: session.activeAccountId,
-            ),
-            _PaymentsTab(
-              deposits: summary.deposits,
-              totalPaid: summary.totalPaid,
-            ),
+        bottom: TabBar(
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          indicatorWeight: 3,
+          tabs: [
+            Tab(text: t(ref, 'overview')),
+            Tab(text: t(ref, 'accounts')),
+            Tab(text: t(ref, 'payments')),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _tabIndex,
-        onTap: (i) => setState(() => _tabIndex = i),
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.dashboard_outlined),
-            label: t(ref, 'overview'),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(investorSessionProvider.notifier).refresh(),
+        child: TabBarView(
+            children: [
+              _OverviewTab(account: account, summary: summary),
+              _AccountsTab(
+                accounts: session.accounts,
+                activeAccountId: session.activeAccountId,
+              ),
+              _PaymentsTab(
+                deposits: summary.deposits,
+                totalPaid: summary.totalPaid,
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.people_outline_rounded),
-            label: t(ref, 'accounts'),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.receipt_long_outlined),
-            label: t(ref, 'payments'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -150,6 +143,7 @@ class _OverviewTab extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _statBlock(
+                            context,
                             t(ref, 'totalCommitted'),
                             Formatters.bdt(summary.totalCommitted),
                             AppColors.primary900,
@@ -160,6 +154,7 @@ class _OverviewTab extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: _statBlock(
+                                  context,
                                   t(ref, 'paid'),
                                   Formatters.bdt(summary.totalPaid),
                                   AppColors.accent600,
@@ -168,6 +163,7 @@ class _OverviewTab extends ConsumerWidget {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: _statBlock(
+                                  context,
                                   t(ref, 'remaining'),
                                   Formatters.bdt(summary.totalRemaining),
                                   const Color(0xFFB45309),
@@ -189,6 +185,7 @@ class _OverviewTab extends ConsumerWidget {
           children: [
             Expanded(
               child: _infoCard(
+                context,
                 Icons.account_balance_wallet_outlined,
                 t(ref, 'totalDeposits'),
                 '${summary.deposits.length}',
@@ -198,6 +195,7 @@ class _OverviewTab extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _infoCard(
+                context,
                 Icons.event_outlined,
                 t(ref, 'lastPayment'),
                 summary.lastPaymentDate ?? '—',
@@ -208,6 +206,7 @@ class _OverviewTab extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _infoCard(
+          context,
           Icons.schedule_outlined,
           t(ref, 'monthly'),
           Formatters.bdt(account.monthlyPayment),
@@ -219,6 +218,7 @@ class _OverviewTab extends ConsumerWidget {
   }
 
   Widget _statBlock(
+    BuildContext context,
     String label,
     String value,
     Color color, {
@@ -229,9 +229,9 @@ class _OverviewTab extends ConsumerWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -248,6 +248,7 @@ class _OverviewTab extends ConsumerWidget {
   }
 
   Widget _infoCard(
+    BuildContext context,
     IconData icon,
     String label,
     String value,
@@ -264,9 +265,9 @@ class _OverviewTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -332,8 +333,8 @@ class _AccountsTab extends ConsumerWidget {
                             ),
                             Text(
                               acc.investorId,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontSize: 12,
                                 fontFamily: 'monospace',
                               ),
@@ -367,18 +368,21 @@ class _AccountsTab extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: _miniStat(
+                          context,
                           t(ref, 'shareAmount'),
                           Formatters.bdt(acc.shareAmount),
                         ),
                       ),
                       Expanded(
                         child: _miniStat(
+                          context,
                           t(ref, 'monthly'),
                           Formatters.bdt(acc.monthlyPayment),
                         ),
                       ),
                       Expanded(
                         child: _miniStat(
+                          context,
                           t(ref, 'duration'),
                           '${acc.totalMonths} ${t(ref, 'months')}',
                         ),
@@ -394,7 +398,7 @@ class _AccountsTab extends ConsumerWidget {
     );
   }
 
-  Widget _miniStat(String label, String value) {
+  Widget _miniStat(BuildContext context, String label, String value) {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.all(10),
@@ -407,9 +411,9 @@ class _AccountsTab extends ConsumerWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -496,7 +500,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
               const SizedBox(height: 12),
               Text(
                 t(ref, 'noPaymentRecords'),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -527,8 +531,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                         if (dep.batchNo != null)
                           Text(
                             dep.batchNo!,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 11,
                               fontFamily: 'monospace',
                             ),
@@ -565,9 +569,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                     IconButton(
                       tooltip: 'Share',
                       onPressed: () => _shareReceipt(dep),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.share_rounded,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],

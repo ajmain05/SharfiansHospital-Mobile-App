@@ -2,9 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_retry_view.dart';
@@ -18,23 +20,40 @@ class EventsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(publicEventsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F9FB),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          t(ref, 'events'),
+          style: GoogleFonts.libreCaslonText(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : const Color(0xFF191C1E),
+          ),
         ),
-        title: Text(t(ref, 'events')),
         actions: [
           IconButton(
-            icon: const Icon(Icons.confirmation_number_outlined),
+            icon: const Icon(Icons.tune_rounded, size: 22),
+            color: isDark ? Colors.white : const Color(0xFF191C1E),
             tooltip: t(ref, 'checkStatus'),
             onPressed: () => context.push('/events/check'),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            height: 1,
+          ),
+        ),
       ),
       body: RefreshIndicator(
+        color: const Color(0xFF316BF3),
         onRefresh: () async => ref.invalidate(publicEventsProvider),
         child: eventsAsync.when(
           data: (events) {
@@ -47,16 +66,17 @@ class EventsListScreen extends ConsumerWidget {
                     child: Center(
                       child: Column(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.event_busy_outlined,
                             size: 48,
-                            color: AppColors.textSecondary,
+                            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             t(ref, 'noEvents'),
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ],
@@ -68,9 +88,9 @@ class EventsListScreen extends ConsumerWidget {
             }
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               itemCount: events.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 14),
+              separatorBuilder: (_, _) => const SizedBox(height: 20),
               itemBuilder: (context, i) => _EventCard(event: events[i]),
             );
           },
@@ -91,72 +111,118 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final date = DateTime.tryParse(event.date);
     final dateLabel = date != null
         ? DateFormat('MMM d, yyyy · h:mm a').format(date)
         : event.date;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => context.push('/events/${event.slug}'),
-      child: Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: CachedNetworkImage(
-                  imageUrl: event.imageUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(color: AppColors.surface2),
-                  errorWidget: (_, _, _) =>
-                      Container(color: AppColors.surface2),
+        child: InkWell(
+          onTap: () => context.push('/events/${event.slug}'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: CachedNetworkImage(
+                    imageUrl: event.imageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(color: isDark ? const Color(0xFF334155) : const Color(0xFFECEEF0)),
+                    errorWidget: (_, _, _) => Container(color: isDark ? const Color(0xFF334155) : const Color(0xFFECEEF0)),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title in Libre Caslon Text serif
+                    Text(
+                      event.title,
+                      style: GoogleFonts.libreCaslonText(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                        color: isDark ? Colors.white : const Color(0xFF191C1E),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    
+                    // Metadata list
+                    _metaRow(
+                      context: context,
+                      icon: Icons.calendar_today_outlined,
+                      text: dateLabel,
+                    ),
+                    const SizedBox(height: 14),
+                    _metaRow(
+                      context: context,
+                      icon: Icons.location_on_outlined,
+                      text: event.location,
+                    ),
+                    const SizedBox(height: 14),
+                    _metaRow(
+                      context: context,
+                      icon: Icons.credit_card_outlined,
+                      text: event.feePerPerson > 0
+                          ? '${Formatters.bdt(event.feePerPerson)} / person'
+                          : 'Free',
+                    ),
+                  ],
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _metaRow(Icons.calendar_today_outlined, dateLabel),
-                  const SizedBox(height: 4),
-                  _metaRow(Icons.location_on_outlined, event.location),
-                  const SizedBox(height: 4),
-                  _metaRow(
-                    Icons.payments_outlined,
-                    '${Formatters.bdt(event.feePerPerson)} / person',
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _metaRow(IconData icon, String text) {
+  Widget _metaRow({
+    required BuildContext context,
+    required IconData icon,
+    required String text,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
+        Icon(
+          icon,
+          size: 20,
+          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF316BF3), // Blue icon matching active theme
+        ),
+        const SizedBox(width: 14),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              height: 1.3,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF45464D),
             ),
           ),
         ),

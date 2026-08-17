@@ -29,15 +29,15 @@ class CircularProgressRing extends StatelessWidget {
             children: [
               Text(
                 '${percent.round()}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-              const Text(
+              Text(
                 'Completed',
-                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),

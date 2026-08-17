@@ -5,8 +5,6 @@ import 'app.dart';
 import 'core/l10n/bundled_translations.dart';
 import 'core/storage/local_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'core/services/push_notification_service.dart';
-
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -18,7 +16,6 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await PushNotificationService().init();
   } catch (e) {
     debugPrint('Firebase initialization failed. Please run flutterfire configure: $e');
   }

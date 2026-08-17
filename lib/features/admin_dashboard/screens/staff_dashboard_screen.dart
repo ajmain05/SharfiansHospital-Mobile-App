@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/storage/local_storage.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../data/admin_dashboard_repository.dart';
@@ -19,96 +21,155 @@ class StaffDashboardScreen extends ConsumerWidget {
     final statsAsync = ref.watch(staffStatsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        title: const Text('Staff Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            tooltip: 'Logout',
-            onPressed: () {
-              LocalStorage.clearAdminSession();
-              context.go('/admin/login');
-            },
-          ),
-        ],
-      ),
+      backgroundColor: context.bgFill,
       body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(staffStatsProvider);
-        },
-        child: SingleChildScrollView(
+        color: AppColors.primary700,
+        onRefresh: () async => ref.invalidate(staffStatsProvider),
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Stats Cards
-              statsAsync.when(
-                data: (stats) => Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Total Investors',
-                        value: Formatters.number(stats['totalInvestors'] ?? 0),
-                        icon: Icons.groups_rounded,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Total Funds',
-                        value: Formatters.bdt(stats['totalAmount'] ?? 0),
-                        icon: Icons.account_balance_wallet_rounded,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
+          slivers: [
+            // ── Header ───────────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: _DashboardHeader(ref: ref, onLogout: () {
+                LocalStorage.clearAdminSession();
+                context.go('/admin/login');
+              }),
+            ),
+
+            // ── Stats ─────────────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: statsAsync.when(
+                data: (stats) => _StatsRow(stats: stats),
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, _) => Center(child: Text('Error: $err')),
               ),
-              
-              const SizedBox(height: 32),
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+            ),
+
+            // ── Quick Actions ─────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+                child: Text(
+                  'Quick Actions',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: context.textHigh,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Action Grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
+              sliver: SliverGrid.count(
                 crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.1,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                childAspectRatio: 1.0,
                 children: [
                   _ActionCard(
                     title: 'QR Scanner',
+                    subtitle: 'Scan event tickets',
                     icon: Icons.qr_code_scanner_rounded,
-                    color: Colors.indigo,
+                    gradient: AppColors.cardGradientGreen,
                     onTap: () => context.push('/admin/scanner'),
                   ),
                   _ActionCard(
                     title: 'Approvals',
+                    subtitle: 'Review pending requests',
                     icon: Icons.fact_check_rounded,
-                    color: Colors.orange.shade700,
+                    gradient: AppColors.cardGradientGold,
                     onTap: () => context.push('/admin/approvals'),
                   ),
                   _ActionCard(
                     title: 'Directory',
+                    subtitle: 'Search investors',
                     icon: Icons.contact_phone_rounded,
-                    color: Colors.teal,
+                    gradient: AppColors.cardGradientTeal,
                     onTap: () => context.push('/admin/directory'),
                   ),
+                  _ActionCard(
+                    title: 'Live Dashboard',
+                    subtitle: 'Active event stats',
+                    icon: Icons.bar_chart_rounded,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    onTap: () => context.push('/admin/scanner'),
+                  ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardHeader extends StatelessWidget {
+  final WidgetRef ref;
+  final VoidCallback onLogout;
+
+  const _DashboardHeader({required this.ref, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.heroGradient,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Staff Portal',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      'Sharfians Hospital',
+                      style: GoogleFonts.nunito(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: onLogout,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 22),
               ),
             ],
           ),
@@ -118,16 +179,50 @@ class StaffDashboardScreen extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
+class _StatsRow extends StatelessWidget {
+  final Map<String, dynamic> stats;
+
+  const _StatsRow({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatChip(
+              icon: Icons.groups_rounded,
+              label: 'Total Investors',
+              value: Formatters.number(stats['totalInvestors'] ?? 0),
+              color: AppColors.primary700,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: _StatChip(
+              icon: Icons.account_balance_wallet_rounded,
+              label: 'Total Funds',
+              value: Formatters.bdt(stats['totalAmount'] ?? 0),
+              color: AppColors.accent600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
   final IconData icon;
+  final String label;
+  final String value;
   final Color color;
 
-  const _StatCard({
-    required this.title,
-    required this.value,
+  const _StatChip({
     required this.icon,
+    required this.label,
+    required this.value,
     required this.color,
   });
 
@@ -136,13 +231,13 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -150,23 +245,23 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 16),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 12),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
               color: color,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
+            label,
+            style: GoogleFonts.nunito(
+              fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: context.textMed,
             ),
           ),
         ],
@@ -177,54 +272,71 @@ class _StatCard extends StatelessWidget {
 
 class _ActionCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
-  final Color color;
+  final LinearGradient gradient;
   final VoidCallback onTap;
 
   const _ActionCard({
     required this.title,
+    required this.subtitle,
     required this.icon,
-    required this.color,
+    required this.gradient,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: gradient.colors.first.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
-              child: Icon(icon, color: color, size: 32),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
-            ),
-          ],
+              const Spacer(),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: GoogleFonts.nunito(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

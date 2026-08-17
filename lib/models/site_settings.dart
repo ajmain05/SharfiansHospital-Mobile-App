@@ -164,12 +164,23 @@ class BankDetails {
       swiftCode.isNotEmpty ||
       mobileAccounts.isNotEmpty;
 
+  factory BankDetails.fallback() => const BankDetails(
+        bankName: 'Islami Bank Bangladesh PLC',
+        accountName: 'Sharfians Hospital Limited',
+        accountNumber: '20503960100088814',
+        branchName: 'Chalkbazar Branch, Chittagong',
+        routingNumber: '125150833',
+        swiftCode: 'IBBLBDDH',
+        mobileAccounts: [],
+      );
+
   factory BankDetails.fromJson(dynamic raw) {
+    if (raw == null) return BankDetails.fallback();
     final json = raw is Map
         ? raw.cast<String, dynamic>()
         : const <String, dynamic>{};
     final accounts = <MobileAccount>[];
-    final rawAccounts = json['mobileAccounts'];
+    final rawAccounts = json['mobileAccounts'] ?? json['mobile_accounts'] ?? json['mfs'] ?? json['mobileBanking'];
     if (rawAccounts is List) {
       accounts.addAll(
         rawAccounts
@@ -178,35 +189,39 @@ class BankDetails {
       );
     }
 
-    void addLegacy(String key, String provider, String type) {
-      final number = json[key];
-      if (number != null && number.toString().trim().isNotEmpty) {
-        accounts.add(
-          MobileAccount(
-            provider: provider,
-            type: type,
-            number: number.toString(),
-          ),
-        );
+    void addLegacy(List<String> keys, String provider, String type) {
+      for (final key in keys) {
+        final val = json[key];
+        if (val != null) {
+          final str = val is Map ? (val['number'] ?? val['phone'] ?? val['account'] ?? '').toString() : val.toString();
+          if (str.trim().isNotEmpty) {
+            if (!accounts.any((a) => a.number == str.trim())) {
+              accounts.add(MobileAccount(provider: provider, type: type, number: str.trim()));
+            }
+            break;
+          }
+        }
       }
     }
 
-    addLegacy('bkashMerchant', 'bKash', 'Merchant');
-    addLegacy('bkashPersonal', 'bKash', 'Personal');
-    addLegacy('bkashPersonal1', 'bKash', 'Personal');
-    addLegacy('nagadPersonal', 'Nagad', 'Personal');
-    addLegacy('rocketPersonal', 'Rocket', 'Personal');
-    addLegacy('upayPersonal', 'Upay', 'Personal');
+    addLegacy(const ['bkashMerchant', 'bkash_merchant'], 'bKash', 'Merchant');
+    addLegacy(const ['bkashPersonal', 'bkash_personal', 'bkash', 'bkashNumber', 'bkash_number', 'bkashNo'], 'bKash', 'Personal');
+    addLegacy(const ['bkashPersonal1', 'bkash_personal1'], 'bKash', 'Personal');
+    addLegacy(const ['nagadPersonal', 'nagad_personal', 'nagad', 'nagadNumber', 'nagad_number', 'nagadNo'], 'Nagad', 'Personal');
+    addLegacy(const ['rocketPersonal', 'rocket_personal', 'rocket', 'rocketNumber', 'rocket_number', 'rocketNo'], 'Rocket', 'Personal');
+    addLegacy(const ['upayPersonal', 'upay_personal', 'upay', 'upayNumber', 'upay_number', 'upayNo'], 'Upay', 'Personal');
 
-    return BankDetails(
-      bankName: _stringFrom(json, const ['bankName', 'name']),
-      accountName: _stringFrom(json, const ['accountName', 'accountHolder']),
-      accountNumber: _stringFrom(json, const ['accountNumber', 'bankAccount']),
-      branchName: _stringFrom(json, const ['branchName', 'branch']),
-      routingNumber: _stringFrom(json, const ['routingNumber', 'bankRouting']),
-      swiftCode: _stringFrom(json, const ['swiftCode', 'swift']),
+    final parsed = BankDetails(
+      bankName: _stringFrom(json, const ['bankName', 'bank_name', 'name', 'bank', 'bankTitle', 'bank_title']),
+      accountName: _stringFrom(json, const ['accountName', 'account_name', 'accountHolder', 'account_holder', 'accountTitle', 'account_title', 'title', 'holder']),
+      accountNumber: _stringFrom(json, const ['accountNumber', 'account_number', 'bankAccount', 'bank_account', 'account_no', 'accountNo', 'acc_no', 'accNo', 'number']),
+      branchName: _stringFrom(json, const ['branchName', 'branch_name', 'branch', 'branchAddress', 'branch_address', 'location']),
+      routingNumber: _stringFrom(json, const ['routingNumber', 'routing_number', 'bankRouting', 'routing_no', 'routingNo', 'routing']),
+      swiftCode: _stringFrom(json, const ['swiftCode', 'swift_code', 'swift', 'swift_no', 'swiftNo']),
       mobileAccounts: accounts,
     );
+
+    return parsed.hasAny ? parsed : BankDetails.fallback();
   }
 }
 
@@ -231,9 +246,12 @@ class CareerSettings {
 
   factory CareerSettings.fromJson(dynamic raw) {
     const fb = CareerSettings();
+    if (raw == false) return const CareerSettings(enabled: false);
+
     final json = raw is Map
         ? raw.cast<String, dynamic>()
         : const <String, dynamic>{};
+
     final rawPositions = json['positions'] ?? json['jobs'] ?? json['openings'];
     final positions = rawPositions is List
         ? rawPositions
@@ -252,8 +270,26 @@ class CareerSettings {
               .toList()
         : const <String>[];
 
+    final isEnabled = _boolFrom(
+      json,
+      const [
+        'formEnabled',
+        'form_enabled',
+        'enabled',
+        'is_open',
+        'isOpen',
+        'careerEnabled',
+        'career_enabled',
+        'isCareerOpen',
+        'is_career_open',
+        'active',
+        'is_active',
+      ],
+      fallback: fb.enabled,
+    );
+
     return CareerSettings(
-      enabled: json['enabled'] as bool? ?? fb.enabled,
+      enabled: isEnabled,
       title: _stringFrom(json, const ['title'], fallback: fb.title),
       titleBn: _stringFrom(json, const [
         'title_bn',
@@ -394,8 +430,7 @@ class SiteSettings {
       minShareAmount: (json['minShareAmount'] as num?) ?? fb.minShareAmount,
       investmentTarget:
           (json['investmentTarget'] as num?) ?? fb.investmentTarget,
-      investorPortalEnabled:
-          json['investorPortalEnabled'] as bool? ?? fb.investorPortalEnabled,
+      investorPortalEnabled: _boolFrom(json, const ['investorPortalEnabled', 'investor_portal_enabled'], fallback: fb.investorPortalEnabled),
       customTranslations:
           (json['customTranslations'] as List?)
               ?.map(
@@ -421,8 +456,31 @@ class SiteSettings {
               .where((f) => f.question.isNotEmpty || f.answer.isNotEmpty)
               .toList() ??
           fb.faqs,
-      bankDetails: BankDetails.fromJson(json['bankDetails']),
-      careerSettings: CareerSettings.fromJson(json['careerSettings']),
+      bankDetails: BankDetails.fromJson(
+        json['bankDetails'] ??
+        json['bank_details'] ??
+        json['bankAccount'] ??
+        json['bank_account'] ??
+        json['bankInfo'] ??
+        json['bank_info'] ??
+        json['paymentDetails'] ??
+        json['payment_details'] ??
+        json['bank'] ??
+        json,
+      ),
+      careerSettings: CareerSettings.fromJson(
+        json.containsKey('careerSettings')
+            ? json['careerSettings']
+            : json.containsKey('career_settings')
+                ? json['career_settings']
+                : json.containsKey('career')
+                    ? json['career']
+                    : json.containsKey('careerEnabled')
+                        ? json['careerEnabled']
+                        : json.containsKey('career_enabled')
+                            ? json['career_enabled']
+                            : json,
+      ),
     );
   }
 }
@@ -438,6 +496,20 @@ String _stringFrom(
     if (value != null && value is! List && value is! Map) {
       return value.toString();
     }
+  }
+  return fallback;
+}
+
+bool _boolFrom(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  bool fallback = false,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
   }
   return fallback;
 }

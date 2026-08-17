@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_retry_view.dart';
@@ -24,166 +27,638 @@ class HomeScreen extends ConsumerWidget {
     final loggedIn = ref.watch(investorSessionProvider).isLoggedIn;
 
     return Scaffold(
+      backgroundColor: context.bgFill,
       body: RefreshIndicator(
+        color: const Color(0xFF316BF3),
+        backgroundColor: context.cardFill,
         onRefresh: () async {
           ref.invalidate(siteSettingsProvider);
           ref.invalidate(publicStatsProvider);
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(24, 60, 24, 48),
-                decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+          slivers: [
+            // ── Hero ─────────────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: _HeroSection(
+                settingsAsync: settingsAsync,
+                lang: lang,
+                loggedIn: loggedIn,
+                ref: ref,
+                onNavigate: (p) => context.go(p),
+                onEventsTab: () => context.push('/events'),
+              ),
+            ),
+
+            // ── Quick Access Row ──────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: _QuickAccessRow(
+                ref: ref,
+                loggedIn: loggedIn,
+                onPortal: () => context.go(loggedIn ? '/investor/dashboard' : '/investor/login'),
+                onEvents: () => context.push('/events'),
+                onBankDetails: () => context.push('/bank-details'),
+              ),
+            ),
+
+            // ── Impact Stats ──────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: publicStatsAsync.when(
+                data: (stats) => _ImpactSection(
+                  stats: stats,
+                  settingsAsync: settingsAsync,
+                  lang: lang,
+                  ref: ref,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                loading: () => _StatsShimmer(),
+                error: (err, _) => Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: ErrorRetryView(onRetry: () => ref.invalidate(publicStatsProvider)),
+                ),
+              ),
+            ),
+
+            // ── Explore Grid ──────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: _ExploreSection(
+                ref: ref,
+                onNavigate: (p) => context.push(p),
+              ),
+            ),
+
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HERO SECTION
+// ══════════════════════════════════════════════════════════════════════════════
+class _HeroSection extends StatelessWidget {
+  final AsyncValue<SiteSettings> settingsAsync;
+  final String lang;
+  final bool loggedIn;
+  final WidgetRef ref;
+  final void Function(String) onNavigate;
+  final VoidCallback onEventsTab;
+
+  const _HeroSection({
+    required this.settingsAsync,
+    required this.lang,
+    required this.loggedIn,
+    required this.ref,
+    required this.onNavigate,
+    required this.onEventsTab,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ClipPath(
+            clipper: _WaveClipper(),
+            child: Container(
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+            ),
+          ),
+        ),
+
+        // Decorative circles removed to keep UI clean
+
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 14, 22, 72),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Controls row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: const [
-                        ThemeToggleButton(),
-                        LanguageToggleButton(),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        settingsAsync.maybeWhen(
-                          data: (s) =>
-                              lang == 'bn' ? s.badgeTextBn : s.badgeText,
-                          orElse: () => t(ref, 'badgeText'),
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                    ThemeToggleButton(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.primary900),
+                    SizedBox(width: 4),
+                    LanguageToggleButton(),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Lottie Illustration
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Glow effect specifically for dark mode so the Lottie icons stay visible
+                    if (Theme.of(context).brightness == Brightness.dark)
+                      Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: Colors.white.withValues(alpha: 0.12), blurRadius: 80, spreadRadius: 40),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      settingsAsync.maybeWhen(
-                        data: (s) => lang == 'bn' ? s.heroTitleBn : s.heroTitle,
-                        orElse: () => t(ref, 'heroTitle'),
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      settingsAsync.maybeWhen(
-                        data: (s) =>
-                            lang == 'bn' ? s.heroSubtitleBn : s.heroSubtitle,
-                        orElse: () => t(ref, 'heroSubtitle'),
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      settingsAsync.maybeWhen(
-                        data: (s) => lang == 'bn'
-                            ? s.heroDescriptionBn
-                            : s.heroDescription,
-                        orElse: () => t(ref, 'heroDescription'),
-                      ),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary700,
-                      ),
-                      onPressed: () => context.go('/register'),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(t(ref, 'becomeInvestor')),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward_rounded, size: 18),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white54, width: 2),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () => context.go(
-                        loggedIn ? '/investor/dashboard' : '/investor/login',
-                      ),
-                      child: Text(t(ref, 'viewMyPortal')),
-                    ),
-                    const SizedBox(height: 10),
                     Center(
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/events'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                        icon: const Icon(Icons.event_outlined, size: 18),
-                        label: Text(t(ref, 'events')),
+                      child: Lottie.asset(
+                        'assets/animations/hero_bg.json',
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox(height: 0),
                       ),
                     ),
                   ],
                 ),
-              ),
-              publicStatsAsync.when(
-                data: (stats) => _StatsSection(
-                  stats: stats,
-                  settingsAsync: settingsAsync,
-                  lang: lang,
-                ),
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (err, stack) => ErrorRetryView(
-                  onRetry: () => ref.invalidate(publicStatsProvider),
-                ),
-              ),
-              const _PublicLinksSection(),
-              const SizedBox(height: 48),
-              
-              // Staff Portal Link
-              Center(
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
+                const SizedBox(height: 16),
+
+                // Badge
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : const Color(0xFFDBEAFE)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, color: Color(0xFF316BF3), size: 16),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            settingsAsync.maybeWhen(
+                              data: (s) => lang == 'bn' ? s.badgeTextBn : s.badgeText,
+                              orElse: () => t(ref, 'badgeText'),
+                            ),
+                            style: GoogleFonts.poppins(
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1D4ED8),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  icon: const Icon(Icons.shield_outlined, size: 16),
-                  label: Text(
-                    t(ref, 'staffPortal'),
-                    style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+
+                // Title
+                Center(
+                  child: Text(
+                    settingsAsync.maybeWhen(
+                      data: (s) => lang == 'bn' ? s.heroTitleBn : s.heroTitle,
+                      orElse: () => t(ref, 'heroTitle'),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1E3A8A),
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        height: 1.2),
                   ),
-                  onPressed: () => context.push('/admin/login'),
+                ),
+                const SizedBox(height: 8),
+
+                // Subtitle
+                Center(
+                  child: Text(
+                    settingsAsync.maybeWhen(
+                      data: (s) => lang == 'bn' ? s.heroSubtitleBn : s.heroSubtitle,
+                      orElse: () => t(ref, 'heroSubtitle'),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF1E40AF),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // New "Anyone can invest" text
+                Center(
+                  child: Text(
+                    lang == 'bn' ? 'যে কেউ বিনিয়োগ করতে পারে, শুধুমাত্র প্রাক্তন ছাত্রদের মধ্যে সীমাবদ্ধ নয়' : 'Anyone can invest, not limited to alumni',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // CTA row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _HeroCTA(
+                    icon: Icons.volunteer_activism_rounded,
+                    title: t(ref, 'becomeInvestor'),
+                    gradient: const LinearGradient(colors: [Color(0xFFEAB308), Color(0xFFF59E0B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    shadow: true,
+                    onTap: () => onNavigate('/register'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _circle(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color));
+}
+
+
+
+class _HeroCTA extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final LinearGradient gradient;
+  final Color? borderColor;
+  final Color? textColor;
+  final Color? iconColor;
+  final bool shadow;
+  final VoidCallback onTap;
+
+  const _HeroCTA({
+    required this.icon,
+    required this.title,
+    required this.gradient,
+    required this.onTap,
+    this.borderColor,
+    this.textColor,
+    this.iconColor,
+    this.shadow = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: shadow ? context.cardShadow : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6), // reduced horizontal padding
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(16),
+              border: borderColor != null ? Border.all(color: borderColor!, width: 1.5) : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: iconColor ?? Colors.white, size: 16),
+                const SizedBox(width: 4), // reduced gap
+                Flexible(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.poppins(color: textColor ?? Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 50);
+    path.quadraticBezierTo(size.width * 0.25, size.height, size.width * 0.5, size.height - 28);
+    path.quadraticBezierTo(size.width * 0.75, size.height - 56, size.width, size.height - 16);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUICK ACCESS ROW (new — prominent, just below hero)
+// ══════════════════════════════════════════════════════════════════════════════
+class _QuickAccessRow extends StatelessWidget {
+  final WidgetRef ref;
+  final bool loggedIn;
+  final VoidCallback onPortal;
+  final VoidCallback onEvents;
+  final VoidCallback onBankDetails;
+
+  const _QuickAccessRow({
+    required this.ref,
+    required this.loggedIn,
+    required this.onPortal,
+    required this.onEvents,
+    required this.onBankDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0), // Reduced top padding to close gap with hero
+      child: Row(
+        children: [
+          _QuickChip(
+            icon: Icons.event_rounded,
+            label: t(ref, 'events'),
+            color: AppColors.teal600,
+            onTap: onEvents,
+          ),
+          const SizedBox(width: 10),
+          _QuickChip(
+            icon: loggedIn ? Icons.dashboard_rounded : Icons.login_rounded,
+            label: loggedIn ? t(ref, 'myPortal') : t(ref, 'login'),
+            color: AppColors.primary700,
+            onTap: onPortal,
+          ),
+          const SizedBox(width: 10),
+          _QuickChip(
+            icon: Icons.account_balance_rounded,
+            label: t(ref, 'bankDetails'),
+            color: AppColors.accent600,
+            onTap: onBankDetails,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickChip({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: context.cardFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.borderFill),
+              boxShadow: context.cardShadow,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                const SizedBox(height: 4), // Reduced gap
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: context.textHigh),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPACT STATS
+// ══════════════════════════════════════════════════════════════════════════════
+class _ImpactSection extends StatelessWidget {
+  final Map<String, dynamic> stats;
+  final AsyncValue<SiteSettings> settingsAsync;
+  final String lang;
+  final WidgetRef ref;
+
+  const _ImpactSection({required this.stats, required this.settingsAsync, required this.lang, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final section = settingsAsync.maybeWhen(data: (s) => s.investorStatsSection, orElse: () => null);
+    final totalInvestors = (stats['totalInvestors'] as num?) ?? 0;
+    final totalAmount = (stats['totalAmount'] as num?) ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16), // Reverted top padding
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            title: section != null ? (lang == 'bn' ? section.titleBn : section.title) : t(ref, 'growingTogether'),
+            subtitle: lang == 'bn' ? 'আমাদের অর্জন একসাথে' : 'Our collective achievement',
+          ),
+          const SizedBox(height: 12), // Reduced gap below the header
+          Row(
+            children: [
+              Expanded(
+                child: _ImpactCard(
+                  gradient: AppColors.cardGradientGreen,
+                  icon: Icons.groups_rounded,
+                  value: Formatters.number(totalInvestors),
+                  label: section != null ? (lang == 'bn' ? section.investorLabelBn : section.investorLabel) : t(ref, 'totalInvestors'),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(width: 14),
+              Expanded(
+                child: _ImpactCard(
+                  gradient: AppColors.cardGradientGold,
+                  icon: Icons.savings_rounded,
+                  value: Formatters.bdtCompact(totalAmount),
+                  label: section != null ? (lang == 'bn' ? section.amountLabelBn : section.amountLabel) : t(ref, 'committedAmount'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImpactCard extends StatelessWidget {
+  final LinearGradient gradient;
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _ImpactCard({required this.gradient, required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [BoxShadow(color: gradient.colors.first.withValues(alpha: 0.3), blurRadius: 18, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(height: 10), // Reduced gap
+          Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)), // Reduced font size slightly
+          const SizedBox(height: 2), // Reduced gap
+          Text(label, style: GoogleFonts.nunito(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsShimmer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+      child: Row(
+        children: [
+          Expanded(child: Container(height: 120, decoration: BoxDecoration(color: context.cardFill3, borderRadius: BorderRadius.circular(22)))),
+          const SizedBox(width: 14),
+          Expanded(child: Container(height: 120, decoration: BoxDecoration(color: context.cardFill3, borderRadius: BorderRadius.circular(22)))),
+        ],
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPLORE SECTION
+// ══════════════════════════════════════════════════════════════════════════════
+class _ExploreSection extends StatelessWidget {
+  final WidgetRef ref;
+  final void Function(String) onNavigate;
+
+  const _ExploreSection({required this.ref, required this.onNavigate});
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsAsync = ref.watch(siteSettingsProvider);
+    final lang = ref.watch(localeProvider).languageCode;
+    final isCareerOpen = settingsAsync.maybeWhen(data: (s) => s.careerSettings.enabled, orElse: () => true);
+    final careerSubtitle = isCareerOpen
+        ? (lang == 'bn' ? 'আমাদের দলে যোগ দিন' : 'Join our team')
+        : (lang == 'bn' ? 'সাময়িকভাবে বন্ধ' : 'Currently Closed');
+
+    final items = [
+      _ExploreItem(Icons.photo_library_rounded, t(ref, 'gallery'), '/gallery', AppColors.cardGradientTeal, 'View photos & moments'),
+      _ExploreItem(Icons.help_rounded, t(ref, 'faq'), '/faq', const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Frequently asked questions'),
+      _ExploreItem(Icons.account_balance_rounded, t(ref, 'bankDetails'), '/bank-details', AppColors.cardGradientGold, 'Official payment details'),
+      _ExploreItem(Icons.work_rounded, t(ref, 'career'), '/career', const LinearGradient(colors: [Color(0xFFDB2777), Color(0xFFF472B6)], begin: Alignment.topLeft, end: Alignment.bottomRight), careerSubtitle),
+      _ExploreItem(Icons.event_rounded, t(ref, 'events'), '/events', AppColors.cardGradientGreen, 'Upcoming programs'),
+      _ExploreItem(Icons.shield_rounded, t(ref, 'staffPortal'), '/admin/login', const LinearGradient(colors: [Color(0xFF475569), Color(0xFF64748B)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Admin & Staff access'),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32), // Reduced top padding, increased bottom padding
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: t(ref, 'explore'), subtitle: 'Everything Sharfians offers'),
+          const SizedBox(height: 12), // Reduced gap
+
+          // 2-column grid for all items
+          GridView.builder(
+            padding: EdgeInsets.zero, // Remove default grid padding that causes massive gaps
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 1.15, // Made slightly taller to fit 2 lines of text
+            ),
+            itemBuilder: (context, i) => _ExploreCard(item: items[i], onTap: () => onNavigate(items[i].route)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExploreItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  final LinearGradient gradient;
+  final String subtitle;
+
+  const _ExploreItem(this.icon, this.label, this.route, this.gradient, this.subtitle);
+}
+
+class _ExploreCard extends StatelessWidget {
+  final _ExploreItem item;
+  final VoidCallback onTap;
+
+  const _ExploreCard({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.cardFill,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.borderFill),
+            boxShadow: context.cardShadow,
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(gradient: item.gradient, borderRadius: BorderRadius.circular(13)),
+                child: Icon(item.icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(height: 14), // Replaced Spacer with fixed gap
+              Text(item.label, style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14, color: context.textHigh), maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 2),
+              Text(item.subtitle, style: GoogleFonts.nunito(fontSize: 11, color: context.textMed), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         ),
@@ -192,184 +667,25 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _PublicLinksSection extends ConsumerWidget {
-  const _PublicLinksSection();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SHARED WIDGETS
+// ══════════════════════════════════════════════════════════════════════════════
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({required this.title, required this.subtitle});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final links = [
-      (
-        Icons.photo_library_outlined,
-        t(ref, 'gallery'),
-        '/gallery',
-        AppColors.primary600,
-      ),
-      (Icons.help_outline_rounded, t(ref, 'faq'), '/faq', AppColors.accent600),
-      (
-        Icons.account_balance_outlined,
-        t(ref, 'bankDetails'),
-        '/bank-details',
-        const Color(0xFFB45309),
-      ),
-      (
-        Icons.work_outline_rounded,
-        t(ref, 'career'),
-        '/career',
-        const Color(0xFF7C3AED),
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            t(ref, 'explore'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: links.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.55,
-            ),
-            itemBuilder: (context, i) {
-              final link = links[i];
-              return InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () => context.push(link.$3),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(link.$1, color: link.$4),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          link.$2,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsSection extends ConsumerWidget {
-  final Map<String, dynamic> stats;
-  final AsyncValue<SiteSettings> settingsAsync;
-  final String lang;
-
-  const _StatsSection({
-    required this.stats,
-    required this.settingsAsync,
-    required this.lang,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final InvestorStatsSection? section = settingsAsync.maybeWhen(
-      data: (s) => s.investorStatsSection,
-      orElse: () => null,
-    );
-    final totalInvestors = (stats['totalInvestors'] as num?) ?? 0;
-    final totalAmount = (stats['totalAmount'] as num?) ?? 0;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-      child: Column(
-        children: [
-          Text(
-            section != null
-                ? (lang == 'bn' ? section.titleBn : section.title)
-                : t(ref, 'totalInvestors'),
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _statCard(
-                  Icons.groups_rounded,
-                  section != null
-                      ? (lang == 'bn'
-                            ? section.investorLabelBn
-                            : section.investorLabel)
-                      : t(ref, 'totalInvestors'),
-                  Formatters.number(totalInvestors),
-                  AppColors.primary600,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: _statCard(
-                  Icons.savings_rounded,
-                  section != null
-                      ? (lang == 'bn'
-                            ? section.amountLabelBn
-                            : section.amountLabel)
-                      : t(ref, 'committedAmount'),
-                  Formatters.bdt(totalAmount),
-                  AppColors.accent600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statCard(IconData icon, String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: context.textHigh)),
+        const SizedBox(height: 2),
+        Text(subtitle, style: GoogleFonts.nunito(fontSize: 13, fontWeight: FontWeight.w700, color: context.textHigh.withValues(alpha: 0.75))),
+      ],
     );
   }
 }

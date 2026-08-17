@@ -13,8 +13,8 @@ class LanguageToggleButton extends ConsumerWidget {
     return TextButton(
       onPressed: () => ref.read(localeProvider.notifier).toggle(),
       style: TextButton.styleFrom(
-        backgroundColor: AppColors.primary50,
-        foregroundColor: AppColors.primary600,
+        backgroundColor: const Color(0xFFEFF6FF),
+        foregroundColor: const Color(0xFF2563EB),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: Text(
