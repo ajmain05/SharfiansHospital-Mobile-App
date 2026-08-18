@@ -642,95 +642,170 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 24, bottom: 160),
       children: [
         for (final dep in widget.deposits) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary600.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -3,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TRANSACTION DATE',
+                  style: GoogleFonts.publicSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dep.dateOfDeposit,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                if (dep.batchNo != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Ref: ${dep.batchNo}',
+                    style: GoogleFonts.publicSans(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          dep.dateOfDeposit,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                          'AMOUNT PAID',
+                          style: GoogleFonts.publicSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                            color: AppColors.primary600,
                           ),
                         ),
-                        if (dep.batchNo != null)
-                          Text(
-                            dep.batchNo!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontSize: 11,
-                              fontFamily: 'monospace',
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          Formatters.bdt(dep.totalAmount),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF316BF3),
                           ),
+                        ),
                       ],
                     ),
-                  ),
-                  Text(
-                    Formatters.bdt(dep.totalAmount),
-                    style: const TextStyle(
-                      color: AppColors.accent600,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (_downloadingId == dep.id)
-                    const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: Padding(
-                        padding: EdgeInsets.all(10),
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    if (_downloadingId == dep.id)
+                      const SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: Padding(
+                          padding: EdgeInsets.all(10),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          tooltip: t(ref, 'download'),
+                          onPressed: () => _downloadReceipt(dep),
+                          icon: const Icon(
+                            Icons.download_rounded,
+                            color: Color(0xFF316BF3),
+                          ),
+                        ),
                       ),
-                    )
-                  else ...[
-                    IconButton(
-                      tooltip: t(ref, 'download'),
-                      onPressed: () => _downloadReceipt(dep),
-                      icon: const Icon(
-                        Icons.download_rounded,
-                        color: AppColors.primary600,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Share',
-                      onPressed: () => _shareReceipt(dep),
-                      icon: Icon(
-                        Icons.share_rounded,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
                   ],
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
         ],
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              t(ref, 'totalPaid'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              Formatters.bdt(widget.totalPaid),
-              style: const TextStyle(
-                color: AppColors.accent600,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.brightness == Brightness.light 
+                ? const Color(0xFF1E3A8A) // primary-container from HTML
+                : Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF316BF3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    t(ref, 'totalPaid').toUpperCase(),
+                    style: GoogleFonts.publicSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                Formatters.bdt(widget.totalPaid),
+                style: GoogleFonts.publicSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
