@@ -37,11 +37,20 @@ class EventsListScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, size: 22),
-            color: isDark ? Colors.white : const Color(0xFF191C1E),
-            tooltip: t(ref, 'checkStatus'),
-            onPressed: () => context.push('/events/check'),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: TextButton.icon(
+              icon: Icon(Icons.fact_check_outlined, size: 20, color: isDark ? Colors.white : const Color(0xFF191C1E)),
+              label: Text(
+                t(ref, 'checkStatus'),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF191C1E),
+                ),
+              ),
+              onPressed: () => context.push('/events/check'),
+            ),
           ),
         ],
         bottom: PreferredSize(
@@ -88,7 +97,7 @@ class EventsListScreen extends ConsumerWidget {
             }
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               itemCount: events.length,
               separatorBuilder: (_, _) => const SizedBox(height: 20),
               itemBuilder: (context, i) => _EventCard(event: events[i]),
@@ -157,10 +166,10 @@ class _EventCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title in Libre Caslon Text serif
+                    // Title in Noto Sans Bengali or Poppins for better thickness
                     Text(
                       event.title,
-                      style: GoogleFonts.libreCaslonText(
+                      style: GoogleFonts.notoSansBengali(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         height: 1.4,

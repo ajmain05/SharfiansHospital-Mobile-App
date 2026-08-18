@@ -5,24 +5,26 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../settings/providers/site_settings_provider.dart';
+import '../../home/providers/public_stats_provider.dart';
+import '../../events/providers/events_providers.dart';
 /// Animated Splash Screen
 /// Uses ONLY Flutter built-in animations — no extra packages.
 /// Designed for maximum performance on all devices.
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   // ── Controllers ────────────────────────────────────────────────────────────
   late AnimationController _pulseController;
   late AnimationController _logoController;
   late AnimationController _textController;
-  late AnimationController _exitController;
 
   // ── Pulse rings ────────────────────────────────────────────────────────────
   late Animation<double> _ring1Scale;
@@ -41,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _subtitleOpacity;
 
   // ── Exit ──────────────────────────────────────────────────────────────────
-  late Animation<double> _exitOpacity;
+  // Removed exit controller to let GoRouter handle the transition smoothly
 
   @override
   void initState() {
@@ -114,14 +116,7 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _textController, curve: const Interval(0.4, 1.0, curve: Curves.easeOut)),
     );
 
-    // Exit fade
-    _exitController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _exitOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _exitController, curve: Curves.easeIn),
-    );
+    // Exit fade removed to prevent black screen flash during transition
   }
 
   Future<void> _startSequence() async {
@@ -131,6 +126,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Start pulsing rings immediately
     _pulseController.repeat();
+
+    // Preload critical API data in the background
+    final preloadFuture = Future.wait([
+      ref.read(siteSettingsProvider.future),
+      ref.read(publicStatsProvider.future),
+      ref.read(publicEventsProvider.future),
+    ]);
 
     // Logo enters
     await Future.delayed(const Duration(milliseconds: 200));
@@ -146,9 +148,15 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
-    // Fade out entire splash
+    // Ensure API calls are finished before transitioning (max 10s timeout to prevent getting stuck)
+    try {
+      await preloadFuture.timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Ignore errors or timeouts, just transition anyway
+    }
+
+    // Stop pulsing before transition
     _pulseController.stop();
-    await _exitController.forward();
 
     if (!mounted) return;
     context.go('/');
@@ -159,7 +167,6 @@ class _SplashScreenState extends State<SplashScreen>
     _pulseController.dispose();
     _logoController.dispose();
     _textController.dispose();
-    _exitController.dispose();
     super.dispose();
   }
 
@@ -169,11 +176,9 @@ class _SplashScreenState extends State<SplashScreen>
     final bgColor = isDark ? const Color(0xFF111827) : Colors.white;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
 
-    return FadeTransition(
-      opacity: _exitOpacity,
-      child: Scaffold(
-        backgroundColor: bgColor,
-        body: Center(
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -360,7 +365,6 @@ class _SplashScreenState extends State<SplashScreen>
             ],
           ),
         ),
-      ),
     );
   }
 }
