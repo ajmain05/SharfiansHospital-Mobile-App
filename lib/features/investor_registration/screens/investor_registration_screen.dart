@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/locale_provider.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/investor_category.dart';
 import '../../../core/widgets/language_toggle_button.dart';
@@ -157,226 +157,411 @@ class _InvestorRegistrationScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-        title: Text(t(ref, 'investorRegistration')),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: LanguageToggleButton(),
+      backgroundColor: const Color(0xFFF8FAFC), // surface
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Brand Header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 80),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF316BF3), Color(0xFF1E40AF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(40),
+                        bottomRight: Radius.circular(40),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              onPressed: () => context.go('/'),
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              padding: EdgeInsets.zero,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            const LanguageToggleButton(),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          t(ref, 'investorRegistration'),
+                          style: GoogleFonts.libreCaslonText(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Join us in shaping the future. Begin your investment journey today.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Content Area
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Transform.translate(
+                      offset: const Offset(0, -40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Video CTA
+                          if (tutorialVideoUrl.isNotEmpty) ...[
+                            GestureDetector(
+                              onTap: () async {
+                                final url = Uri.parse(tutorialVideoUrl);
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                } else if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Could not open video URL.')),
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.04),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEFF6FF), // blue-50
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.play_arrow, color: Color(0xFF316BF3), size: 28),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'How to Register?',
+                                            style: GoogleFonts.libreCaslonText(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            t(ref, 'howToRegisterWatchVideo'),
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF1E293B),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Entity Toggle
+                                _TypeToggle(
+                                  value: _investorType,
+                                  onChanged: (v) => setState(() => _investorType = v),
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Personal Info Section
+                                _EditorialSection(
+                                  title: 'Personal Details',
+                                  icon: Icons.badge_outlined,
+                                  children: [
+                                    if (_investorType == 'Organization')
+                                      _BespokeField(
+                                        controller: _orgNameCtrl,
+                                        label: t(ref, 'organizationName'),
+                                        icon: Icons.domain,
+                                        isRequired: true,
+                                      ),
+                                    _BespokeField(
+                                      controller: _nameCtrl,
+                                      label: _investorType == 'Organization'
+                                          ? t(ref, 'representativeFullName')
+                                          : t(ref, 'fullName'),
+                                      icon: Icons.person_outline,
+                                      placeholder: 'Enter your full name',
+                                      isRequired: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _fatherCtrl,
+                                      label: t(ref, 'fathersName'),
+                                      icon: Icons.family_restroom,
+                                      placeholder: 'Enter father\'s name',
+                                      isRequired: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _motherCtrl,
+                                      label: t(ref, 'mothersName'),
+                                      icon: Icons.family_restroom,
+                                      placeholder: 'Enter mother\'s name',
+                                      isRequired: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _phoneCtrl,
+                                      label: t(ref, 'phoneNumber'),
+                                      icon: Icons.phone_iphone,
+                                      placeholder: '+880',
+                                      isRequired: true,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                    _BespokeField(
+                                      controller: _addressCtrl,
+                                      label: t(ref, 'address'),
+                                      icon: Icons.location_on_outlined,
+                                      placeholder: 'Enter detailed address',
+                                      isRequired: true,
+                                      maxLines: 2,
+                                    ),
+                                    _BespokeField(
+                                      controller: _educationLevelCtrl,
+                                      label: t(ref, 'degreeLevel'),
+                                      icon: Icons.school_outlined,
+                                      placeholder: 'Highest qualification',
+                                    ),
+                                    _BespokeField(
+                                      controller: _passingYearCtrl,
+                                      label: t(ref, 'passingYear'),
+                                      icon: Icons.calendar_today_outlined,
+                                      placeholder: 'YYYY',
+                                      keyboardType: TextInputType.number,
+                                      isOptional: true,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.only(top: 24),
+                                      decoration: const BoxDecoration(
+                                        border: Border(top: BorderSide(color: Color(0xFFE2E8F0), style: BorderStyle.solid)),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Investment Details',
+                                            style: GoogleFonts.libreCaslonText(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          _BespokeField(
+                                            controller: _shareCtrl,
+                                            label: t(ref, 'shareAmountBdt'),
+                                            icon: Icons.payments_outlined,
+                                            placeholder: '0',
+                                            isRequired: true,
+                                            keyboardType: TextInputType.number,
+                                            isLarge: true,
+                                            isPrimary: true,
+                                          ),
+                                          _BespokeField(
+                                            controller: _personsCtrl,
+                                            label: t(ref, 'numberOfPersons'),
+                                            icon: Icons.group_outlined,
+                                            isRequired: true,
+                                            keyboardType: TextInputType.number,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                // Nominee Info Section
+                                if (_investorType != 'Organization')
+                                  _EditorialSection(
+                                    title: 'Nominee Information',
+                                    children: [
+                                      _BespokeField(
+                                        controller: _nomineeNameCtrl,
+                                        label: t(ref, 'nomineeName'),
+                                        icon: Icons.person_outline,
+                                        placeholder: 'Enter nominee name',
+                                        isRequired: true,
+                                      ),
+                                      _BespokeField(
+                                        controller: _nomineeRelationCtrl,
+                                        label: t(ref, 'nomineeRelation'),
+                                        icon: Icons.diversity_1,
+                                        placeholder: 'Relation with nominee',
+                                        isRequired: true,
+                                      ),
+                                      _BespokeField(
+                                        controller: _nomineePhoneCtrl,
+                                        label: t(ref, 'nomineePhone'),
+                                        icon: Icons.phone_outlined,
+                                        placeholder: '+880',
+                                        isRequired: true,
+                                        keyboardType: TextInputType.phone,
+                                      ),
+                                      _BespokeField(
+                                        controller: _nomineeNidCtrl,
+                                        label: t(ref, 'nomineeNid'),
+                                        icon: Icons.badge_outlined,
+                                        placeholder: 'ID Number',
+                                        isOptional: true,
+                                      ),
+                                      _BespokeField(
+                                        controller: _nomineeAddressCtrl,
+                                        label: t(ref, 'nomineeAddress'),
+                                        icon: Icons.home_outlined,
+                                        placeholder: 'Enter nominee address',
+                                        isRequired: true,
+                                        maxLines: 2,
+                                      ),
+                                    ],
+                                  ),
+
+                                // Charity Section
+                                _EditorialSection(
+                                  title: 'Charitable Contribution',
+                                  bgColor: const Color(0xFFFAFAF9),
+                                  borderColor: const Color(0xFFE7E5E4),
+                                  headerContent: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(color: Colors.red.shade100),
+                                      ),
+                                      child: Icon(Icons.volunteer_activism, color: Colors.red.shade400, size: 24),
+                                    ),
+                                    Text(
+                                      t(ref, 'charityDesc'),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF475569),
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                  children: [
+                                    _BespokeField(
+                                      controller: _charityCtrl,
+                                      label: t(ref, 'donationPercentage'),
+                                      icon: Icons.percent,
+                                      placeholder: '0',
+                                      keyboardType: TextInputType.number,
+                                      isOptional: true,
+                                    ),
+                                  ],
+                                ),
+
+                                // Live Calculator
+                                _LiveCalculatorCard(
+                                  share: _share,
+                                  monthlyPayment: _monthlyPayment,
+                                ),
+                                const SizedBox(height: 120), // Padding for the bottom nav
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (tutorialVideoUrl.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final url = Uri.parse(tutorialVideoUrl);
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Could not open video URL.')),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.play_circle_outline, color: AppColors.primary600),
-                    label: Text(
-                      t(ref, 'howToRegisterWatchVideo'),
-                      style: const TextStyle(color: AppColors.primary600, fontWeight: FontWeight.bold),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary200),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      backgroundColor: AppColors.primary50,
-                    ),
-                  ),
-                ),
-              _TypeToggle(
-                value: _investorType,
-                onChanged: (v) => setState(() => _investorType = v),
-              ),
-              const SizedBox(height: 16),
-              if (_investorType == 'Organization') ...[
-                _Field(
-                  controller: _orgNameCtrl,
-                  label: t(ref, 'organizationName'),
-                  required: true,
-                ),
-                const SizedBox(height: 14),
-              ],
-              _Field(
-                controller: _nameCtrl,
-                label: _investorType == 'Organization'
-                    ? t(ref, 'representativeFullName')
-                    : t(ref, 'fullName'),
-                required: true,
-              ),
-              const SizedBox(height: 14),
-              _Field(
-                controller: _fatherCtrl,
-                label: t(ref, 'fathersName'),
-                required: true,
-              ),
-              const SizedBox(height: 14),
-              _Field(
-                controller: _motherCtrl,
-                label: t(ref, 'mothersName'),
-                required: true,
-              ),
-              const SizedBox(height: 14),
-              _Field(
-                controller: _phoneCtrl,
-                label: t(ref, 'phoneNumber'),
-                required: true,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 14),
-              _Field(
-                controller: _addressCtrl,
-                label: t(ref, 'address'),
-                required: true,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _Field(
-                      controller: _educationLevelCtrl,
-                      label: '${t(ref, 'degreeLevel')} (${t(ref, 'optional')})',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _Field(
-                      controller: _passingYearCtrl,
-                      label: '${t(ref, 'passingYear')} (${t(ref, 'optional')})',
-                      keyboardType: TextInputType.number,
-                    ),
+
+      // Submit Button (Pinned Bottom)
+      bottomSheet: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.9),
+          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: SafeArea(
+          child: GestureDetector(
+            onTap: _loading ? null : () => _submit(minShareAmount),
+            child: Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFF316BF3),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF316BF3).withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: _Field(
-                      controller: _shareCtrl,
-                      label: t(ref, 'shareAmountBdt'),
-                      required: true,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _Field(
-                      controller: _personsCtrl,
-                      label: t(ref, 'numberOfPersons'),
-                      required: true,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              if (_investorType != 'Organization') ...[
-                const SizedBox(height: 22),
-                Text(
-                  t(ref, 'nomineeInformation'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _nomineeNameCtrl,
-                  label: t(ref, 'nomineeName'),
-                  required: true,
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _nomineeRelationCtrl,
-                  label: t(ref, 'nomineeRelation'),
-                  required: true,
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _nomineePhoneCtrl,
-                  label: t(ref, 'nomineePhone'),
-                  required: true,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _nomineeNidCtrl,
-                  label: '${t(ref, 'nomineeNid')} (${t(ref, 'optional')})',
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _nomineeAddressCtrl,
-                  label: t(ref, 'nomineeAddress'),
-                  required: true,
-                  maxLines: 2,
-                ),
-              ],
-              const SizedBox(height: 22),
-              Text(
-                t(ref, 'charityDonation'),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                t(ref, 'charityDesc'),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _Field(
-                controller: _charityCtrl,
-                label:
-                    '${t(ref, 'donationPercentage')} (${t(ref, 'optional')})',
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 20),
-              _LiveCalculatorCard(
-                share: _share,
-                monthlyPayment: _monthlyPayment,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _loading ? null : () => _submit(minShareAmount),
+              child: Center(
                 child: _loading
                     ? const SizedBox(
-                        height: 18,
-                        width: 18,
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
                         ),
                       )
-                    : Text(t(ref, 'registerAsInvestor')),
+                    : Text(
+                        'Become an Investor',
+                        style: GoogleFonts.publicSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
               ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -384,93 +569,264 @@ class _InvestorRegistrationScreenState
   }
 }
 
-class _Field extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final bool required;
-  final TextInputType? keyboardType;
-  final int maxLines;
+class _EditorialSection extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final List<Widget> children;
+  final List<Widget>? headerContent;
+  final Color bgColor;
+  final Color borderColor;
 
-  const _Field({
-    required this.controller,
-    required this.label,
-    this.required = false,
-    this.keyboardType,
-    this.maxLines = 1,
+  const _EditorialSection({
+    required this.title,
+    required this.children,
+    this.icon,
+    this.headerContent,
+    this.bgColor = Colors.white,
+    this.borderColor = Colors.transparent,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      decoration: InputDecoration(labelText: required ? '$label *' : label),
-      validator: required
-          ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null
-          : null,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          if (icon != null)
+            Positioned(
+              top: -20,
+              right: -20,
+              child: Icon(
+                icon,
+                size: 100,
+                color: Colors.black.withValues(alpha: 0.03),
+              ),
+            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (headerContent != null) ...headerContent!,
+              Text(
+                title,
+                style: GoogleFonts.libreCaslonText(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ...children,
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _TypeToggle extends ConsumerWidget {
+class _BespokeField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final String? placeholder;
+  final bool isRequired;
+  final bool isOptional;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final bool isLarge;
+  final bool isPrimary;
+
+  const _BespokeField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.placeholder,
+    this.isRequired = false,
+    this.isOptional = false,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.isLarge = false,
+    this.isPrimary = false,
+  });
+
+  @override
+  State<_BespokeField> createState() => _BespokeFieldState();
+}
+
+class _BespokeFieldState extends State<_BespokeField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                widget.icon,
+                size: 16,
+                color: _isFocused
+                    ? const Color(0xFF316BF3)
+                    : const Color(0xFF64748B), // slate-500
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _isFocused
+                            ? const Color(0xFF316BF3)
+                            : (widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF475569)), // slate-600
+                      ),
+                    ),
+                    if (widget.isOptional)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: Text(
+                          '(Optional)',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          TextFormField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            keyboardType: widget.keyboardType,
+            maxLines: widget.maxLines,
+            style: GoogleFonts.publicSans(
+              fontSize: widget.isLarge ? 20 : 15,
+              fontWeight: widget.isLarge ? FontWeight.w600 : FontWeight.w500,
+              color: widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF0F172A),
+            ),
+            decoration: InputDecoration(
+              filled: false,
+              hintText: widget.placeholder,
+              hintStyle: GoogleFonts.publicSans(
+                color: widget.isPrimary ? const Color(0xFF316BF3).withValues(alpha: 0.5) : const Color(0xFF64748B), // slate-500
+                fontSize: widget.isLarge ? 20 : 15,
+                fontWeight: widget.isLarge ? FontWeight.w600 : FontWeight.w500,
+              ),
+              border: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E8F0))),
+              enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E8F0))),
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF316BF3), width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              isDense: true,
+            ),
+            validator: widget.isRequired
+                ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeToggle extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
 
   const _TypeToggle({required this.value, required this.onChanged});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: _toggleButton(
-              context,
-              'Individual',
-              '👤 ${t(ref, 'personalIndividual')}',
-            ),
-          ),
-          Expanded(
-            child: _toggleButton(
-              context,
-              'Organization',
-              '🏢 ${t(ref, 'organizationShomiti')}',
-            ),
-          ),
+          _toggleButton('Individual', 'person', 'Individual', value == 'Individual'),
+          const SizedBox(width: 32),
+          _toggleButton('Organization', 'domain', 'Organization', value == 'Organization'),
         ],
       ),
     );
   }
 
-  Widget _toggleButton(BuildContext context, String type, String label) {
-    final selected = value == type;
+  Widget _toggleButton(String type, String iconName, String label, bool isSelected) {
     return GestureDetector(
       onTap: () => onChanged(type),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: selected
-              ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
-              : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            color: selected ? AppColors.primary600 : AppColors.textSecondary,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Icon(
+                  iconName == 'person' ? Icons.person : Icons.domain,
+                  color: isSelected ? const Color(0xFF316BF3) : const Color(0xFF64748B),
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? const Color(0xFF316BF3) : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          if (isSelected)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 2,
+                color: const Color(0xFF316BF3),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -489,91 +845,171 @@ class _LiveCalculatorCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final category = InvestorCategory.of(share);
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: category.gradient,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.calculate_outlined,
-                color: Colors.white70,
-                size: 18,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                ),
+                child: const Icon(
+                  Icons.query_stats,
+                  color: Color(0xFF316BF3),
+                  size: 20,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Text(
-                t(ref, 'liveCalculator'),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w600,
+                'Investment Projection',
+                style: GoogleFonts.libreCaslonText(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          _calcRow(t(ref, 'shareAmount'), Formatters.bdt(share)),
-          const Divider(color: Colors.white24, height: 20),
-          _calcRow(
-            t(ref, 'monthlyPayment'),
-            monthlyPayment > 0 ? Formatters.bdt(monthlyPayment) : '—',
+          const SizedBox(height: 24),
+          const Text(
+            'Projected Share Amount',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF475569),
+            ),
           ),
-          const Divider(color: Colors.white24, height: 20),
-          _calcRow(t(ref, 'duration'), share > 0 ? t(ref, 'oneYear') : '—'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
+          Text(
+            Formatters.bdt(share),
+            style: GoogleFonts.libreCaslonText(
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF316BF3),
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 1,
+            color: const Color(0xFFE2E8F0),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Monthly Payment',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      monthlyPayment > 0 ? Formatters.bdt(monthlyPayment) : '—',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Duration',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      share > 0 ? t(ref, 'oneYear') : '—',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                t(ref, 'status'),
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              const Text(
+                'Account Status',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF475569),
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFFECFDF5), // emerald-50
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFD1FAE5)), // emerald-100
                 ),
-                child: Text(
-                  category.isDirector
-                      ? '⭐ ${category.label}'
-                      : t(ref, 'regular'),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF34D399), // emerald-400
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      category.isDirector ? '⭐ ${category.label}' : 'Regular',
+                      style: const TextStyle(
+                        color: Color(0xFF34D399),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _calcRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -597,133 +1033,219 @@ class _SuccessView extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accent500,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 30,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF34D399),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      t(ref, 'registrationSuccessful'),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 40,
                     ),
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.brandGradient,
-                        borderRadius: BorderRadius.circular(20),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    t(ref, 'registrationSuccessful'),
+                    style: GoogleFonts.libreCaslonText(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF316BF3), Color(0xFF1E40AF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t(ref, 'yourInvestorId'),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF316BF3).withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t(ref, 'yourInvestorId'),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
-                          Text(
-                            (submitted['investor_id'] ?? '').toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          (submitted['investor_id'] ?? '').toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
                           ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${t(ref, 'monthlyColon')} ${Formatters.bdt(submitted['monthly_payment'] as num?)}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white24,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  (submitted['status'] ?? '').toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          height: 1,
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Monthly',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                    fontSize: 12,
                                   ),
                                 ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  Formatters.bdt(submitted['monthly_payment'] as num?),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary50,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        helpText,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.primary900,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                (submitted['status'] ?? '').toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Row(
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFDBEAFE)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: onRegisterAnother,
-                            child: Text(t(ref, 'registerAnother')),
-                          ),
-                        ),
+                        const Icon(Icons.info_outline, color: Color(0xFF316BF3), size: 20),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => context.go('/'),
-                            child: Text(t(ref, 'goHome')),
+                          child: Text(
+                            helpText,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w500,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: onRegisterAnother,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                          child: Text(
+                            t(ref, 'registerAnother'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => context.go('/'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF316BF3),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            t(ref, 'goHome'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

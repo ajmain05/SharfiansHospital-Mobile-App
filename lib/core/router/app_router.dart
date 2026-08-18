@@ -55,6 +55,44 @@ final appRouter = GoRouter(
                 transitionsBuilder: fadeTransition,
                 transitionDuration: const Duration(milliseconds: 350),
               ),
+              routes: [
+                GoRoute(
+                  path: 'gallery',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const GalleryScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: 'faq',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const FaqScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: 'bank-details',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const BankDetailsScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: 'career',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const CareerScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -128,42 +166,7 @@ final appRouter = GoRouter(
     ),
 
     // ── Public ──────────────────────────────────────────────────────────────
-    GoRoute(
-      path: '/gallery',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const GalleryScreen(),
-        transitionsBuilder: slideUpTransition,
-        transitionDuration: const Duration(milliseconds: 320),
-      ),
-    ),
-    GoRoute(
-      path: '/faq',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const FaqScreen(),
-        transitionsBuilder: slideUpTransition,
-        transitionDuration: const Duration(milliseconds: 320),
-      ),
-    ),
-    GoRoute(
-      path: '/bank-details',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const BankDetailsScreen(),
-        transitionsBuilder: slideUpTransition,
-        transitionDuration: const Duration(milliseconds: 320),
-      ),
-    ),
-    GoRoute(
-      path: '/career',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const CareerScreen(),
-        transitionsBuilder: slideUpTransition,
-        transitionDuration: const Duration(milliseconds: 320),
-      ),
-    ),
+
 
     // ── Investor (Non-tab routes) ────────────────────────────────────────────
     GoRoute(

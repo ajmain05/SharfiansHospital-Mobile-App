@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../core/l10n/locale_provider.dart';
@@ -31,27 +32,47 @@ class GalleryScreen extends ConsumerWidget {
         child: settingsAsync.when(
           data: (settings) {
             if (settings.galleryImages.isEmpty) return _EmptyGallery();
-            return GridView.builder(
+            return CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.9,
-              ),
-              itemCount: settings.galleryImages.length,
-              itemBuilder: (context, index) => _GalleryTile(
-                image: settings.galleryImages[index],
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => _GalleryViewer(
-                      images: settings.galleryImages,
-                      initialIndex: index,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24.0, bottom: 16.0),
+                    child: Center(
+                      child: Lottie.asset(
+                        'assets/animations/camera.json',
+                        height: 180,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
-              ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.9,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _GalleryTile(
+                        image: settings.galleryImages[index],
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => _GalleryViewer(
+                              images: settings.galleryImages,
+                              initialIndex: index,
+                            ),
+                          ),
+                        ),
+                      ),
+                      childCount: settings.galleryImages.length,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
           loading: () => const ShimmerLoader(),
