@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_filex/open_filex.dart';
@@ -47,11 +48,19 @@ class _InvestorDashboardScreenState
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: Text(
-            t(
-              ref,
-              'welcomeComma',
-              params: {'name': account.displayName.split(' ').first},
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Welcome, ${account.displayName}',
+              style: GoogleFonts.libreCaslonText(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         actions: [
@@ -72,13 +81,17 @@ class _InvestorDashboardScreenState
           ),
         ],
         bottom: TabBar(
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          indicatorWeight: 3,
+          labelColor: AppColors.primary600,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+          indicatorColor: AppColors.primary600,
+          labelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+          unselectedLabelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+          indicatorWeight: 2,
+          dividerColor: Theme.of(context).colorScheme.outlineVariant,
           tabs: [
-            Tab(text: t(ref, 'overview')),
-            Tab(text: t(ref, 'accounts')),
-            Tab(text: t(ref, 'payments')),
+            Tab(text: t(ref, 'overview').toUpperCase()),
+            Tab(text: t(ref, 'accounts').toUpperCase()),
+            Tab(text: t(ref, 'payments').toUpperCase()),
           ],
         ),
       ),
@@ -114,73 +127,113 @@ class _OverviewTab extends ConsumerWidget {
     final category = InvestorCategory.of(account.shareAmount);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 160),
       children: [
-        Row(
-          children: [
-            Text(
-              category.isDirector ? '⭐ ${category.label}' : category.label,
-              style: TextStyle(
-                color: category.color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircularProgressRing(percent: summary.progressPercent),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _statBlock(
-                            context,
-                            t(ref, 'totalCommitted'),
-                            Formatters.bdt(summary.totalCommitted),
-                            AppColors.primary900,
-                            big: true,
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _statBlock(
-                                  context,
-                                  t(ref, 'paid'),
-                                  Formatters.bdt(summary.totalPaid),
-                                  AppColors.accent600,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _statBlock(
-                                  context,
-                                  t(ref, 'remaining'),
-                                  Formatters.bdt(summary.totalRemaining),
-                                  const Color(0xFFB45309),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+        if (category.isDirector)
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: category.gradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: category.color.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                      spreadRadius: -6,
                     ),
                   ],
                 ),
-              ],
+                child: Text(
+                  category.label.toUpperCase(),
+                  style: GoogleFonts.publicSans(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            category.label,
+            style: GoogleFonts.publicSans(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 40,
+                offset: const Offset(0, 10),
+                spreadRadius: -10,
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircularProgressRing(percent: summary.progressPercent),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _statBlock(
+                      context,
+                      t(ref, 'totalCommitted'),
+                      Formatters.bdt(summary.totalCommitted),
+                      Theme.of(context).colorScheme.onSurface,
+                      isTitle: true,
+                    ),
+                    const SizedBox(height: 20),
+                    Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _statBlock(
+                          context,
+                          t(ref, 'paid'),
+                          Formatters.bdt(summary.totalPaid),
+                          AppColors.primary600,
+                        ),
+                        _statBlock(
+                          context,
+                          t(ref, 'remaining'),
+                          Formatters.bdt(summary.totalRemaining),
+                          const Color(0xFFD97706),
+                          alignRight: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -192,26 +245,41 @@ class _OverviewTab extends ConsumerWidget {
                 AppColors.primary600,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 20),
             Expanded(
               child: _infoCard(
                 context,
                 Icons.event_outlined,
                 t(ref, 'lastPayment'),
                 summary.lastPaymentDate ?? '—',
-                AppColors.accent600,
+                const Color(0xFFD97706),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        _infoCard(
-          context,
-          Icons.schedule_outlined,
-          t(ref, 'monthly'),
-          Formatters.bdt(account.monthlyPayment),
-          AppColors.primary700,
-          fullWidth: true,
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: _infoCard(
+                context,
+                Icons.schedule_outlined,
+                t(ref, 'monthly'),
+                Formatters.bdt(account.monthlyPayment),
+                AppColors.primary600,
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: _infoCard(
+                context,
+                Icons.timelapse_outlined,
+                t(ref, 'duration'),
+                '${account.totalMonths} ${t(ref, 'months')}',
+                const Color(0xFF0EA5E9),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -222,26 +290,35 @@ class _OverviewTab extends ConsumerWidget {
     String label,
     String value,
     Color color, {
-    bool big = false,
+    bool isTitle = false,
+    bool alignRight = false,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 10,
+          style: GoogleFonts.publicSans(
+            fontSize: 11,
+            letterSpacing: 1.2,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
           ),
         ),
+        const SizedBox(height: 6),
         Text(
           value,
-          style: TextStyle(
-            fontSize: big ? 22 : 16,
-            fontWeight: FontWeight.w800,
-            color: color,
-          ),
+          style: isTitle
+              ? GoogleFonts.publicSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                )
+              : GoogleFonts.publicSans(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
         ),
       ],
     );
@@ -253,31 +330,51 @@ class _OverviewTab extends ConsumerWidget {
     String label,
     String value,
     Color color, {
-    bool fullWidth = false,
+    bool isFullWidth = false,
   }) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 8),
-            Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                fontSize: 10,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 40,
+            offset: const Offset(0, 10),
+            spreadRadius: -10,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 26),
+          const SizedBox(height: 14),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.publicSans(
+              fontSize: 11,
+              letterSpacing: 1.2,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: isFullWidth 
+                ? GoogleFonts.publicSans(fontSize: 26, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)
+                : GoogleFonts.publicSans(fontSize: 19, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ],
       ),
     );
   }
@@ -292,105 +389,131 @@ class _AccountsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
       itemCount: accounts.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 16),
       itemBuilder: (context, i) {
         final acc = accounts[i];
         final active = acc.id == activeAccountId;
         final category = InvestorCategory.of(acc.shareAmount);
+        
         return InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(40),
           onTap: () => ref
               .read(investorSessionProvider.notifier)
               .setActiveAccount(acc.id),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: active ? AppColors.primary600 : AppColors.border,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.surfaceContainerLowest, 
+                  Theme.of(context).brightness == Brightness.dark 
+                      ? const Color(0xFF1E2433) 
+                      : const Color(0xFFF8F9FF)
+                ],
+              ),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: active 
+                    ? AppColors.primary600 
+                    : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
                 width: active ? 2 : 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 48,
+                  offset: const Offset(0, 24),
+                  spreadRadius: -12,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 0,
+                  offset: const Offset(0, 0),
+                  spreadRadius: 1,
+                ),
+              ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              acc.displayName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            Text(
-                              acc.investorId,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                fontSize: 12,
-                                fontFamily: 'monospace',
-                              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      acc.displayName,
+                      style: GoogleFonts.publicSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      acc.investorId,
+                      style: GoogleFonts.publicSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    if (category.isDirector) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: category.gradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: category.color.withValues(alpha: 0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                              spreadRadius: -6,
                             ),
                           ],
                         ),
-                      ),
-                      if (category.isDirector)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                        child: Text(
+                          category.label.toUpperCase(),
+                          style: GoogleFonts.publicSans(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
                           ),
-                          decoration: BoxDecoration(
-                            gradient: category.gradient,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            category.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _miniStat(
-                          context,
-                          t(ref, 'shareAmount'),
-                          Formatters.bdt(acc.shareAmount),
-                        ),
-                      ),
-                      Expanded(
-                        child: _miniStat(
-                          context,
-                          t(ref, 'monthly'),
-                          Formatters.bdt(acc.monthlyPayment),
-                        ),
-                      ),
-                      Expanded(
-                        child: _miniStat(
-                          context,
-                          t(ref, 'duration'),
-                          '${acc.totalMonths} ${t(ref, 'months')}',
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  children: [
+                    _accountStatBlock(
+                      context,
+                      t(ref, 'shareAmount'),
+                      Formatters.bdt(acc.shareAmount),
+                    ),
+                    const SizedBox(height: 12),
+                    _accountStatBlock(
+                      context,
+                      t(ref, 'monthly'),
+                      Formatters.bdt(acc.monthlyPayment),
+                    ),
+                    const SizedBox(height: 12),
+                    _accountStatBlock(
+                      context,
+                      t(ref, 'duration'),
+                      '${acc.totalMonths} ${t(ref, 'months')}',
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         );
@@ -398,29 +521,39 @@ class _AccountsTab extends ConsumerWidget {
     );
   }
 
-  Widget _miniStat(BuildContext context, String label, String value) {
+  Widget _accountStatBlock(BuildContext context, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.all(10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.2 : 0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 9,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.publicSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: GoogleFonts.publicSans(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ],
       ),
