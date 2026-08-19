@@ -348,8 +348,6 @@ class _RegistrationStats extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final snapshotAsync = ref.watch(liveSnapshotProvider(event.id));
-
     Widget buildRow(String totalSeats, String seatsLeft) {
       return Row(
         children: [
@@ -500,9 +498,9 @@ class _PaymentInfoCard extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (event.branches.isNotEmpty) ...[
-          _buildBranchesCard(event.branches),
-          const SizedBox(height: 24),
-        ]
+          _buildBranchesCard(context, event.branches),
+          const SizedBox(height: 16),
+        ],
       ],
     );
   }
@@ -697,7 +695,7 @@ class _PaymentInfoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildBranchesCard(List<dynamic> branches) {
+  Widget _buildBranchesCard(BuildContext context, List<dynamic> branches) {
     return _buildCardBase(
       title: 'Institutional Locations',
       icon: Icons.corporate_fare,
