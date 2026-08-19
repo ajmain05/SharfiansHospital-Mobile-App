@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/adaptive_colors.dart';
@@ -68,74 +69,50 @@ class _CareerClosed extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Decorative closed badge
+                // Lottie Animation Container (Replaces Icon)
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 200,
+                  height: 200,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.accent500.withValues(alpha: 0.15),
-                        AppColors.accent300.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppColors.accent500.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.accent500.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
                   ),
-                  child: const Icon(
-                    Icons.work_off_rounded,
-                    size: 52,
-                    color: AppColors.accent600,
+                  child: Lottie.asset(
+                    'assets/animations/career.json', // Add your lottie json here!
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.business_center_rounded,
+                      size: 60,
+                      color: AppColors.accent400,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 36),
 
                 Text(
                   lang == 'bn' ? 'নিয়োগ সাময়িকভাবে বন্ধ' : 'No Open Positions',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
                     color: context.textHigh,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   lang == 'bn'
                       ? 'বর্তমানে কোনো পদে আবেদন গ্রহণ করা হচ্ছে না। নতুন সুযোগের জন্য আমাদের সাথেই থাকুন।'
                       : 'We are not accepting applications at this moment. Stay connected for future opportunities when we expand our team.',
-                  style: GoogleFonts.nunito(
-                    fontSize: 14,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: context.textMed,
-                    height: 1.6,
+                    height: 1.8,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
-
-                // Info pills
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _InfoPill(
-                      icon: Icons.notifications_active_outlined,
-                      label: lang == 'bn' ? 'বিজ্ঞপ্তির জন্য অপেক্ষা করুন' : 'Watch for announcements',
-                      color: AppColors.primary700,
-                    ),
-                    _InfoPill(
-                      icon: Icons.favorite_rounded,
-                      label: lang == 'bn' ? 'আমাদের দলে যোগ দিন' : 'Join our growing team',
-                      color: AppColors.accent600,
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -145,40 +122,6 @@ class _CareerClosed extends StatelessWidget {
   }
 }
 
-class _InfoPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _InfoPill({required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // OPEN STATE — Premium Application Form
