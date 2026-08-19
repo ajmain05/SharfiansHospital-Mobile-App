@@ -697,31 +697,35 @@ class _BespokeFieldState extends State<_BespokeField> {
             children: [
               Icon(
                 widget.icon,
-                size: 16,
+                size: 18,
                 color: _isFocused
                     ? const Color(0xFF316BF3)
-                    : const Color(0xFF64748B), // slate-500
+                    : const Color(0xFF475569), // slate-600
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
                 child: Row(
                   children: [
                     Text(
                       widget.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                      style: GoogleFonts.publicSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                         color: _isFocused
                             ? const Color(0xFF316BF3)
-                            : (widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF475569)), // slate-600
+                            : (widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF0F172A)), // slate-900 crisp
                       ),
                     ),
                     if (widget.isOptional)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6),
                         child: Text(
                           '(Optional)',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 12,
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                   ],
@@ -888,12 +892,12 @@ class _LiveCalculatorCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Projected Share Amount',
-            style: TextStyle(
+            style: GoogleFonts.publicSans(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF475569),
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 4),
@@ -902,7 +906,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
             style: GoogleFonts.libreCaslonText(
               fontSize: 36,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF316BF3),
+              color: const Color(0xFF316BF3),
               letterSpacing: -1,
             ),
           ),
@@ -918,21 +922,21 @@ class _LiveCalculatorCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Monthly Payment',
-                      style: TextStyle(
+                      style: GoogleFonts.publicSans(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF475569),
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       monthlyPayment > 0 ? Formatters.bdt(monthlyPayment) : '—',
-                      style: const TextStyle(
+                      style: GoogleFonts.publicSans(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                   ],
@@ -942,21 +946,21 @@ class _LiveCalculatorCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Duration',
-                      style: TextStyle(
+                      style: GoogleFonts.publicSans(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF475569),
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       share > 0 ? t(ref, 'oneYear') : '—',
-                      style: const TextStyle(
+                      style: GoogleFonts.publicSans(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                   ],
@@ -968,12 +972,12 @@ class _LiveCalculatorCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Account Status',
-                style: TextStyle(
+                style: GoogleFonts.publicSans(
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               Container(
