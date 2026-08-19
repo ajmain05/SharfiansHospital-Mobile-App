@@ -687,7 +687,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                     'Ref: ${dep.batchNo}',
                     style: GoogleFonts.publicSans(
                       fontSize: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF475569),
                     ),
                   ),
                 ],

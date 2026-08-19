@@ -195,11 +195,6 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
     if (_submitted) return _SuccessView(phone: _phoneCtrl.text.trim());
 
     final event = widget.event;
-    final date = DateTime.tryParse(event.date);
-    final dateLabel = date != null
-        ? DateFormat('MMM d, yyyy · h:mm a').format(date)
-        : event.date;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -207,85 +202,6 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (event.offlineNotice != null && event.offlineNotice!.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  event.offlineNotice!,
-                  style: const TextStyle(
-                    color: Color(0xFF9A3412),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
-                    AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: CachedNetworkImage(
-                        imageUrl: event.imageUrl!,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 19,
-                          ),
-                        ),
-                        if (event.description != null &&
-                            event.description!.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            event.description!,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 13.5,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 14),
-                        _metaRow(Icons.calendar_today_outlined, dateLabel),
-                        const SizedBox(height: 6),
-                        _metaRow(Icons.location_on_outlined, event.location),
-                        const SizedBox(height: 6),
-                        _metaRow(
-                          Icons.payments_outlined,
-                          '${Formatters.bdt(event.feePerPerson)} / person',
-                        ),
-                        if (event.maxCapacity != null) ...[
-                          const SizedBox(height: 6),
-                          _metaRow(
-                            Icons.event_seat_outlined,
-                            '${event.remainingSeats} / ${event.maxCapacity} seats left',
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_hasPaymentInfo(event.paymentConfig) ||
-                event.branches.isNotEmpty)
-              _PaymentInfoCard(event: event),
-            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(18),

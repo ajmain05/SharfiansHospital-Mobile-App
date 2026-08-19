@@ -169,7 +169,7 @@ class _EventCard extends StatelessWidget {
                     // Title in Noto Sans Bengali or Poppins for better thickness
                     Text(
                       event.title,
-                      style: GoogleFonts.notoSansBengali(
+                      style: GoogleFonts.hindSiliguri(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                         height: 1.4,
@@ -227,9 +227,9 @@ class _EventCard extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.hindSiliguri(
               fontSize: 15,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               height: 1.3,
               color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF45464D),
             ),
