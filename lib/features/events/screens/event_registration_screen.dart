@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,10 +10,12 @@ import 'package:intl/intl.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/cloudinary_uploader.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/event.dart';
 import '../providers/events_providers.dart';
+
+const String _bgImageUrl =
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuC-r2SZdviaJpcKKrOGKAF2giGZNzpqbuOT-7M40iwK7piLgybI2GMmZO7Frfh2wOSEBk8dZrnSVZrhDUMVQsXycYvYZ_LT4wYQX5zMvYCllpE0R0yBcgA97ioWSwH1vjnJY5n0_y2VV0wHgwdZlAWjfRePONzIz-6hOz4PZ0xZMRLAE3zX6tU-0f6tP6PGUbanD_gU_ZAip05vxQL_g_zDdlqhiPdNrtHUAxEeSg0y431n7QutbdNi';
 
 class EventRegistrationScreen extends ConsumerWidget {
   final String slug;
@@ -24,28 +27,65 @@ class EventRegistrationScreen extends ConsumerWidget {
     final eventAsync = ref.watch(eventBySlugProvider(slug));
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+      backgroundColor: const Color(0xFFFAF8FF),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFFAF8FF),
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFC5C5D3), width: 1),
+            ),
+          ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            toolbarHeight: 64,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF444651)),
+              onPressed: () => context.pop(),
+            ),
+            title: Text(
+              t(ref, 'eventRegistrationTitle'),
+              style: GoogleFonts.publicSans(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF00236F),
+              ),
+            ),
+          ),
         ),
-        title: Text(t(ref, 'eventRegistrationTitle')),
       ),
-      body: eventAsync.when(
-        data: (event) {
-          if (!event.isActive) {
-            return _ClosedView(message: t(ref, 'eventClosedMsg'));
-          }
-          if (event.isDeadlinePassed) {
-            return _ClosedView(message: t(ref, 'deadlinePassed'));
-          }
-          if (event.isCapacityFull) {
-            return _ClosedView(message: t(ref, 'capacityFull'));
-          }
-          return _RegistrationForm(event: event);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => _ClosedView(message: t(ref, 'eventNotFound')),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background Illustration with 92% rgba(250, 248, 255, 0.92) overlay tint
+          Positioned.fill(
+            child: Image.network(
+              _bgImageUrl,
+              fit: BoxFit.cover,
+              color: const Color(0xFFFAF8FF).withValues(alpha: 0.92),
+              colorBlendMode: BlendMode.srcOver,
+              errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFFFAF8FF)),
+            ),
+          ),
+          eventAsync.when(
+            data: (event) {
+              if (!event.isActive) {
+                return _ClosedView(message: t(ref, 'eventClosedMsg'));
+              }
+              if (event.isDeadlinePassed) {
+                return _ClosedView(message: t(ref, 'deadlinePassed'));
+              }
+              if (event.isCapacityFull) {
+                return _ClosedView(message: t(ref, 'capacityFull'));
+              }
+              return _RegistrationForm(event: event);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => _ClosedView(message: t(ref, 'eventNotFound')),
+          ),
+        ],
       ),
     );
   }
@@ -67,18 +107,25 @@ class _ClosedView extends ConsumerWidget {
             const Icon(
               Icons.lock_outline_rounded,
               size: 48,
-              color: AppColors.textSecondary,
+              color: Color(0xFF444651),
             ),
             const SizedBox(height: 12),
             Text(
               t(ref, 'registrationClosed'),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              style: GoogleFonts.publicSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: const Color(0xFF131B2E),
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: GoogleFonts.publicSans(
+                color: const Color(0xFF444651),
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -105,7 +152,6 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   EventPaymentMethod? _method;
   DateTime? _chequeDate;
   File? _proofFile;
-  double? _uploadProgress;
   bool _submitting = false;
   bool _submitted = false;
 
@@ -152,13 +198,11 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
 
     setState(() {
       _submitting = true;
-      _uploadProgress = 0;
     });
     try {
       final proofUrl = await CloudinaryUploader.upload(
         _proofFile!,
         folder: 'event_registrations',
-        onProgress: (p) => setState(() => _uploadProgress = p),
       );
 
       var senderNumber = _senderCtrl.text.trim();
@@ -196,451 +240,455 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
 
     final event = widget.event;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      event.formTitle ?? t(ref, 'registrationForm'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 672),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Centered Bangla Title
+                Text(
+                  event.formTitle ?? 'অনলাইন রেজিস্ট্রেশন ফর্ম',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.hindSiliguri(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E3A8A),
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please complete the form below to secure your spot.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 14,
+                    color: const Color(0xFF444651),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Full Name
+                _label('Full Name'),
+                TextFormField(
+                  controller: _nameCtrl,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 16,
+                    color: const Color(0xFF131B2E),
+                  ),
+                  decoration: _inputDecor('Enter your full name'),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? t(ref, 'requiredField') : null,
+                ),
+                const SizedBox(height: 24),
+
+                // Phone Number
+                _label('Phone Number'),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 16,
+                    color: const Color(0xFF131B2E),
+                  ),
+                  decoration: _inputDecor('e.g. +880 1712 345678'),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? t(ref, 'requiredField') : null,
+                ),
+                const SizedBox(height: 24),
+
+                // No. of Persons
+                _label('No. of Persons'),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 200,
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFC5C5D3)),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 18),
-                    TextFormField(
-                      controller: _nameCtrl,
-                      decoration: InputDecoration(
-                        labelText: '${t(ref, 'fullName')} *',
-                      ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? t(ref, 'requiredField')
-                          : null,
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: '${t(ref, 'phoneNumber')} *',
-                      ),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? t(ref, 'requiredField')
-                          : null,
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      t(ref, 'numberOfPersons'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _counterButton(
-                          Icons.remove,
-                          () => setState(
-                            () => _personsCount = (_personsCount - 1).clamp(
-                              1,
-                              999,
-                            ),
+                        IconButton(
+                          onPressed: () => setState(
+                            () => _personsCount = (_personsCount - 1).clamp(1, 999),
+                          ),
+                          icon: const Icon(
+                            Icons.remove,
+                            color: Color(0xFF1E3A8A),
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        Text(
+                          '$_personsCount',
+                          style: GoogleFonts.publicSans(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF131B2E),
                           ),
                         ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              '$_personsCount',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        IconButton(
+                          onPressed: () => setState(
+                            () => _personsCount = (_personsCount + 1).clamp(1, 999),
                           ),
-                        ),
-                        _counterButton(
-                          Icons.add,
-                          () => setState(
-                            () => _personsCount = (_personsCount + 1).clamp(
-                              1,
-                              999,
-                            ),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Color(0xFF1E3A8A),
+                            size: 20,
                           ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent500.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Total Payment Box
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F3FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFC5C5D3).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            t(ref, 'totalPayment'),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            'TOTAL PAYMENT',
+                            style: GoogleFonts.publicSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.7,
+                              color: const Color(0xFF444651),
+                            ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
                             Formatters.bdt(_totalAmount),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: AppColors.accent600,
+                            style: GoogleFonts.publicSans(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E3A8A),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      '${t(ref, 'paymentMethod')} *',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
+                      Text(
+                        'Per person: ${Formatters.bdt(event.feePerPerson)}',
+                        style: GoogleFonts.publicSans(
+                          fontSize: 14,
+                          color: const Color(0xFF444651),
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Payment Method
+                _label('Payment Method'),
+                DropdownButtonFormField<EventPaymentMethod>(
+                  initialValue: _method,
+                  isExpanded: true,
+                  icon: const Icon(
+                    Icons.expand_more,
+                    color: Color(0xFF444651),
+                  ),
+                  decoration: _inputDecor('Select a payment method'),
+                  hint: Text(
+                    'Select a payment method',
+                    style: GoogleFonts.publicSans(
+                      fontSize: 16,
+                      color: const Color(0xFF444651).withValues(alpha: 0.5),
                     ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<EventPaymentMethod>(
-                      initialValue: _method,
-                      isExpanded: true,
-                      hint: Text(t(ref, 'selectPaymentMethod')),
-                      items: _methods
-                          .map(
-                            (m) => DropdownMenuItem(
-                              value: m,
-                              child: Text(
-                                m.label,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                  ),
+                  items: _methods
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(
+                            m.label,
+                            style: GoogleFonts.publicSans(
+                              fontSize: 16,
+                              color: const Color(0xFF131B2E),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (m) => setState(() => _method = m),
-                    ),
-                    if (_method != null) ...[
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _senderCtrl,
-                        keyboardType:
-                            (_method!.id == 'Bank' || _method!.id == 'Cheque')
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (m) => setState(() => _method = m),
+                ),
+
+                if (_method != null) ...[
+                  const SizedBox(height: 24),
+                  _label(_senderLabel(_method!.id)),
+                  TextFormField(
+                    controller: _senderCtrl,
+                    keyboardType:
+                        (_method!.id == 'Bank' || _method!.id == 'Cheque')
                             ? TextInputType.text
                             : TextInputType.phone,
-                        decoration: InputDecoration(
-                          labelText: '${_senderLabel(_method!.id)} *',
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
+                    style: GoogleFonts.publicSans(
+                      fontSize: 16,
+                      color: const Color(0xFF131B2E),
+                    ),
+                    decoration: _inputDecor(
+                      'Enter ${_senderLabel(_method!.id).toLowerCase()}',
+                    ),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty)
                             ? t(ref, 'requiredField')
                             : null,
-                      ),
-                    ],
-                    if (_method?.id == 'Cheque') ...[
-                      const SizedBox(height: 14),
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setState(() => _chequeDate = picked);
-                          }
-                        },
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: t(ref, 'chequeDateLabel'),
-                          ),
-                          child: Text(
-                            _chequeDate != null
-                                ? DateFormat.yMMMd().format(_chequeDate!)
-                                : '—',
-                          ),
+                  ),
+                ],
+
+                if (_method?.id == 'Cheque') ...[
+                  const SizedBox(height: 24),
+                  _label('Cheque Date'),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) setState(() => _chequeDate = picked);
+                    },
+                    child: InputDecorator(
+                      decoration: _inputDecor('Select Date'),
+                      child: Text(
+                        _chequeDate != null
+                            ? DateFormat.yMMMd().format(_chequeDate!)
+                            : '—',
+                        style: GoogleFonts.publicSans(
+                          fontSize: 16,
+                          color: const Color(0xFF131B2E),
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 18),
-                    Text(
-                      '${_method?.id == 'Cheque' ? t(ref, 'chequePhotoLabel') : t(ref, 'paymentProofLabel')} *',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+                // Payment Screenshot Upload
+                _label('Payment Screenshot'),
+                _uploadZone(),
+
+                const SizedBox(height: 32),
+
+                // Submit Button
+                SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF316BF3),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _uploadZone(),
-                    const SizedBox(height: 22),
-                    ElevatedButton(
-                      onPressed: _submitting ? null : _submit,
-                      child: _submitting
-                          ? SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                                value:
-                                    _uploadProgress != null &&
-                                        _uploadProgress! < 1
-                                    ? _uploadProgress
-                                    : null,
+                    child: _submitting
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'COMPLETE REGISTRATION',
+                                style: GoogleFonts.publicSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.7,
+                                ),
                               ),
-                            )
-                          : Text(t(ref, 'submitRegistration')),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      t(ref, 'registrationDisclaimer'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward, size: 18),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 48),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  bool _hasPaymentInfo(Map<String, dynamic> pc) =>
-      pc.isNotEmpty &&
-      (pc['bankName'] != null ||
-          pc['bankAccount'] != null ||
-          pc['mobileAccounts'] != null ||
-          pc['bkashMerchant'] != null ||
-          pc['bkashPersonal1'] != null ||
-          pc['nagadPersonal'] != null);
+  Widget _label(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text.toUpperCase(),
+          style: GoogleFonts.publicSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.7,
+            color: const Color(0xFF314156),
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecor(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.publicSans(
+        fontSize: 16,
+        color: const Color(0xFF444651).withValues(alpha: 0.5),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFC5C5D3)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFC5C5D3)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFF00236F), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
+    );
+  }
+
+  Widget _uploadZone() {
+    if (_proofFile != null) {
+      return InkWell(
+        onTap: _pickImage,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 160,
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF316BF3), width: 1.5),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.file(_proofFile!, fit: BoxFit.cover),
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Change Photo',
+                    style: GoogleFonts.publicSans(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: _pickImage,
+      borderRadius: BorderRadius.circular(12),
+      child: DottedBorder(
+        options: RoundedRectDottedBorderOptions(
+          radius: const Radius.circular(12),
+          color: const Color(0xFFC5C5D3),
+          strokeWidth: 2,
+          dashPattern: const [6, 4],
+        ),
+        child: Container(
+          height: 160,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.cloud_upload_outlined,
+                size: 36,
+                color: Color(0xFF444651),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Click to upload or drag and drop',
+                style: GoogleFonts.publicSans(
+                  color: const Color(0xFF131B2E),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'SVG, PNG, JPG or GIF (max. 5MB)',
+                style: GoogleFonts.publicSans(
+                  color: const Color(0xFF444651),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   String _senderLabel(String methodId) {
     if (methodId == 'Bank') return t(ref, 'senderNumberBank');
     if (methodId == 'Cheque') return t(ref, 'senderNumberCheque');
     return t(ref, 'senderNumberMobile');
-  }
-
-  Widget _counterButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.surface2,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 18),
-      ),
-    );
-  }
-
-  Widget _metaRow(IconData icon, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _uploadZone() {
-    return InkWell(
-      onTap: _pickImage,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        height: 160,
-        width: double.infinity,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 2),
-          color: AppColors.surface2,
-        ),
-        child: _proofFile == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 32,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    t(ref, 'uploadScreenshot'),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              )
-            : Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.file(_proofFile!, fit: BoxFit.cover),
-                  Positioned(
-                    right: 8,
-                    bottom: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        t(ref, 'changePhoto'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _PaymentInfoCard extends ConsumerWidget {
-  final Event event;
-
-  const _PaymentInfoCard({required this.event});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pc = event.paymentConfig;
-    final methods = EventPaymentMethod.fromPaymentConfig(
-      pc,
-    ).where((m) => m.number != null);
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(gradient: AppColors.brandGradient),
-            child: Text(
-              t(ref, 'paymentInfo'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (pc['bankName'] != null || pc['bankAccount'] != null) ...[
-                  Text(
-                    pc['bankName']?.toString() ?? t(ref, 'bankDetails'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  if (pc['bankAccount'] != null)
-                    Text(
-                      '${t(ref, 'accountNumber')}: ${pc['bankAccount']}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  if (pc['bankRouting'] != null)
-                    Text(
-                      '${t(ref, 'routingNumber')}: ${pc['bankRouting']}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                ],
-                for (final m in methods) ...[
-                  Text(
-                    '${m.label}: ${m.number}',
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                if (event.branches.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    t(ref, 'branchOffices'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  for (final b in event.branches) ...[
-                    Text(
-                      b['name']?.toString() ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
-                      ),
-                    ),
-                    if (b['address'] != null)
-                      Text(
-                        b['address'].toString(),
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    if (b['phone'] != null)
-                      Text(
-                        b['phone'].toString(),
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.primary600,
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                  ],
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -661,7 +709,7 @@ class _SuccessView extends ConsumerWidget {
               width: 72,
               height: 72,
               decoration: const BoxDecoration(
-                color: AppColors.accent500,
+                color: Color(0xFF2170E4),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -673,30 +721,58 @@ class _SuccessView extends ConsumerWidget {
             const SizedBox(height: 20),
             Text(
               t(ref, 'registrationSubmitted'),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+              style: GoogleFonts.publicSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                color: const Color(0xFF131B2E),
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               t(ref, 'registrationPendingMsg'),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: GoogleFonts.publicSans(
+                color: const Color(0xFF444651),
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.surface2,
+                color: const Color(0xFFF2F3FF),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFC5C5D3)),
               ),
               child: Text(
                 phone,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: GoogleFonts.publicSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: const Color(0xFF1E3A8A),
+                ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => GoRouter.of(context).go('/events/check'),
-              child: Text(t(ref, 'checkStatus')),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF316BF3),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                t(ref, 'checkStatus'),
+                style: GoogleFonts.publicSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
@@ -704,3 +780,5 @@ class _SuccessView extends ConsumerWidget {
     );
   }
 }
+
+
