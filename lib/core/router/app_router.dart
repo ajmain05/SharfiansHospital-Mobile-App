@@ -186,6 +186,11 @@ final appRouter = GoRouter(
         transitionsBuilder: scaleUpTransition,
         transitionDuration: const Duration(milliseconds: 350),
       ),
+      redirect: (context, state) {
+        final phone = LocalStorage.getInvestorPhone();
+        if (phone != null && phone.isNotEmpty) return '/investor/dashboard';
+        return null;
+      },
     ),
 
     // ── Admin ────────────────────────────────────────────────────────────────
@@ -197,6 +202,11 @@ final appRouter = GoRouter(
         transitionsBuilder: scaleUpTransition,
         transitionDuration: const Duration(milliseconds: 350),
       ),
+      redirect: (context, state) {
+        final token = LocalStorage.getAdminToken();
+        if (token != null) return '/admin/dashboard';
+        return null;
+      },
     ),
     GoRoute(
       path: '/admin/dashboard',

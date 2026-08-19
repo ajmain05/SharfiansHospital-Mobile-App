@@ -7,10 +7,11 @@ import '../storage/local_storage.dart';
 class ApiResponse {
   final bool success;
   final dynamic data;
+  final dynamic raw;
   final String? error;
   final int? statusCode;
 
-  ApiResponse({required this.success, this.data, this.error, this.statusCode});
+  ApiResponse({required this.success, this.data, this.raw, this.error, this.statusCode});
 
   bool get isNotFound => statusCode == 404;
 }
@@ -97,10 +98,11 @@ class ApiClient {
       return ApiResponse(
         success: success is bool ? success : true,
         data: body.containsKey('data') ? body['data'] : body,
+        raw: body,
         statusCode: res.statusCode,
       );
     }
-    return ApiResponse(success: true, data: body, statusCode: res.statusCode);
+    return ApiResponse(success: true, data: body, raw: body, statusCode: res.statusCode);
   }
 
   ApiResponse _fail(DioException e) {

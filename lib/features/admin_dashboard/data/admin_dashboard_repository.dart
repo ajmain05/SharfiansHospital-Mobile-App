@@ -11,7 +11,9 @@ class AdminDashboardRepository {
     if (!res.success) {
       throw ApiException(res.error ?? 'Failed to load stats', statusCode: res.statusCode);
     }
-    return res.data['stats'] as Map<String, dynamic>;
+    // `res.data` is typically a List for `/investors`. The top-level 'stats' is kept in `res.raw`.
+    final rawMap = res.raw as Map<String, dynamic>? ?? {};
+    return (rawMap['stats'] as Map<String, dynamic>?) ?? {};
   }
 
   /// Gets all events to select from
