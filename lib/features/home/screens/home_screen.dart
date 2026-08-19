@@ -499,52 +499,81 @@ class _ImpactSection extends StatelessWidget {
 
           // ── Notice to Unconfirmed Investors ─────────────────────────────
           Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF292113) : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(16),
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF0F7FF),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDark ? const Color(0xFF78450A) : const Color(0xFFFCD34D),
+                color: isDark ? const Color(0xFF3B82F6) : const Color(0xFFBFDBFE),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
+                  color: const Color(0xFF316BF3).withValues(alpha: isDark ? 0.2 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('⚠️', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF316BF3).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.campaign_rounded,
+                        color: Color(0xFF316BF3),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
                         isBn ? 'জরুরী বিজ্ঞপ্তি' : 'Important Notice',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
+                          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E3A8A),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isBn
-                            ? 'সকল ${Formatters.number(totalInvestors)} জন নিবন্ধিত বিনিয়োগকারীর দৃষ্টি আকর্ষণ করছি, যদি কেউ এখনো কোনো পরিমাণ জমা না দিয়ে থাকেন, তবে অনুগ্রহ করে অন্তত সর্বনিম্ন একটি পরিমাণ জমা দিয়ে "নিশ্চিত বিনিয়োগকারী" হিসেবে নিজেকে তালিকাভুক্ত করুন।'
-                            : 'Attention to all ${Formatters.number(totalInvestors)} registered investors: If you haven\'t deposited any amount yet, please confirm your registration as a "Confirmed Investor" by making at least a minimum deposit.',
-                        style: GoogleFonts.nunito(
-                          fontSize: 11,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF316BF3).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF316BF3).withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        isBn ? 'মনোযোগ দিন' : 'Attention',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF78350F),
-                          height: 1.5,
+                          color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  isBn
+                      ? 'সকল ${Formatters.number(totalInvestors)} জন নিবন্ধিত বিনিয়োগকারীর দৃষ্টি আকর্ষণ করছি: যদি কেউ এখনো কোনো পরিমাণ জমা না দিয়ে থাকেন, তবে অনুগ্রহ করে অন্তত সর্বনিম্ন একটি পরিমাণ জমা দিয়ে "নিশ্চিত বিনিয়োগকারী" হিসেবে নিজেকে তালিকাভুক্ত করুন।'
+                      : 'Attention to all ${Formatters.number(totalInvestors)} registered investors: If you haven\'t deposited any amount yet, please confirm your registration as a "Confirmed Investor" by making at least a minimum deposit.',
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -563,7 +592,7 @@ class _ImpactSection extends StatelessWidget {
                   value: Formatters.number(totalInvestors),
                   label: section != null ? (isBn ? section.investorLabelBn : section.investorLabel) : t(ref, 'totalInvestors'),
                   confirmedValue: confirmedInv > 0 ? Formatters.number(confirmedInv) : null,
-                  confirmedLabel: isBn ? 'নিশ্চিত বিনিয়োগকারী' : 'Confirmed Investors',
+                  confirmedLabel: isBn ? 'নিশ্চিত' : 'Confirmed',
                   confirmedSub: isBn ? '(পূর্ণ বা আংশিক পরিশোধিত)' : '(Full or Partial paid)',
                 ),
               ),
@@ -576,8 +605,8 @@ class _ImpactSection extends StatelessWidget {
                   value: Formatters.bdtCompact(totalAmount),
                   label: section != null ? (isBn ? section.amountLabelBn : section.amountLabel) : t(ref, 'committedAmount'),
                   confirmedValue: confirmedTarget > 0 ? Formatters.bdtCompact(confirmedTarget) : null,
-                  confirmedLabel: isBn ? 'নিশ্চিত প্রতিশ্রুত পরিমাণ' : 'Confirmed Committed Amount',
-                  confirmedSub: isBn ? '(${Formatters.number(confirmedInv)} জন নিশ্চিত বিনিয়োগকারী থেকে)' : '(from ${Formatters.number(confirmedInv)} confirmed investors)',
+                  confirmedLabel: isBn ? 'নিশ্চিত' : 'Confirmed',
+                  confirmedSub: isBn ? '(${Formatters.number(confirmedInv)} জন বিনিয়োগকারী থেকে)' : '(from ${Formatters.number(confirmedInv)} investors)',
                 ),
               ),
             ],
@@ -587,51 +616,60 @@ class _ImpactSection extends StatelessWidget {
 
           // ── Goal Progress Bar ───────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE0E7FF)),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4F46E5).withValues(alpha: isDark ? 0.15 : 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF4F46E5).withValues(alpha: isDark ? 0.2 : 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.track_changes_rounded, color: Color(0xFF4F46E5), size: 18),
+                      child: const Icon(
+                        Icons.track_changes_rounded,
+                        color: Color(0xFF4F46E5),
+                        size: 22,
+                      ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             isBn ? 'বিনিয়োগের লক্ষ্যমাত্রা' : 'Investment Target',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            style: GoogleFonts.publicSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             isBn
-                                ? 'নিশ্চিত প্রতিশ্রুত লক্ষ্য: ${targetCr.toStringAsFixed(0)} কোটি টাকা'
-                                : 'Confirmed Committed Goal: ${targetCr % 1 == 0 ? targetCr.toStringAsFixed(0) : targetCr.toStringAsFixed(2)} Cr BDT',
+                                ? 'লক্ষ্য: ${targetCr.toStringAsFixed(0)} কোটি টাকা'
+                                : 'Target Goal: ${targetCr % 1 == 0 ? targetCr.toStringAsFixed(0) : targetCr.toStringAsFixed(2)} Cr BDT',
                             style: GoogleFonts.nunito(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             ),
@@ -639,88 +677,147 @@ class _ImpactSection extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Percentage Pill Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.trending_up_rounded, color: Colors.white, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${(progressPct * 100).toStringAsFixed(1)}%',
+                            style: GoogleFonts.publicSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                // Raised vs Goal stats row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isBn ? 'নিশ্চিত সংগ্রহ' : 'Confirmed Raised',
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          Formatters.bdtCompact(confirmedTarget),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF4F46E5),
+                          ),
+                        ),
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '${(progressPct * 100).toStringAsFixed(1)}%',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF4F46E5),
+                          isBn ? 'লক্ষ্যমাত্রা' : 'Target Goal',
+                          style: GoogleFonts.nunito(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                           ),
                         ),
                         Text(
-                          isBn ? 'অর্জিত' : 'Achieved',
-                          style: GoogleFonts.nunito(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
-                            letterSpacing: 0.5,
+                          isBn ? '${targetCr.toStringAsFixed(0)} কোটি' : '${targetCr % 1 == 0 ? targetCr.toStringAsFixed(0) : targetCr.toStringAsFixed(2)} Cr BDT',
+                          style: GoogleFonts.publicSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
 
                 // Progress track
                 Stack(
                   children: [
-                    // Background
+                    // Background Track
                     Container(
-                      height: 28,
+                      height: 18,
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    // Fill
+                    // Progress Fill
                     LayoutBuilder(builder: (ctx, constraints) {
+                      final fillWidth = (constraints.maxWidth * progressPct).clamp(0.0, constraints.maxWidth);
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 1200),
                         curve: Curves.easeOutCubic,
-                        height: 28,
-                        width: constraints.maxWidth * progressPct,
+                        height: 18,
+                        width: fillWidth,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF4F46E5), Color(0xFF6366F1), Color(0xFF818CF8)],
+                            colors: [Color(0xFF3B82F6), Color(0xFF4F46E5), Color(0xFF7C3AED)],
                           ),
                           borderRadius: BorderRadius.circular(10),
-                          boxShadow: [BoxShadow(color: const Color(0xFF4F46E5).withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2))],
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                       );
                     }),
-                    // Amount text inside bar
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            Formatters.bdtCompact(confirmedTarget),
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: progressPct > 0.2 ? Colors.white : const Color(0xFF4F46E5),
-                              shadows: progressPct > 0.2 ? [const Shadow(blurRadius: 4, color: Colors.black26)] : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('৳0', style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
+                    Text('৳0', style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
+                    Text(
+                      '${(progressPct * 100).toStringAsFixed(1)}% ${isBn ? 'অর্জিত' : 'Achieved'}',
+                      style: GoogleFonts.nunito(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF4F46E5),
+                      ),
+                    ),
                     Text(
                       isBn ? '${targetCr.toStringAsFixed(0)} কোটি' : '${targetCr % 1 == 0 ? targetCr.toStringAsFixed(0) : targetCr.toStringAsFixed(2)} Cr',
-                      style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8)),
                     ),
                   ],
                 ),
@@ -755,68 +852,107 @@ class _ImpactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [BoxShadow(color: gradient.colors.first.withValues(alpha: 0.3), blurRadius: 18, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top Icon Badge
           Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: Colors.white, size: 20),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          const SizedBox(height: 10),
-          Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-          const SizedBox(height: 2),
-          Text(label, style: GoogleFonts.nunito(fontSize: 11, color: Colors.white.withValues(alpha: 0.85), fontWeight: FontWeight.w600)),
+          const SizedBox(height: 14),
 
-          // Confirmed sub-row
+          // Main Value & Label
+          Text(
+            value,
+            style: GoogleFonts.publicSans(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.88),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          // Confirmed Sub-Card
           if (confirmedValue != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1,
+                ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('✅', style: TextStyle(fontSize: 12)),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              confirmedValue!,
-                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white),
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                confirmedLabel ?? '',
-                                style: GoogleFonts.nunito(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (confirmedSub != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            confirmedSub!,
-                            style: GoogleFonts.nunito(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.85)),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.white,
+                        size: 15,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '$confirmedValue ${confirmedLabel ?? ''}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
                           ),
-                        ]
-                      ],
-                    ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
+                  if (confirmedSub != null) ...[
+                    const SizedBox(height: 3),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 21),
+                      child: Text(
+                        confirmedSub!,
+                        style: GoogleFonts.nunito(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.88),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
