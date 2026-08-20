@@ -44,6 +44,14 @@ class _InvestorRegistrationScreenState
   bool _loading = false;
   Map<String, dynamic>? _submitted;
 
+  String? _eduCategory;
+
+  static const _degreeOptions = {
+    'Madrasa': ['Ponchom (5th)', 'Oshtom (8th)', 'Dakhil', 'Alim', 'Fazil', 'Kamil', 'Dawra-e-Hadith', 'Takhassus / Mufti', 'PhD'],
+    'General': ['SSC', 'HSC', 'Honours / Degree', 'BSc / BBA', 'MSc / MBA', 'Masters', 'MPhil', 'PhD', 'Post-Doctorate'],
+    'Medical': ['MBBS', 'BDS', 'MD', 'MS', 'FCPS', 'MCPS', 'MRCP', 'FRCS', 'Diploma', 'MPhil (Medical)', 'MPH']
+  };
+
   @override
   void initState() {
     super.initState();
@@ -358,12 +366,71 @@ class _InvestorRegistrationScreenState
                                       isRequired: true,
                                       maxLines: 2,
                                     ),
-                                    _BespokeField(
-                                      controller: _educationLevelCtrl,
-                                      label: t(ref, 'degreeLevel'),
-                                      icon: Icons.school_outlined,
-                                      placeholder: 'Highest qualification',
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      t(ref, 'Education Background'),
+                                      style: GoogleFonts.publicSans(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF475569),
+                                      ),
                                     ),
+                                    const SizedBox(height: 12),
+                                    DropdownButtonFormField<String>(
+                                      value: _eduCategory,
+                                      decoration: InputDecoration(
+                                        labelText: t(ref, 'Education Category'),
+                                        prefixIcon: const Icon(Icons.category_outlined, color: Color(0xFF64748B)),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                        ),
+                                        filled: true,
+                                        fillColor: const Color(0xFFF8FAFC),
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(value: 'Madrasa', child: Text('Madrasa Education')),
+                                        DropdownMenuItem(value: 'General', child: Text('General Education')),
+                                        DropdownMenuItem(value: 'Medical', child: Text('Medical Degrees')),
+                                        DropdownMenuItem(value: 'Other', child: Text('Other')),
+                                      ],
+                                      onChanged: (val) {
+                                        setState(() {
+                                          _eduCategory = val;
+                                          _educationLevelCtrl.clear();
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    if (_eduCategory != null && _eduCategory != 'Other')
+                                      DropdownButtonFormField<String>(
+                                        value: _educationLevelCtrl.text.isEmpty ? null : _educationLevelCtrl.text,
+                                        decoration: InputDecoration(
+                                          labelText: t(ref, 'Degree / Level'),
+                                          prefixIcon: const Icon(Icons.school_outlined, color: Color(0xFF64748B)),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                          ),
+                                          filled: true,
+                                          fillColor: const Color(0xFFF8FAFC),
+                                        ),
+                                        items: _degreeOptions[_eduCategory]!
+                                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                                            .toList(),
+                                        onChanged: (val) {
+                                          setState(() {
+                                            _educationLevelCtrl.text = val ?? '';
+                                          });
+                                        },
+                                      )
+                                    else if (_eduCategory == 'Other')
+                                      _BespokeField(
+                                        controller: _educationLevelCtrl,
+                                        label: t(ref, 'degreeLevel'),
+                                        icon: Icons.school_outlined,
+                                        placeholder: 'Enter your degree',
+                                      ),
                                     _BespokeField(
                                       controller: _passingYearCtrl,
                                       label: t(ref, 'passingYear'),
@@ -387,6 +454,31 @@ class _InvestorRegistrationScreenState
                                               fontSize: 20,
                                               fontWeight: FontWeight.w700,
                                               color: Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF), // blue-50
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: const Color(0xFFBFDBFE)), // blue-200
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.info_outline, color: Color(0xFF3B82F6), size: 20),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Minimum required investment is ${Formatters.bdt(minShareAmount)}',
+                                                    style: GoogleFonts.publicSans(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: const Color(0xFF1E3A8A), // blue-900
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           const SizedBox(height: 24),

@@ -25,6 +25,7 @@ import '../../features/splash/screens/splash_screen.dart';
 import '../storage/local_storage.dart';
 import '../widgets/tap_scale.dart';
 import '../widgets/main_scaffold.dart';
+import '../../features/settings/screens/settings_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
@@ -158,6 +159,20 @@ final appRouter = GoRouter(
                 child: const InvestorDashboardScreen(),
                 transitionsBuilder: fadeTransition,
                 transitionDuration: const Duration(milliseconds: 400),
+              ),
+            ),
+          ],
+        ),
+        // Tab 4: Settings
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/settings',
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const SettingsScreen(),
+                transitionsBuilder: fadeTransition,
+                transitionDuration: const Duration(milliseconds: 350),
               ),
             ),
           ],

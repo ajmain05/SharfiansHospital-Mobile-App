@@ -14,6 +14,7 @@ import '../../../core/widgets/theme_toggle_button.dart';
 import '../../../models/site_settings.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../../settings/providers/site_settings_provider.dart';
+import '../../settings/screens/settings_screen.dart';
 import '../providers/public_stats_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -139,10 +140,7 @@ class _HeroSection extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    ThemeToggleButton(
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.primary900),
-                    SizedBox(width: 4),
-                    LanguageToggleButton(),
+                    // Empty row since settings moved to quick access
                   ],
                 ),
                 const SizedBox(height: 8),

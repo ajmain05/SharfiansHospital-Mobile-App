@@ -17,6 +17,7 @@ import '../../investor_auth/providers/investor_session_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
+import '../../settings/screens/settings_screen.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
   const InvestorDashboardScreen({super.key});
@@ -51,32 +52,24 @@ class _InvestorDashboardScreenState
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Welcome, ${account.displayName}',
-              style: GoogleFonts.libreCaslonText(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+          title: Text(
+            'Welcome, ${account.displayName}',
+            style: GoogleFonts.libreCaslonText(
+              fontSize: 20, // Slightly reduced to fit better
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.2,
             ),
+            maxLines: 2,
           ),
         actions: [
-          ThemeToggleButton(color: Theme.of(context).appBarTheme.foregroundColor),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: t(ref, 'refresh'),
-            onPressed: () =>
-                ref.read(investorSessionProvider.notifier).refresh(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: t(ref, 'logout'),
-            onPressed: () async {
-              await ref.read(investorSessionProvider.notifier).logout();
-              if (context.mounted) context.go('/investor/login');
+            icon: const Icon(Icons.settings_rounded),
+            tooltip: t(ref, 'settings'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
           ),
         ],
@@ -234,6 +227,52 @@ class _OverviewTab extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
+        if (!category.isDirector)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFDE68A), Color(0xFFF59E0B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Directorship Goal',
+                        style: GoogleFonts.publicSans(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF78350F)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Increase your share to ${Formatters.bdt(1000000)} to unlock exclusive benefits as a Director!',
+                        style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF92400E)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (!category.isDirector) const SizedBox(height: 20),
         Row(
           children: [
             Expanded(

@@ -59,6 +59,13 @@ class MainScaffold extends ConsumerWidget {
                   isSelected: navigationShell.currentIndex == 2,
                   onTap: () => _onTap(2),
                 ),
+                _NavItem(
+                  icon: Icons.settings_outlined,
+                  activeIcon: Icons.settings_rounded,
+                  label: t(ref, 'settings'),
+                  isSelected: navigationShell.currentIndex == 3,
+                  onTap: () => _onTap(3),
+                ),
               ],
             ),
           ),
