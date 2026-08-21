@@ -295,12 +295,10 @@ class _DirectorshipTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final rows = [
-      (InvestorCategory.of(2000000), 2000000),
-      (InvestorCategory.of(5000000), 5000000),
-      (InvestorCategory.of(10000000), 10000000),
-      (InvestorCategory.of(50000000), 50000000),
-    ];
+    final rows = InvestorCategory.tiers
+        .where((t) => t.isDirector)
+        .map((t) => (t, t.minAmount))
+        .toList();
 
     return Container(
       decoration: BoxDecoration(

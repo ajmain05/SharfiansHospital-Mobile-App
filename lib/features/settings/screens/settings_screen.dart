@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:go_router/go_router.dart';
-
 import 'about_screen.dart';
 import 'investment_guidelines_screen.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/theme_provider.dart';
-import '../../investor_auth/providers/investor_session_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -71,19 +68,6 @@ class SettingsScreen extends ConsumerWidget {
               ref.read(themeProvider.notifier).toggle();
             },
           ),
-          if (ref.watch(investorSessionProvider).isLoggedIn) ...[
-            const SizedBox(height: 32),
-            _SettingsTile(
-              icon: Icons.logout_rounded,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
-              iconColor: const Color(0xFFEF4444),
-              onTap: () async {
-                await ref.read(investorSessionProvider.notifier).logout();
-                if (context.mounted) context.go('/');
-              },
-            ),
-          ],
         ],
       ),
     );

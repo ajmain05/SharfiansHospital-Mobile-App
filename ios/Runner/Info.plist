@@ -59,6 +59,15 @@
 	<array>
 		<string>tel</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- bKash's tokenized checkout page doesn't fully satisfy default ATS
+		     requirements; without this the in-app WebView hangs on a blank
+		     page instead of erroring. Scoped to WebView content only — native
+		     networking (Dio/API calls) is unaffected and stays HTTPS-only. -->
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

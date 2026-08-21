@@ -3,13 +3,52 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/formatters.dart';
-import '../../../core/l10n/locale_provider.dart';
+import '../../../core/utils/investor_category.dart';
+import '../providers/site_settings_provider.dart';
+
+/// Benefit copy per director tier. Not backed by any CMS field today — the
+/// backend only exposes a single "Board of Director" tier (label/amount/
+/// benefits) via /api/settings, not per Silver/Golden/Platinum/Diamond
+/// sub-tier — so this stays local text, keyed by [InvestorCategory.id].
+const Map<String, List<String>> _tierBenefits = {
+  'silver': [
+    'Voting rights in general board meetings',
+    'Special healthcare discounts for family',
+    'Priority appointment scheduling',
+  ],
+  'golden': [
+    'Voting rights in general board meetings',
+    'Free annual health checkup',
+    'Special healthcare discounts for family',
+    'Priority appointment scheduling',
+  ],
+  'platinum': [
+    'Executive voting rights',
+    'Free annual comprehensive health checkups',
+    'VIP hospital suite access',
+    'Strategic decision making involvement',
+  ],
+  'diamond': [
+    'Executive voting rights',
+    'Free annual comprehensive health checkups',
+    'VIP hospital suite access',
+    'Strategic decision making involvement',
+    'Highest profit-sharing priority',
+    'Dedicated relationship manager',
+  ],
+};
 
 class InvestmentGuidelinesScreen extends ConsumerWidget {
   const InvestmentGuidelinesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(siteSettingsProvider);
+    final minShareAmount = settingsAsync.maybeWhen(
+      data: (s) => s.minShareAmount,
+      orElse: () => 100000,
+    );
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -30,7 +69,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
           _buildAlertBox(
             context,
             'Minimum Investment',
-            'To become an investor in Sharfians Hospital, a minimum commitment of ${Formatters.bdt(100000)} is required.',
+            'To become an investor in Sharfians Hospital, a minimum commitment of ${Formatters.bdt(minShareAmount)} is required.',
             Icons.info_outline_rounded,
             const Color(0xFFEFF6FF), // blue-50
             const Color(0xFF3B82F6), // blue-500
@@ -45,37 +84,19 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildTierCard(
-            context,
-            title: 'Gold Director',
-            shareAmount: 1000000,
-            benefits: [
-              'Voting rights in general board meetings',
-              'Special healthcare discounts for family',
-              'Priority appointment scheduling',
-            ],
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFDE68A), Color(0xFFF59E0B)],
+          for (final tier in InvestorCategory.tiers.where((t) => t.isDirector))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildTierCard(
+                context,
+                title: tier.label,
+                shareAmount: tier.minAmount,
+                benefits: _tierBenefits[tier.id] ?? const [],
+                gradient: tier.gradient,
+                iconColor: tier.color,
+              ),
             ),
-            iconColor: const Color(0xFFF59E0B),
-          ),
           const SizedBox(height: 16),
-          _buildTierCard(
-            context,
-            title: 'Platinum Director',
-            shareAmount: 5000000,
-            benefits: [
-              'Executive voting rights',
-              'Free annual comprehensive health checkups',
-              'VIP hospital suite access',
-              'Strategic decision making involvement',
-            ],
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8)],
-            ),
-            iconColor: const Color(0xFF64748B),
-          ),
-          const SizedBox(height: 32),
           Text(
             'Terms & Conditions',
             style: GoogleFonts.libreCaslonText(

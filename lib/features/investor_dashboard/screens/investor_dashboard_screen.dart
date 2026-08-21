@@ -16,8 +16,6 @@ import '../../../models/investor.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
-import '../../../core/widgets/theme_toggle_button.dart';
-import '../../settings/screens/settings_screen.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
   const InvestorDashboardScreen({super.key});
@@ -64,12 +62,11 @@ class _InvestorDashboardScreenState
           ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_rounded),
-            tooltip: t(ref, 'settings'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
+            tooltip: t(ref, 'logout'),
+            onPressed: () async {
+              await ref.read(investorSessionProvider.notifier).logout();
+              if (context.mounted) context.go('/investor/login');
             },
           ),
         ],

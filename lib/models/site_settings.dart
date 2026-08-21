@@ -324,6 +324,12 @@ class SiteSettings {
   final String heroDescriptionBn;
   final String badgeText;
   final String badgeTextBn;
+  final String aboutBadge;
+  final String aboutBadgeBn;
+  final String aboutTitle;
+  final String aboutTitleBn;
+  final String aboutDescription;
+  final String aboutDescriptionBn;
   final String logoUrl;
   final String registerHelpText;
   final String registerHelpTextBn;
@@ -351,6 +357,12 @@ class SiteSettings {
     required this.heroDescriptionBn,
     required this.badgeText,
     required this.badgeTextBn,
+    required this.aboutBadge,
+    required this.aboutBadgeBn,
+    required this.aboutTitle,
+    required this.aboutTitleBn,
+    required this.aboutDescription,
+    required this.aboutDescriptionBn,
     required this.logoUrl,
     required this.registerHelpText,
     required this.registerHelpTextBn,
@@ -381,6 +393,14 @@ class SiteSettings {
         'আমাদের কমিউনিটি-চালিত স্বাস্থ্যসেবা বিপ্লবে যোগ দিন। আমাদের হাসপাতাল প্রকল্পে বিনিয়োগ করুন এবং প্রতিটি নাগরিকের জন্য মানসম্মত চিকিৎসা সেবা নিশ্চিত করতে সাহায্য করুন।',
     badgeText: 'Community Healthcare Investment Programme',
     badgeTextBn: 'কমিউনিটি হেলথকেয়ার ইনভেস্টমেন্ট প্রোগ্রাম',
+    aboutBadge: 'About The Project',
+    aboutBadgeBn: 'প্রজেক্ট সম্পর্কে',
+    aboutTitle: 'Building A Healthier Tomorrow Together',
+    aboutTitleBn: 'একসাথে গড়ছি আগামীর সুস্থ ভবিষ্যৎ',
+    aboutDescription:
+        'Sharfians Hospital is a community-owned healthcare initiative. Through collective share investment, we are building a state-of-the-art hospital that will serve our community for generations to come.',
+    aboutDescriptionBn:
+        'শরফিয়ান্স হাসপাতাল একটি কমিউনিটি-মালিকানাধীন স্বাস্থ্যসেবা উদ্যোগ। সম্মিলিত শেয়ার বিনিয়োগের মাধ্যমে আমরা একটি অত্যাধুনিক হাসপাতাল নির্মাণ করছি যা আগামী প্রজন্মের সেবা করবে।',
     logoUrl: '',
     registerHelpText:
         'Note: You can login to My Portal using your registered phone number at any time to find your Investor ID and track your investments.',
@@ -421,6 +441,12 @@ class SiteSettings {
       heroDescriptionBn: s('heroDescription_bn', fb.heroDescriptionBn),
       badgeText: s('badgeText', fb.badgeText),
       badgeTextBn: s('badgeText_bn', fb.badgeTextBn),
+      aboutBadge: s('aboutBadge', fb.aboutBadge),
+      aboutBadgeBn: s('aboutBadge_bn', fb.aboutBadgeBn),
+      aboutTitle: s('aboutTitle', fb.aboutTitle),
+      aboutTitleBn: s('aboutTitle_bn', fb.aboutTitleBn),
+      aboutDescription: s('aboutDescription', fb.aboutDescription),
+      aboutDescriptionBn: s('aboutDescription_bn', fb.aboutDescriptionBn),
       logoUrl: s('logoUrl', fb.logoUrl),
       registerHelpText: s('registerHelpText', fb.registerHelpText),
       registerHelpTextBn: s('registerHelpText_bn', fb.registerHelpTextBn),

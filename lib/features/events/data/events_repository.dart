@@ -70,4 +70,49 @@ class EventsRepository {
         )
         .toList();
   }
+
+  /// Starts a bKash PGW checkout. Returns `{bkashURL, paymentID}` — the
+  /// caller opens `bkashURL` in a webview and, once bKash redirects back,
+  /// calls [executeBkashPayment] or [cancelBkashPayment].
+  Future<Map<String, dynamic>> createBkashPayment({
+    required String eventId,
+    required String name,
+    required String phone,
+    required int personsCount,
+  }) async {
+    final res = await _api.post('/bkash/create-payment', {
+      'eventId': eventId,
+      'name': name,
+      'phone': phone,
+      'personsCount': personsCount,
+    });
+    if (!res.success || res.data is! Map) {
+      throw ApiException(
+        res.error ?? 'Failed to start bKash payment',
+        statusCode: res.statusCode,
+      );
+    }
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
+  /// Verifies a completed bKash payment server-side and creates the
+  /// registration. Returns `{qrCodeToken}` on success.
+  Future<Map<String, dynamic>> executeBkashPayment(String paymentID) async {
+    final res = await _api.post('/bkash/execute-payment', {
+      'paymentID': paymentID,
+      'status': 'success',
+    });
+    if (!res.success || res.data is! Map) {
+      throw ApiException(
+        res.error ?? 'Payment verification failed',
+        statusCode: res.statusCode,
+      );
+    }
+    return (res.data as Map).cast<String, dynamic>();
+  }
+
+  /// Best-effort cleanup when the user cancels/abandons a bKash checkout.
+  Future<void> cancelBkashPayment(String paymentID) async {
+    await _api.post('/bkash/cancel-payment', {'paymentID': paymentID});
+  }
 }

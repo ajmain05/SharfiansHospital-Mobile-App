@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AboutScreen extends StatelessWidget {
+import '../../../models/site_settings.dart';
+import '../providers/site_settings_provider.dart';
+
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(siteSettingsProvider);
+    final fallback = SiteSettings.fallback();
+    final hospitalName = settingsAsync.maybeWhen(
+      data: (s) => s.heroTitle,
+      orElse: () => fallback.heroTitle,
+    );
+    final aboutTitle = settingsAsync.maybeWhen(
+      data: (s) => s.aboutTitle,
+      orElse: () => fallback.aboutTitle,
+    );
+    final aboutDescription = settingsAsync.maybeWhen(
+      data: (s) => s.aboutDescription,
+      orElse: () => fallback.aboutDescription,
+    );
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -40,7 +59,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Text(
-            'Sharfians Hospital',
+            hospitalName,
             textAlign: TextAlign.center,
             style: GoogleFonts.libreCaslonText(
               fontSize: 28,
@@ -59,6 +78,12 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 40),
+          _buildSection(
+            context,
+            aboutTitle,
+            aboutDescription,
+            Icons.info_outline_rounded,
+          ),
           _buildSection(
             context,
             'Our Vision',

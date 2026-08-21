@@ -152,7 +152,7 @@ class EventPaymentMethod {
         }
       }
 
-      addIfPresent('bkashMerchant', 'bKash', 'Merchant');
+      // bkashMerchant removed as per request
       addIfPresent('bkashPersonal1', 'bKash', 'Personal');
       addIfPresent('bkashPersonal2', 'bKash/Nagad', 'Personal');
       addIfPresent('nagadPersonal', 'Nagad', 'Personal');
@@ -184,13 +184,6 @@ class EventPaymentMethod {
         ),
       );
     }
-    methods.add(
-      const EventPaymentMethod(
-        id: 'Cheque',
-        label: 'Cheque',
-        channel: 'Cheque',
-      ),
-    );
 
     if (methods.length == 1) {
       methods.insertAll(0, const [

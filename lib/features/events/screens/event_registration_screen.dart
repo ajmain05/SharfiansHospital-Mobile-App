@@ -8,11 +8,15 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/cloudinary_uploader.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/event.dart';
 import '../providers/events_providers.dart';
+import 'bkash_checkout_screen.dart';
+
+const String _pgwMethodId = 'bKash_PGW';
 
 const String _bgImageUrl =
     'https://lh3.googleusercontent.com/aida-public/AB6AXuC-r2SZdviaJpcKKrOGKAF2giGZNzpqbuOT-7M40iwK7piLgybI2GMmZO7Frfh2wOSEBk8dZrnSVZrhDUMVQsXycYvYZ_LT4wYQX5zMvYCllpE0R0yBcgA97ioWSwH1vjnJY5n0_y2VV0wHgwdZlAWjfRePONzIz-6hOz4PZ0xZMRLAE3zX6tU-0f6tP6PGUbanD_gU_ZAip05vxQL_g_zDdlqhiPdNrtHUAxEeSg0y431n7QutbdNi';
@@ -160,7 +164,15 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
   @override
   void initState() {
     super.initState();
-    _methods = EventPaymentMethod.fromPaymentConfig(widget.event.paymentConfig);
+    _methods = [
+      const EventPaymentMethod(
+        id: _pgwMethodId,
+        label: 'bKash (Payment Gateway)',
+        channel: 'bKash PGW',
+      ),
+      ...EventPaymentMethod.fromPaymentConfig(widget.event.paymentConfig)
+          .where((m) => m.id != 'Cheque' && !m.id.toLowerCase().contains('merchant') && !m.label.toLowerCase().contains('merchant')),
+    ];
   }
 
   @override
@@ -189,6 +201,12 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       ).showSnackBar(SnackBar(content: Text(t(ref, 'selectPaymentMethod'))));
       return;
     }
+
+    if (_method!.id == _pgwMethodId) {
+      await _submitViaBkashPgw();
+      return;
+    }
+
     if (_proofFile == null) {
       ScaffoldMessenger.of(
         context,
@@ -224,6 +242,70 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
 
       if (!mounted) return;
       setState(() => _submitted = true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  /// bKash PGW: create the payment, run bKash's checkout in a webview, then
+  /// verify + create the registration server-side once bKash redirects back.
+  /// Unlike the manual flow, a successful PGW payment is auto-APPROVED with
+  /// a real ticket immediately — no admin approval step — so this routes
+  /// straight to the ticket screen instead of the "pending" success view.
+  Future<void> _submitViaBkashPgw() async {
+    setState(() => _submitting = true);
+    try {
+      final created = await ref.read(eventsRepositoryProvider).createBkashPayment(
+        eventId: widget.event.id,
+        name: _nameCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim(),
+        personsCount: _personsCount,
+      );
+      final paymentID = created['paymentID'] as String?;
+      final bkashUrl = created['bkashURL'] as String?;
+      if (paymentID == null || bkashUrl == null) {
+        throw Exception('বিকাশ পেমেন্ট শুরু করতে সমস্যা হয়েছে।');
+      }
+
+      if (!mounted) return;
+      final result = await Navigator.of(context).push<BkashCheckoutResult>(
+        MaterialPageRoute(
+          builder: (_) => BkashCheckoutScreen(
+            bkashUrl: bkashUrl,
+            callbackUrlPrefix: '${Env.frontendBaseUrl}/events/bkash-callback',
+          ),
+        ),
+      );
+
+      if (result == null || !result.isSuccess) {
+        // Backed out of the webview, or bKash reported cancel/failure/decline.
+        await ref
+            .read(eventsRepositoryProvider)
+            .cancelBkashPayment(result?.paymentID ?? paymentID);
+        if (!mounted) return;
+        if (result != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('পেমেন্ট বাতিল হয়েছে বা ব্যর্থ হয়েছে।')),
+          );
+        }
+        return;
+      }
+
+      final executed = await ref
+          .read(eventsRepositoryProvider)
+          .executeBkashPayment(result.paymentID);
+      final qrCodeToken = executed['qrCodeToken'] as String?;
+      if (qrCodeToken == null) {
+        throw Exception('পেমেন্ট ভেরিফাই করতে সমস্যা হয়েছে।');
+      }
+
+      if (!mounted) return;
+      GoRouter.of(context).go('/events/status/$qrCodeToken');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -438,7 +520,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   onChanged: (m) => setState(() => _method = m),
                 ),
 
-                if (_method != null) ...[
+                if (_method != null && _method!.id != _pgwMethodId) ...[
                   const SizedBox(height: 24),
                   _label(_senderLabel(_method!.id)),
                   TextFormField(
@@ -489,10 +571,12 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   ),
                 ],
 
-                const SizedBox(height: 24),
-                // Payment Screenshot Upload
-                _label('Payment Screenshot'),
-                _uploadZone(),
+                if (_method?.id != _pgwMethodId) ...[
+                  const SizedBox(height: 24),
+                  // Payment Screenshot Upload
+                  _label('Payment Screenshot'),
+                  _uploadZone(),
+                ],
 
                 const SizedBox(height: 32),
 
@@ -523,15 +607,19 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'COMPLETE REGISTRATION',
+                                _method?.id == _pgwMethodId
+                                    ? 'বিকাশ দিয়ে পে করুন'
+                                    : 'COMPLETE REGISTRATION',
                                 style: GoogleFonts.publicSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 0.7,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward, size: 18),
+                              if (_method?.id != _pgwMethodId) ...[
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward, size: 18),
+                              ],
                             ],
                           ),
                   ),
