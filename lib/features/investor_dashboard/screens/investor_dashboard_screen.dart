@@ -434,7 +434,7 @@ class _AccountsTab extends ConsumerWidget {
         final category = InvestorCategory.of(acc.shareAmount);
         
         return InkWell(
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(24),
           onTap: () => ref
               .read(investorSessionProvider.notifier)
               .setActiveAccount(acc.id),
@@ -451,7 +451,7 @@ class _AccountsTab extends ConsumerWidget {
                       : const Color(0xFFF8F9FF)
                 ],
               ),
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: active 
                     ? AppColors.primary600 
@@ -751,7 +751,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                           style: GoogleFonts.publicSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFF316BF3),
+                            color: AppColors.primary600,
                           ),
                         ),
                       ],
@@ -776,7 +776,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                           onPressed: () => _downloadReceipt(dep),
                           icon: const Icon(
                             Icons.download_rounded,
-                            color: Color(0xFF316BF3),
+                            color: AppColors.primary600,
                           ),
                         ),
                       ),

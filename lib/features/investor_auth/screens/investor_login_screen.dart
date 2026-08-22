@@ -339,7 +339,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                           child: Text(
                             _error!,
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF991B1B),
+                              color: AppColors.error,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),

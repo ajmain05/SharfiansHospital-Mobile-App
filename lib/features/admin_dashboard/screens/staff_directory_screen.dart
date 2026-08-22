@@ -4,6 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../core/utils/investor_category.dart';
+import '../../../models/investor.dart';
 import '../data/admin_dashboard_repository.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
@@ -49,6 +52,125 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to search: $e')));
       }
     }
+  }
+
+  void _showInvestorDetails(Map<String, dynamic> raw) {
+    final investor = Investor.fromJson(raw);
+    final tier = InvestorCategory.of(investor.shareAmount);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: AppColors.primary100,
+                      foregroundColor: AppColors.primary700,
+                      child: Text(
+                        investor.displayName.isNotEmpty
+                            ? investor.displayName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            investor.displayName,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            investor.investorId,
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (investor.isDirector)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: tier.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          tier.label,
+                          style: TextStyle(
+                            color: tier.color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                _detailRow('Phone', investor.phone),
+                _detailRow('Address', investor.address),
+                _detailRow('Share Amount', Formatters.bdt(investor.shareAmount)),
+                _detailRow('Monthly Payment', Formatters.bdt(investor.monthlyPayment)),
+                _detailRow('Persons', '${investor.numberOfPersons}'),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _callPhone(investor.phone);
+                    },
+                    icon: const Icon(Icons.call_rounded, color: Colors.green),
+                    label: const Text('Call'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _callPhone(String phone) async {
@@ -112,7 +234,9 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
                         itemBuilder: (context, index) {
                           final investor = _investors[index];
                           return InkWell(
-                            onTap: () {},
+                            onTap: () => _showInvestorDetails(
+                              (investor as Map).cast<String, dynamic>(),
+                            ),
                             borderRadius: BorderRadius.circular(16),
                             child: Container(
                               padding: const EdgeInsets.all(16),

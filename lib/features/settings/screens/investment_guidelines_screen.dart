@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/investor_category.dart';
 import '../providers/site_settings_provider.dart';
@@ -144,8 +145,9 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
                 Text(
                   content,
                   style: GoogleFonts.publicSans(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: const Color(0xFF475569),
                     fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     height: 1.5,
                   ),
                 ),
@@ -205,7 +207,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
                   style: GoogleFonts.publicSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.outline,
+                    color: context.textMed,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -223,7 +225,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
                   style: GoogleFonts.publicSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.outline,
+                    color: context.textMed,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -239,6 +241,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
                           b,
                           style: GoogleFonts.publicSans(
                             fontSize: 14,
+                            fontWeight: FontWeight.w500,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.4,
                           ),
@@ -262,6 +265,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
         text,
         style: GoogleFonts.publicSans(
           fontSize: 14,
+          fontWeight: FontWeight.w500,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
           height: 1.5,
         ),

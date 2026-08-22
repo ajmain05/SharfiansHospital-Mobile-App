@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/api_client.dart';
+import '../router/app_router.dart';
 
 final pushNotificationServiceProvider = Provider((ref) => PushNotificationService());
 
@@ -24,15 +25,29 @@ class PushNotificationService {
       return; // User declined
     }
 
-    // 2. Initialize local notifications for foreground messages
+    // 2. Initialize local notifications for foreground messages. Tapping one
+    // opens the app to Home — the backend's /notifications/send payload
+    // carries no routing data today, so that's the most we can do without a
+    // backend change; see plan notes for the richer deep-link fast-follow.
     const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
     const DarwinInitializationSettings iosInit = DarwinInitializationSettings();
     const InitializationSettings initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
-    await _localNotifications.initialize(settings: initSettings);
+    await _localNotifications.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: (_) => _navigateHome(),
+    );
 
     // 3. Listen to foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+    // 4. Tapped from background, or app cold-started from a terminated state
+    // by tapping a notification.
+    FirebaseMessaging.onMessageOpenedApp.listen((_) => _navigateHome());
+    final initialMessage = await _fcm.getInitialMessage();
+    if (initialMessage != null) _navigateHome();
   }
+
+  void _navigateHome() => appRouter.go('/');
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     final notification = message.notification;

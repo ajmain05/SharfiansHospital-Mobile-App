@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/cloudinary_uploader.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/event.dart';
 import '../providers/events_providers.dart';
@@ -31,14 +33,14 @@ class EventRegistrationScreen extends ConsumerWidget {
     final eventAsync = ref.watch(eventBySlugProvider(slug));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8FF),
+      backgroundColor: context.bgFill,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFAF8FF),
+          decoration: BoxDecoration(
+            color: context.bgFill,
             border: Border(
-              bottom: BorderSide(color: Color(0xFFC5C5D3), width: 1),
+              bottom: BorderSide(color: context.borderFill, width: 1),
             ),
           ),
           child: AppBar(
@@ -46,7 +48,7 @@ class EventRegistrationScreen extends ConsumerWidget {
             elevation: 0,
             toolbarHeight: 64,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xFF444651)),
+              icon: Icon(Icons.arrow_back, color: context.textMed),
               onPressed: () => context.pop(),
             ),
             title: Text(
@@ -54,7 +56,7 @@ class EventRegistrationScreen extends ConsumerWidget {
               style: GoogleFonts.publicSans(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF00236F),
+                color: context.textHigh,
               ),
             ),
           ),
@@ -68,9 +70,9 @@ class EventRegistrationScreen extends ConsumerWidget {
             child: Image.network(
               _bgImageUrl,
               fit: BoxFit.cover,
-              color: const Color(0xFFFAF8FF).withValues(alpha: 0.92),
+              color: context.bgFill.withValues(alpha: 0.92),
               colorBlendMode: BlendMode.srcOver,
-              errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFFFAF8FF)),
+              errorBuilder: (context, error, stackTrace) => Container(color: context.bgFill),
             ),
           ),
           eventAsync.when(
@@ -108,10 +110,10 @@ class _ClosedView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.lock_outline_rounded,
               size: 48,
-              color: Color(0xFF444651),
+              color: context.textMed,
             ),
             const SizedBox(height: 12),
             Text(
@@ -119,7 +121,7 @@ class _ClosedView extends ConsumerWidget {
               style: GoogleFonts.publicSans(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: const Color(0xFF131B2E),
+                color: context.textHigh,
               ),
             ),
             const SizedBox(height: 6),
@@ -127,7 +129,7 @@ class _ClosedView extends ConsumerWidget {
               message,
               textAlign: TextAlign.center,
               style: GoogleFonts.publicSans(
-                color: const Color(0xFF444651),
+                color: context.textMed,
                 fontSize: 14,
               ),
             ),
@@ -269,7 +271,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       final paymentID = created['paymentID'] as String?;
       final bkashUrl = created['bkashURL'] as String?;
       if (paymentID == null || bkashUrl == null) {
-        throw Exception('বিকাশ পেমেন্ট শুরু করতে সমস্যা হয়েছে।');
+        throw Exception(t(ref, 'bkashPaymentStartFailed'));
       }
 
       if (!mounted) return;
@@ -290,7 +292,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
         if (!mounted) return;
         if (result != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('পেমেন্ট বাতিল হয়েছে বা ব্যর্থ হয়েছে।')),
+            SnackBar(content: Text(t(ref, 'bkashPaymentCancelledOrFailed'))),
           );
         }
         return;
@@ -301,7 +303,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           .executeBkashPayment(result.paymentID);
       final qrCodeToken = executed['qrCodeToken'] as String?;
       if (qrCodeToken == null) {
-        throw Exception('পেমেন্ট ভেরিফাই করতে সমস্যা হয়েছে।');
+        throw Exception(t(ref, 'bkashPaymentVerifyFailed'));
       }
 
       if (!mounted) return;
@@ -338,7 +340,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E3A8A),
+                    color: context.textHigh,
                     height: 1.3,
                   ),
                 ),
@@ -348,7 +350,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.publicSans(
                     fontSize: 14,
-                    color: const Color(0xFF444651),
+                    color: context.textMed,
                     height: 1.4,
                   ),
                 ),
@@ -360,7 +362,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   controller: _nameCtrl,
                   style: GoogleFonts.publicSans(
                     fontSize: 16,
-                    color: const Color(0xFF131B2E),
+                    color: context.textHigh,
                   ),
                   decoration: _inputDecor('Enter your full name'),
                   validator: (v) =>
@@ -375,7 +377,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                   keyboardType: TextInputType.phone,
                   style: GoogleFonts.publicSans(
                     fontSize: 16,
-                    color: const Color(0xFF131B2E),
+                    color: context.textHigh,
                   ),
                   decoration: _inputDecor('e.g. +880 1712 345678'),
                   validator: (v) =>
@@ -392,8 +394,8 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: const Color(0xFFC5C5D3)),
+                      color: context.cardFill,
+                      border: Border.all(color: context.borderFill),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -403,9 +405,9 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                           onPressed: () => setState(
                             () => _personsCount = (_personsCount - 1).clamp(1, 999),
                           ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.remove,
-                            color: Color(0xFF1E3A8A),
+                            color: context.textHigh,
                             size: 20,
                           ),
                           padding: EdgeInsets.zero,
@@ -416,16 +418,16 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                           style: GoogleFonts.publicSans(
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF131B2E),
+                            color: context.textHigh,
                           ),
                         ),
                         IconButton(
                           onPressed: () => setState(
                             () => _personsCount = (_personsCount + 1).clamp(1, 999),
                           ),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.add,
-                            color: Color(0xFF1E3A8A),
+                            color: context.textHigh,
                             size: 20,
                           ),
                           padding: EdgeInsets.zero,
@@ -441,10 +443,10 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F3FF),
+                    color: context.cardFill2,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFFC5C5D3).withValues(alpha: 0.5),
+                      color: context.borderFill.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Row(
@@ -460,7 +462,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.7,
-                              color: const Color(0xFF444651),
+                              color: context.textMed,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -469,7 +471,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             style: GoogleFonts.publicSans(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E3A8A),
+                              color: context.textHigh,
                             ),
                           ),
                         ],
@@ -478,7 +480,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                         'Per person: ${Formatters.bdt(event.feePerPerson)}',
                         style: GoogleFonts.publicSans(
                           fontSize: 14,
-                          color: const Color(0xFF444651),
+                          color: context.textMed,
                         ),
                       ),
                     ],
@@ -491,16 +493,16 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                 DropdownButtonFormField<EventPaymentMethod>(
                   initialValue: _method,
                   isExpanded: true,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.expand_more,
-                    color: Color(0xFF444651),
+                    color: context.textMed,
                   ),
                   decoration: _inputDecor('Select a payment method'),
                   hint: Text(
                     'Select a payment method',
                     style: GoogleFonts.publicSans(
                       fontSize: 16,
-                      color: const Color(0xFF444651).withValues(alpha: 0.5),
+                      color: context.textMed.withValues(alpha: 0.5),
                     ),
                   ),
                   items: _methods
@@ -511,7 +513,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             m.label,
                             style: GoogleFonts.publicSans(
                               fontSize: 16,
-                              color: const Color(0xFF131B2E),
+                              color: context.textHigh,
                             ),
                           ),
                         ),
@@ -531,7 +533,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             : TextInputType.phone,
                     style: GoogleFonts.publicSans(
                       fontSize: 16,
-                      color: const Color(0xFF131B2E),
+                      color: context.textHigh,
                     ),
                     decoration: _inputDecor(
                       'Enter ${_senderLabel(_method!.id).toLowerCase()}',
@@ -564,7 +566,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             : '—',
                         style: GoogleFonts.publicSans(
                           fontSize: 16,
-                          color: const Color(0xFF131B2E),
+                          color: context.textHigh,
                         ),
                       ),
                     ),
@@ -608,7 +610,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
                             children: [
                               Text(
                                 _method?.id == _pgwMethodId
-                                    ? 'বিকাশ দিয়ে পে করুন'
+                                    ? t(ref, 'payWithBkash')
                                     : 'COMPLETE REGISTRATION',
                                 style: GoogleFonts.publicSans(
                                   fontSize: 14,
@@ -644,7 +646,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.7,
-            color: const Color(0xFF314156),
+            color: context.textMed,
           ),
         ),
       ),
@@ -656,22 +658,22 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       hintText: hint,
       hintStyle: GoogleFonts.publicSans(
         fontSize: 16,
-        color: const Color(0xFF444651).withValues(alpha: 0.5),
+        color: context.textMed.withValues(alpha: 0.6),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.cardFill,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFC5C5D3)),
+        borderSide: BorderSide(color: context.borderFill),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFC5C5D3)),
+        borderSide: BorderSide(color: context.borderFill),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFF00236F), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF316BF3), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -690,7 +692,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           width: double.infinity,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardFill,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFF316BF3), width: 1.5),
           ),
@@ -730,7 +732,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       child: DottedBorder(
         options: RoundedRectDottedBorderOptions(
           radius: const Radius.circular(12),
-          color: const Color(0xFFC5C5D3),
+          color: context.borderFill,
           strokeWidth: 2,
           dashPattern: const [6, 4],
         ),
@@ -738,22 +740,22 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
           height: 160,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardFill,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.cloud_upload_outlined,
                 size: 36,
-                color: Color(0xFF444651),
+                color: context.textMed,
               ),
               const SizedBox(height: 12),
               Text(
                 'Click to upload or drag and drop',
                 style: GoogleFonts.publicSans(
-                  color: const Color(0xFF131B2E),
+                  color: context.textHigh,
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
                 ),
@@ -762,7 +764,7 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
               Text(
                 'SVG, PNG, JPG or GIF (max. 5MB)',
                 style: GoogleFonts.publicSans(
-                  color: const Color(0xFF444651),
+                  color: context.textMed,
                   fontSize: 14,
                 ),
               ),
@@ -793,26 +795,35 @@ class _SuccessView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: const BoxDecoration(
-                color: Color(0xFF2170E4),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: Colors.white,
-                size: 36,
+            SizedBox(
+              width: 150,
+              height: 150,
+              child: Lottie.asset(
+                'assets/animations/Success.json',
+                repeat: false,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2170E4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 6),
             Text(
               t(ref, 'registrationSubmitted'),
               style: GoogleFonts.publicSans(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
-                color: const Color(0xFF131B2E),
+                color: context.textHigh,
               ),
             ),
             const SizedBox(height: 10),
@@ -820,7 +831,7 @@ class _SuccessView extends ConsumerWidget {
               t(ref, 'registrationPendingMsg'),
               textAlign: TextAlign.center,
               style: GoogleFonts.publicSans(
-                color: const Color(0xFF444651),
+                color: context.textMed,
                 fontSize: 14,
                 height: 1.4,
               ),
@@ -829,16 +840,16 @@ class _SuccessView extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F3FF),
+                color: context.cardFill2,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFC5C5D3)),
+                border: Border.all(color: context.borderFill),
               ),
               child: Text(
                 phone,
                 style: GoogleFonts.publicSans(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
-                  color: const Color(0xFF1E3A8A),
+                  color: context.textHigh,
                 ),
               ),
             ),

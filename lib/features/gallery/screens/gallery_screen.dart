@@ -6,7 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../core/l10n/locale_provider.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../models/site_settings.dart';
@@ -106,12 +106,12 @@ class _GalleryTile extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: image.url,
                 fit: BoxFit.cover,
-                placeholder: (_, _) => Container(color: AppColors.surface2),
+                placeholder: (_, _) => Container(color: context.cardFill2),
                 errorWidget: (_, _, _) => Container(
-                  color: AppColors.surface2,
-                  child: const Icon(
+                  color: context.cardFill2,
+                  child: Icon(
                     Icons.broken_image_outlined,
-                    color: AppColors.textSecondary,
+                    color: context.textMed,
                   ),
                 ),
               ),
@@ -239,15 +239,15 @@ class _EmptyGallery extends ConsumerWidget {
           padding: const EdgeInsets.only(top: 120),
           child: Column(
             children: [
-              const Icon(
+              Icon(
                 Icons.photo_library_outlined,
                 size: 48,
-                color: AppColors.textSecondary,
+                color: context.textMed,
               ),
               const SizedBox(height: 12),
               Text(
                 t(ref, 'noGalleryImages'),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.textMed),
               ),
             ],
           ),

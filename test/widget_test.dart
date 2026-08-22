@@ -9,8 +9,11 @@ import 'package:sharfian_app/features/home/providers/public_stats_provider.dart'
 import 'package:sharfian_app/features/settings/providers/site_settings_provider.dart';
 import 'package:sharfian_app/models/site_settings.dart';
 
+import 'helpers/secure_storage_mock.dart';
+
 void main() {
   testWidgets('App boots and shows the home screen', (WidgetTester tester) async {
+    mockSecureStorage();
     SharedPreferences.setMockInitialValues({});
     await LocalStorage.init();
     await BundledTranslations.load();

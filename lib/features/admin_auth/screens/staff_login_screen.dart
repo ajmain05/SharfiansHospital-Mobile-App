@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../providers/admin_session_provider.dart';
 
 class StaffLoginScreen extends ConsumerStatefulWidget {
@@ -53,13 +54,13 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
     final isLoading = ref.watch(adminSessionProvider).isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.bgFill,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: context.textHigh),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -100,10 +101,10 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                 height: 84,
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.85),
+                                  color: context.cardFill.withValues(alpha: 0.85),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+                                    color: context.borderFill.withValues(alpha: 0.5),
                                     width: 1.5,
                                   ),
                                   boxShadow: [
@@ -138,7 +139,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                             style: GoogleFonts.libreCaslonText(
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: context.textHigh,
                               height: 1.1,
                             ),
                           ),
@@ -179,10 +180,10 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: context.cardFill,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: const Color(0xFFE2E8F0),
+                            color: context.borderFill,
                             width: 1.5,
                           ),
                           boxShadow: [
@@ -214,7 +215,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                     style: GoogleFonts.publicSans(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF0F172A),
+                                      color: context.textHigh,
                                     ),
                                   ),
                                 ],
@@ -227,7 +228,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                 style: GoogleFonts.publicSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF334155),
+                                  color: context.textMed,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -237,25 +238,25 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                 style: GoogleFonts.publicSans(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF0F172A),
+                                  color: context.textHigh,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'staff@sharfians.edu',
                                   hintStyle: GoogleFonts.publicSans(
-                                    color: const Color(0xFF94A3B8),
+                                    color: context.textMed,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  prefixIcon: const Icon(
+                                  prefixIcon: Icon(
                                     Icons.email_outlined,
-                                    color: Color(0xFF475569),
+                                    color: context.textMed,
                                     size: 20,
                                   ),
                                   contentPadding:
                                       const EdgeInsets.symmetric(vertical: 10),
-                                  enabledBorder: const UnderlineInputBorder(
+                                  enabledBorder: UnderlineInputBorder(
                                     borderSide:
-                                        BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                                        BorderSide(color: context.borderFill, width: 1.5),
                                   ),
                                   focusedBorder: const UnderlineInputBorder(
                                     borderSide: BorderSide(
@@ -277,7 +278,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                 style: GoogleFonts.publicSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF334155),
+                                  color: context.textMed,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -287,18 +288,18 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                 style: GoogleFonts.publicSans(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF0F172A),
+                                  color: context.textHigh,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: '••••••••',
                                   hintStyle: GoogleFonts.publicSans(
-                                    color: const Color(0xFF94A3B8),
+                                    color: context.textMed,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  prefixIcon: const Icon(
+                                  prefixIcon: Icon(
                                     Icons.lock_outline,
-                                    color: Color(0xFF475569),
+                                    color: context.textMed,
                                     size: 20,
                                   ),
                                   suffixIcon: IconButton(
@@ -306,7 +307,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                       _obscurePassword
                                           ? Icons.visibility_off_outlined
                                           : Icons.visibility_outlined,
-                                      color: const Color(0xFF475569),
+                                      color: context.textMed,
                                       size: 20,
                                     ),
                                     onPressed: () {
@@ -318,9 +319,9 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                   ),
                                   contentPadding:
                                       const EdgeInsets.symmetric(vertical: 10),
-                                  enabledBorder: const UnderlineInputBorder(
+                                  enabledBorder: UnderlineInputBorder(
                                     borderSide:
-                                        BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                                        BorderSide(color: context.borderFill, width: 1.5),
                                   ),
                                   focusedBorder: const UnderlineInputBorder(
                                     borderSide: BorderSide(
@@ -364,7 +365,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                       style: GoogleFonts.publicSans(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF334155),
+                                        color: context.textMed,
                                       ),
                                     ),
                                   ),
@@ -400,7 +401,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                       Color(0xFF2563EB),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(100),
+                                  borderRadius: BorderRadius.circular(16),
                                   boxShadow: const [
                                     BoxShadow(
                                       color: Color(0x33316BF3),
@@ -415,7 +416,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                     shadowColor: Colors.transparent,
                                     shape: RoundedRectangleBorder(
                                       borderRadius:
-                                          BorderRadius.circular(100),
+                                          BorderRadius.circular(16),
                                     ),
                                   ),
                                   onPressed: isLoading ? null : _submit,
@@ -444,10 +445,10 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.lock_outline,
                                     size: 14,
-                                    color: Color(0xFF64748B),
+                                    color: context.textMed,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -456,7 +457,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 1.0,
-                                      color: const Color(0xFF64748B),
+                                      color: context.textMed,
                                     ),
                                   ),
                                 ],

@@ -61,9 +61,31 @@ class EventsRepository {
     return EventRegistrationSummary.fromJson(res.data as Map<String, dynamic>);
   }
 
-  Future<List<EventRegistrationSummary>> checkByPhone(String phone) async {
-    final res = await _api.get('/event-registrations/check-phone/$phone');
-    if (!res.success || res.data is! List) return const [];
+  /// Step 1 of the phone-based status check: request an SMS verification
+  /// code. Throws [ApiException] (e.g. rate-limited) on failure.
+  Future<void> requestCheckPhoneOtp(String phone) async {
+    final res = await _api.post('/event-registrations/check-phone/request-otp', {
+      'phone': phone,
+    });
+    if (!res.success) {
+      throw ApiException(res.error ?? 'Failed to send code', statusCode: res.statusCode);
+    }
+  }
+
+  /// Step 2: verify the code and, if correct, return the registrations for
+  /// that phone number (including the live QR ticket for approved ones).
+  Future<List<EventRegistrationSummary>> verifyCheckPhoneOtp(
+    String phone,
+    String code,
+  ) async {
+    final res = await _api.post('/event-registrations/check-phone/verify-otp', {
+      'phone': phone,
+      'code': code,
+    });
+    if (!res.success) {
+      throw ApiException(res.error ?? 'Verification failed', statusCode: res.statusCode);
+    }
+    if (res.data is! List) return const [];
     return (res.data as List)
         .map(
           (e) => EventRegistrationSummary.fromJson(e as Map<String, dynamic>),

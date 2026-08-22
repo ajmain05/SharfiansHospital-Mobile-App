@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../data/scanner_repository.dart';
 
 final scannerRepoProvider = Provider((ref) => ScannerRepository());
@@ -100,28 +101,29 @@ class _EventScannerScreenState extends ConsumerState<EventScannerScreen> {
         final message = result['message'] as String?;
         final data = result['data'] as Map<String, dynamic>?;
 
+        final isDark = context.isDark;
         Color bgColor;
         Color iconColor;
         IconData iconData;
 
         switch (scanResult) {
           case 'SUCCESS':
-            bgColor = Colors.green.shade50;
+            bgColor = isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50;
             iconColor = Colors.green;
             iconData = Icons.check_circle;
             break;
           case 'ALREADY_SCANNED':
-            bgColor = Colors.orange.shade50;
+            bgColor = isDark ? Colors.orange.withValues(alpha: 0.15) : Colors.orange.shade50;
             iconColor = Colors.orange;
             iconData = Icons.warning;
             break;
           case 'NOT_APPROVED':
-            bgColor = Colors.red.shade50;
+            bgColor = isDark ? Colors.red.withValues(alpha: 0.15) : Colors.red.shade50;
             iconColor = Colors.red;
             iconData = Icons.block;
             break;
           default:
-            bgColor = Colors.pink.shade50;
+            bgColor = isDark ? Colors.pink.withValues(alpha: 0.15) : Colors.pink.shade50;
             iconColor = Colors.pink;
             iconData = Icons.cancel;
         }
@@ -151,17 +153,17 @@ class _EventScannerScreenState extends ConsumerState<EventScannerScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.cardFill,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow('Name', data['name']),
+                      _buildDetailRow(context, 'Name', data['name']),
                       const Divider(),
-                      _buildDetailRow('Persons', '${data['personsCount']}'),
+                      _buildDetailRow(context, 'Persons', '${data['personsCount']}'),
                       if (data['event'] != null) ...[
                         const Divider(),
-                        _buildDetailRow('Event', data['event']['title']),
+                        _buildDetailRow(context, 'Event', data['event']['title']),
                       ],
                     ],
                   ),
@@ -194,13 +196,13 @@ class _EventScannerScreenState extends ConsumerState<EventScannerScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, dynamic value) {
+  Widget _buildDetailRow(BuildContext context, String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+          Text(label, style: TextStyle(color: context.textMed, fontWeight: FontWeight.w500)),
           Text(value.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),

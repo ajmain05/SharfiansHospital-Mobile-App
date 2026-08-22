@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/investor_category.dart';
 import '../../../core/widgets/language_toggle_button.dart';
@@ -47,9 +49,41 @@ class _InvestorRegistrationScreenState
   String? _eduCategory;
 
   static const _degreeOptions = {
-    'Madrasa': ['Ponchom (5th)', 'Oshtom (8th)', 'Dakhil', 'Alim', 'Fazil', 'Kamil', 'Dawra-e-Hadith', 'Takhassus / Mufti', 'PhD'],
-    'General': ['SSC', 'HSC', 'Honours / Degree', 'BSc / BBA', 'MSc / MBA', 'Masters', 'MPhil', 'PhD', 'Post-Doctorate'],
-    'Medical': ['MBBS', 'BDS', 'MD', 'MS', 'FCPS', 'MCPS', 'MRCP', 'FRCS', 'Diploma', 'MPhil (Medical)', 'MPH']
+    'Madrasa': [
+      'Ponchom (5th)',
+      'Oshtom (8th)',
+      'Dakhil',
+      'Alim',
+      'Fazil',
+      'Kamil',
+      'Dawra-e-Hadith',
+      'Takhassus / Mufti',
+      'PhD',
+    ],
+    'General': [
+      'SSC',
+      'HSC',
+      'Honours / Degree',
+      'BSc / BBA',
+      'MSc / MBA',
+      'Masters',
+      'MPhil',
+      'PhD',
+      'Post-Doctorate',
+    ],
+    'Medical': [
+      'MBBS',
+      'BDS',
+      'MD',
+      'MS',
+      'FCPS',
+      'MCPS',
+      'MRCP',
+      'FRCS',
+      'Diploma',
+      'MPhil (Medical)',
+      'MPH',
+    ],
   };
 
   @override
@@ -86,18 +120,53 @@ class _InvestorRegistrationScreenState
   num get _share => num.tryParse(_shareCtrl.text) ?? 0;
   num get _monthlyPayment => _share > 0 ? (_share / 12).ceil() : 0;
 
+  // The submit button lives in a pinned `Scaffold.bottomSheet`, which a
+  // default/theme-floating SnackBar doesn't know to avoid — it renders right
+  // on top of the button. Explicit margin lifts it clear.
+  void _showErrorSnackBar(BuildContext context, String message) {
+    final colorScheme = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: MediaQuery.of(context).padding.bottom + 100,
+        ),
+        backgroundColor: colorScheme.error,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _submit(num minShareAmount) async {
     if (!_formKey.currentState!.validate()) return;
     if (_share < minShareAmount) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            t(
-              ref,
-              'minimumShareError',
-              params: {'amount': Formatters.number(minShareAmount)},
-            ),
-          ),
+      _showErrorSnackBar(
+        context,
+        t(
+          ref,
+          'minimumShareError',
+          params: {'amount': Formatters.number(minShareAmount)},
         ),
       );
       return;
@@ -137,9 +206,7 @@ class _InvestorRegistrationScreenState
       setState(() => _submitted = result);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      _showErrorSnackBar(context, e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -165,7 +232,7 @@ class _InvestorRegistrationScreenState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // surface
+      backgroundColor: context.bgFill, // surface
       body: Column(
         children: [
           Expanded(
@@ -175,7 +242,12 @@ class _InvestorRegistrationScreenState
                   // Brand Header
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 80),
+                    padding: const EdgeInsets.only(
+                      top: 60,
+                      left: 24,
+                      right: 24,
+                      bottom: 80,
+                    ),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Color(0xFF316BF3), Color(0xFF1E40AF)],
@@ -195,7 +267,10 @@ class _InvestorRegistrationScreenState
                           children: [
                             IconButton(
                               onPressed: () => context.go('/'),
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
                               padding: EdgeInsets.zero,
                               alignment: Alignment.centerLeft,
                             ),
@@ -239,22 +314,28 @@ class _InvestorRegistrationScreenState
                               onTap: () async {
                                 final url = Uri.parse(tutorialVideoUrl);
                                 if (await canLaunchUrl(url)) {
-                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
                                 } else if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Could not open video URL.')),
+                                  _showErrorSnackBar(
+                                    context,
+                                    'Could not open video URL.',
                                   );
                                 }
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: context.cardFill,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: context.borderFill),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.04),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.04,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
@@ -265,32 +346,37 @@ class _InvestorRegistrationScreenState
                                     Container(
                                       width: 48,
                                       height: 48,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFEFF6FF), // blue-50
+                                      decoration: BoxDecoration(
+                                        color: context.primaryTint,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.play_arrow, color: Color(0xFF316BF3), size: 28),
+                                      child: const Icon(
+                                        Icons.play_arrow,
+                                        color: Color(0xFF316BF3),
+                                        size: 28,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'How to Register?',
                                             style: GoogleFonts.libreCaslonText(
                                               fontSize: 18,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0F172A),
+                                              color: context.textHigh,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             t(ref, 'howToRegisterWatchVideo'),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w500,
-                                              color: Color(0xFF1E293B),
+                                              color: context.textHigh,
                                             ),
                                           ),
                                         ],
@@ -311,7 +397,8 @@ class _InvestorRegistrationScreenState
                                 // Entity Toggle
                                 _TypeToggle(
                                   value: _investorType,
-                                  onChanged: (v) => setState(() => _investorType = v),
+                                  onChanged: (v) =>
+                                      setState(() => _investorType = v),
                                 ),
                                 const SizedBox(height: 24),
 
@@ -368,32 +455,24 @@ class _InvestorRegistrationScreenState
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      t(ref, 'Education Background'),
+                                      t(ref, 'educationBackground'),
                                       style: GoogleFonts.publicSans(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF475569),
+                                        color: context.textMed,
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    DropdownButtonFormField<String>(
+                                    _PickerFormField(
+                                      label: t(ref, 'educationCategory'),
+                                      icon: Icons.category_outlined,
                                       value: _eduCategory,
-                                      decoration: InputDecoration(
-                                        labelText: t(ref, 'Education Category'),
-                                        prefixIcon: const Icon(Icons.category_outlined, color: Color(0xFF64748B)),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                        ),
-                                        filled: true,
-                                        fillColor: const Color(0xFFF8FAFC),
-                                      ),
-                                      items: const [
-                                        DropdownMenuItem(value: 'Madrasa', child: Text('Madrasa Education')),
-                                        DropdownMenuItem(value: 'General', child: Text('General Education')),
-                                        DropdownMenuItem(value: 'Medical', child: Text('Medical Degrees')),
-                                        DropdownMenuItem(value: 'Other', child: Text('Other')),
-                                      ],
+                                      options: const {
+                                        'Madrasa': 'Madrasa Education',
+                                        'General': 'General Education',
+                                        'Medical': 'Medical Degrees',
+                                        'Other': 'Other',
+                                      },
                                       onChanged: (val) {
                                         setState(() {
                                           _eduCategory = val;
@@ -402,25 +481,22 @@ class _InvestorRegistrationScreenState
                                       },
                                     ),
                                     const SizedBox(height: 16),
-                                    if (_eduCategory != null && _eduCategory != 'Other')
-                                      DropdownButtonFormField<String>(
-                                        value: _educationLevelCtrl.text.isEmpty ? null : _educationLevelCtrl.text,
-                                        decoration: InputDecoration(
-                                          labelText: t(ref, 'Degree / Level'),
-                                          prefixIcon: const Icon(Icons.school_outlined, color: Color(0xFF64748B)),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                          ),
-                                          filled: true,
-                                          fillColor: const Color(0xFFF8FAFC),
-                                        ),
-                                        items: _degreeOptions[_eduCategory]!
-                                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                            .toList(),
+                                    if (_eduCategory != null &&
+                                        _eduCategory != 'Other')
+                                      _PickerFormField(
+                                        label: t(ref, 'degreeLevel'),
+                                        icon: Icons.school_outlined,
+                                        value: _educationLevelCtrl.text.isEmpty
+                                            ? null
+                                            : _educationLevelCtrl.text,
+                                        options: {
+                                          for (final e
+                                              in _degreeOptions[_eduCategory]!)
+                                            e: e,
+                                        },
                                         onChanged: (val) {
                                           setState(() {
-                                            _educationLevelCtrl.text = val ?? '';
+                                            _educationLevelCtrl.text = val;
                                           });
                                         },
                                       )
@@ -442,39 +518,55 @@ class _InvestorRegistrationScreenState
                                     const SizedBox(height: 16),
                                     Container(
                                       padding: const EdgeInsets.only(top: 24),
-                                      decoration: const BoxDecoration(
-                                        border: Border(top: BorderSide(color: Color(0xFFE2E8F0), style: BorderStyle.solid)),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          top: BorderSide(
+                                            color: context.borderFill,
+                                            style: BorderStyle.solid,
+                                          ),
+                                        ),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Investment Details',
                                             style: GoogleFonts.libreCaslonText(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0F172A),
+                                              color: context.textHigh,
                                             ),
                                           ),
                                           const SizedBox(height: 12),
                                           Container(
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFEFF6FF), // blue-50
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: const Color(0xFFBFDBFE)), // blue-200
+                                              color: context.primaryTint,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color:
+                                                    context.primaryTintBorder,
+                                              ),
                                             ),
                                             child: Row(
                                               children: [
-                                                const Icon(Icons.info_outline, color: Color(0xFF3B82F6), size: 20),
+                                                const Icon(
+                                                  Icons.info_outline,
+                                                  color: Color(0xFF3B82F6),
+                                                  size: 20,
+                                                ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
                                                   child: Text(
                                                     'Minimum required investment is ${Formatters.bdt(minShareAmount)}',
                                                     style: GoogleFonts.publicSans(
                                                       fontSize: 13,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: const Color(0xFF1E3A8A), // blue-900
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: context
+                                                          .textHigh, // blue-900
                                                     ),
                                                   ),
                                                 ),
@@ -553,26 +645,42 @@ class _InvestorRegistrationScreenState
                                 // Charity Section
                                 _EditorialSection(
                                   title: 'Charitable Contribution',
-                                  bgColor: const Color(0xFFFAFAF9),
-                                  borderColor: const Color(0xFFE7E5E4),
+                                  bgColor: context.isDark
+                                      ? context.cardFill2
+                                      : const Color(0xFFFAFAF9),
+                                  borderColor: context.isDark
+                                      ? context.borderFill
+                                      : const Color(0xFFE7E5E4),
                                   headerContent: [
                                     Container(
                                       width: 48,
                                       height: 48,
                                       margin: const EdgeInsets.only(bottom: 16),
                                       decoration: BoxDecoration(
-                                        color: Colors.red.shade50,
+                                        color: context.isDark
+                                            ? Colors.red.withValues(alpha: 0.15)
+                                            : Colors.red.shade50,
                                         borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: Colors.red.shade100),
+                                        border: Border.all(
+                                          color: context.isDark
+                                              ? Colors.red.withValues(
+                                                  alpha: 0.3,
+                                                )
+                                              : Colors.red.shade100,
+                                        ),
                                       ),
-                                      child: Icon(Icons.volunteer_activism, color: Colors.red.shade400, size: 24),
+                                      child: Icon(
+                                        Icons.volunteer_activism,
+                                        color: Colors.red.shade400,
+                                        size: 24,
+                                      ),
                                     ),
                                     Text(
                                       t(ref, 'charityDesc'),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
-                                        color: Color(0xFF475569),
+                                        color: context.textMed,
                                         height: 1.5,
                                       ),
                                     ),
@@ -595,7 +703,52 @@ class _InvestorRegistrationScreenState
                                   share: _share,
                                   monthlyPayment: _monthlyPayment,
                                 ),
-                                const SizedBox(height: 120), // Padding for the bottom nav
+                                const SizedBox(height: 24),
+                                SafeArea(
+                                  top: false,
+                                  child: GestureDetector(
+                                    onTap: _loading
+                                        ? null
+                                        : () => _submit(minShareAmount),
+                                    child: Container(
+                                      height: 52,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF316BF3),
+                                        borderRadius: BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFF316BF3,
+                                            ).withValues(alpha: 0.3),
+                                            blurRadius: 16,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: _loading
+                                            ? const SizedBox(
+                                                height: 22,
+                                                width: 22,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : Text(
+                                                'Become an Investor',
+                                                style: GoogleFonts.publicSans(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -609,54 +762,6 @@ class _InvestorRegistrationScreenState
           ),
         ],
       ),
-
-      // Submit Button (Pinned Bottom)
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
-          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        ),
-        child: SafeArea(
-          child: GestureDetector(
-            onTap: _loading ? null : () => _submit(minShareAmount),
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFF316BF3),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF316BF3).withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: _loading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Become an Investor',
-                        style: GoogleFonts.publicSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -666,16 +771,16 @@ class _EditorialSection extends StatelessWidget {
   final IconData? icon;
   final List<Widget> children;
   final List<Widget>? headerContent;
-  final Color bgColor;
-  final Color borderColor;
+  final Color? bgColor;
+  final Color? borderColor;
 
   const _EditorialSection({
     required this.title,
     required this.children,
     this.icon,
     this.headerContent,
-    this.bgColor = Colors.white,
-    this.borderColor = Colors.transparent,
+    this.bgColor,
+    this.borderColor,
   });
 
   @override
@@ -684,9 +789,9 @@ class _EditorialSection extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: bgColor ?? context.cardFill,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: borderColor ?? Colors.transparent),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -716,7 +821,7 @@ class _EditorialSection extends StatelessWidget {
                 style: GoogleFonts.libreCaslonText(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: context.textHigh,
                 ),
               ),
               const SizedBox(height: 24),
@@ -724,6 +829,121 @@ class _EditorialSection extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A tappable field styled like the app's rounded/filled inputs that opens a
+/// bottom-sheet picker instead of the stock (unstyled) dropdown menu.
+class _PickerFormField extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final String? value;
+  final Map<String, String> options; // internal value -> display label
+  final ValueChanged<String> onChanged;
+
+  const _PickerFormField({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  Future<void> _openPicker(BuildContext context) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final cs = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Text(
+                    label,
+                    style: GoogleFonts.publicSans(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: options.entries.map((entry) {
+                      final isSelected = entry.key == value;
+                      return ListTile(
+                        onTap: () => Navigator.of(sheetContext).pop(entry.key),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        ),
+                        title: Text(
+                          entry.value,
+                          style: GoogleFonts.publicSans(
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            fontSize: 16,
+                            color: isSelected ? cs.primary : cs.onSurface,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                color: cs.primary,
+                              )
+                            : null,
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (selected != null) onChanged(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _openPicker(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: context.textMed),
+          suffixIcon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: context.textMed,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderFill),
+          ),
+          filled: true,
+          fillColor: context.cardFill2,
+        ),
+        child: Text(
+          value != null ? (options[value] ?? value!) : '',
+          style: GoogleFonts.publicSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: context.textHigh,
+          ),
+        ),
       ),
     );
   }
@@ -792,7 +1012,7 @@ class _BespokeFieldState extends State<_BespokeField> {
                 size: 18,
                 color: _isFocused
                     ? const Color(0xFF316BF3)
-                    : const Color(0xFF475569), // slate-600
+                    : context.textMed, // slate-600
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -805,7 +1025,9 @@ class _BespokeFieldState extends State<_BespokeField> {
                         fontWeight: FontWeight.w800,
                         color: _isFocused
                             ? const Color(0xFF316BF3)
-                            : (widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF0F172A)), // slate-900 crisp
+                            : (widget.isPrimary
+                                  ? const Color(0xFF316BF3)
+                                  : context.textHigh), // slate-900 crisp
                       ),
                     ),
                     if (widget.isOptional)
@@ -815,7 +1037,7 @@ class _BespokeFieldState extends State<_BespokeField> {
                           '(Optional)',
                           style: GoogleFonts.publicSans(
                             fontSize: 12,
-                            color: const Color(0xFF64748B),
+                            color: context.textMed,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -834,18 +1056,26 @@ class _BespokeFieldState extends State<_BespokeField> {
             style: GoogleFonts.publicSans(
               fontSize: widget.isLarge ? 20 : 15,
               fontWeight: widget.isLarge ? FontWeight.w600 : FontWeight.w500,
-              color: widget.isPrimary ? const Color(0xFF316BF3) : const Color(0xFF0F172A),
+              color: widget.isPrimary
+                  ? const Color(0xFF316BF3)
+                  : context.textHigh,
             ),
             decoration: InputDecoration(
               filled: false,
               hintText: widget.placeholder,
               hintStyle: GoogleFonts.publicSans(
-                color: widget.isPrimary ? const Color(0xFF316BF3).withValues(alpha: 0.5) : const Color(0xFF64748B), // slate-500
+                color: widget.isPrimary
+                    ? const Color(0xFF316BF3).withValues(alpha: 0.5)
+                    : context.textMed, // slate-500
                 fontSize: widget.isLarge ? 20 : 15,
                 fontWeight: widget.isLarge ? FontWeight.w600 : FontWeight.w500,
               ),
-              border: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E8F0))),
-              enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E8F0))),
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.borderFill),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: context.borderFill),
+              ),
               focusedBorder: const UnderlineInputBorder(
                 borderSide: BorderSide(color: Color(0xFF316BF3), width: 2),
               ),
@@ -871,21 +1101,39 @@ class _TypeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: context.borderFill)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _toggleButton('Individual', 'person', 'Individual', value == 'Individual'),
+          _toggleButton(
+            context,
+            'Individual',
+            'person',
+            'Individual',
+            value == 'Individual',
+          ),
           const SizedBox(width: 32),
-          _toggleButton('Organization', 'domain', 'Organization', value == 'Organization'),
+          _toggleButton(
+            context,
+            'Organization',
+            'domain',
+            'Organization',
+            value == 'Organization',
+          ),
         ],
       ),
     );
   }
 
-  Widget _toggleButton(String type, String iconName, String label, bool isSelected) {
+  Widget _toggleButton(
+    BuildContext context,
+    String type,
+    String iconName,
+    String label,
+    bool isSelected,
+  ) {
     return GestureDetector(
       onTap: () => onChanged(type),
       child: Stack(
@@ -897,7 +1145,7 @@ class _TypeToggle extends StatelessWidget {
               children: [
                 Icon(
                   iconName == 'person' ? Icons.person : Icons.domain,
-                  color: isSelected ? const Color(0xFF316BF3) : const Color(0xFF64748B),
+                  color: isSelected ? const Color(0xFF316BF3) : context.textMed,
                   size: 18,
                 ),
                 const SizedBox(width: 6),
@@ -906,7 +1154,9 @@ class _TypeToggle extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? const Color(0xFF316BF3) : const Color(0xFF64748B),
+                    color: isSelected
+                        ? const Color(0xFF316BF3)
+                        : context.textMed,
                   ),
                 ),
               ],
@@ -917,10 +1167,7 @@ class _TypeToggle extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                height: 2,
-                color: const Color(0xFF316BF3),
-              ),
+              child: Container(height: 2, color: const Color(0xFF316BF3)),
             ),
         ],
       ),
@@ -943,9 +1190,9 @@ class _LiveCalculatorCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardFill,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: context.borderFill),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -962,9 +1209,9 @@ class _LiveCalculatorCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: context.primaryTint,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                  border: Border.all(color: context.primaryTintBorder),
                 ),
                 child: const Icon(
                   Icons.query_stats,
@@ -978,7 +1225,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
                 style: GoogleFonts.libreCaslonText(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: context.textHigh,
                 ),
               ),
             ],
@@ -989,7 +1236,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
             style: GoogleFonts.publicSans(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
+              color: context.textHigh,
             ),
           ),
           const SizedBox(height: 4),
@@ -1003,10 +1250,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Container(
-            height: 1,
-            color: const Color(0xFFE2E8F0),
-          ),
+          Container(height: 1, color: context.borderFill),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -1019,7 +1263,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       style: GoogleFonts.publicSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: context.textHigh,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1028,7 +1272,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       style: GoogleFonts.publicSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: context.textHigh,
                       ),
                     ),
                   ],
@@ -1043,7 +1287,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       style: GoogleFonts.publicSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: context.textHigh,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1052,7 +1296,7 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       style: GoogleFonts.publicSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
+                        color: context.textHigh,
                       ),
                     ),
                   ],
@@ -1069,15 +1313,24 @@ class _LiveCalculatorCard extends ConsumerWidget {
                 style: GoogleFonts.publicSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+                  color: context.textHigh,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5), // emerald-50
+                  color: context.isDark
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD1FAE5)), // emerald-100
+                  border: Border.all(
+                    color: context.isDark
+                        ? Colors.green.withValues(alpha: 0.3)
+                        : const Color(0xFFD1FAE5),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1129,210 +1382,315 @@ class _SuccessView extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.bgFill,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardFill,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 30,
-                    offset: const Offset(0, 8),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF34D399),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+                  // Header
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Lottie.asset(
+                          'assets/animations/Success.json',
+                          repeat: false,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF316BF3),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF316BF3,
+                                      ).withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t(ref, 'registrationSuccessful'),
+                        style: GoogleFonts.libreCaslonText(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: context.textHigh,
+                          letterSpacing: -0.3,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t(ref, 'registrationSuccessSubtitle'),
+                        style: GoogleFonts.publicSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: context.textHigh,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    t(ref, 'registrationSuccessful'),
-                    style: GoogleFonts.libreCaslonText(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+                  // Digital Investor Card
                   Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF316BF3), Color(0xFF1E40AF)],
+                        colors: [Color(0xFF316BF3), Color(0xFF1E3A8A)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF316BF3).withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t(ref, 'yourInvestorId'),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          (submitted['investor_id'] ?? '').toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          height: 1,
-                          color: Colors.white.withValues(alpha: 0.2),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                               children: [
+                                Icon(
+                                  Icons.badge_rounded,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Monthly',
+                                  t(ref, 'digitalInvestorCard').toUpperCase(),
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  Formatters.bdt(submitted['monthly_payment'] as num?),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.2,
                                   ),
                                 ),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                            const SizedBox(height: 16),
+                            Text(
+                              t(ref, 'yourInvestorId'),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                (submitted['status'] ?? '').toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 28,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  (submitted['investor_id'] ?? '').toString(),
+                                  maxLines: 1,
+                                  style: GoogleFonts.robotoMono(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            Container(
+                              height: 1,
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Monthly',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      Formatters.bdt(
+                                        submitted['monthly_payment'] as num?,
+                                      ),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    (submitted['status'] ?? '')
+                                        .toString()
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+                  // Info Note
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFDBEAFE)),
+                      color: context.primaryTint,
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, color: Color(0xFF316BF3), size: 20),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(
+                            Icons.info_outline,
+                            color: Color(0xFF316BF3),
+                            size: 20,
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             helpText,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF1E3A8A),
-                              fontWeight: FontWeight.w500,
-                              height: 1.5,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: context.textHigh,
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
+                  // Action Buttons
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
+                        child: OutlinedButton.icon(
                           onPressed: onRegisterAnother,
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(
+                              color: context.borderFill,
+                              width: 2,
+                            ),
                           ),
-                          child: Text(
+                          icon: Icon(
+                            Icons.person_add_alt_1_rounded,
+                            size: 16,
+                            color: context.textHigh,
+                          ),
+                          label: Text(
                             t(ref, 'registerAnother'),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF475569),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: context.textHigh,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           onPressed: () => context.go('/'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF316BF3),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
                           ),
-                          child: Text(
+                          icon: const Icon(
+                            Icons.home_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          label: Text(
                             t(ref, 'goHome'),
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),

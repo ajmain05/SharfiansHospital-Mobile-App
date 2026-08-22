@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/adaptive_colors.dart';
 import '../data/admin_dashboard_repository.dart';
 
 class StaffApprovalsScreen extends ConsumerStatefulWidget {
@@ -128,7 +129,7 @@ class _StaffApprovalsScreenState extends ConsumerState<StaffApprovalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: context.bgFill,
       appBar: AppBar(
         title: const Text('Pending Approvals'),
       ),
@@ -139,7 +140,7 @@ class _StaffApprovalsScreenState extends ConsumerState<StaffApprovalsScreen> {
                 // Event Selector
                 if (events.isNotEmpty)
                   Container(
-                    color: Colors.white,
+                    color: context.cardFill,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: DropdownButton<String>(
                       isExpanded: true,
@@ -165,7 +166,7 @@ class _StaffApprovalsScreenState extends ConsumerState<StaffApprovalsScreen> {
                   child: isLoadingRegs
                       ? const Center(child: CircularProgressIndicator())
                       : registrations.isEmpty
-                          ? const Center(child: Text('No pending registrations.', style: TextStyle(fontSize: 16, color: Colors.grey)))
+                          ? Center(child: Text('No pending registrations.', style: TextStyle(fontSize: 16, color: context.textMed)))
                           : ListView.separated(
                               padding: const EdgeInsets.all(16),
                               itemCount: registrations.length,
@@ -177,9 +178,9 @@ class _StaffApprovalsScreenState extends ConsumerState<StaffApprovalsScreen> {
                                 return Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.cardFill,
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey.shade200),
+                                    border: Border.all(color: context.borderFill),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,12 +272,12 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: Colors.grey.shade600),
+          Icon(icon, size: 14, color: context.textMed),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 13, color: context.textMed),
             ),
           ),
         ],

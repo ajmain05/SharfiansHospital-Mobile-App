@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import '../../../core/l10n/locale_provider.dart';
 
 /// What the bKash checkout resolved to, parsed from the callback URL's query
 /// params (`?paymentID=...&status=success|cancel|failure|declined`) — same
@@ -18,7 +21,7 @@ class BkashCheckoutResult {
 /// the callback page is meant for a browser, not this app, and everything
 /// it would do (call `/bkash/execute-payment`) is done natively by the
 /// caller once this screen pops with a [BkashCheckoutResult].
-class BkashCheckoutScreen extends StatefulWidget {
+class BkashCheckoutScreen extends ConsumerStatefulWidget {
   final String bkashUrl;
   final String callbackUrlPrefix;
 
@@ -29,10 +32,10 @@ class BkashCheckoutScreen extends StatefulWidget {
   });
 
   @override
-  State<BkashCheckoutScreen> createState() => _BkashCheckoutScreenState();
+  ConsumerState<BkashCheckoutScreen> createState() => _BkashCheckoutScreenState();
 }
 
-class _BkashCheckoutScreenState extends State<BkashCheckoutScreen> {
+class _BkashCheckoutScreenState extends ConsumerState<BkashCheckoutScreen> {
   late final WebViewController _controller;
   bool _loading = true;
   bool _resolved = false;
@@ -57,7 +60,7 @@ class _BkashCheckoutScreenState extends State<BkashCheckoutScreen> {
             if (mounted && (error.isForMainFrame ?? true)) {
               setState(() {
                 _loading = false;
-                _error = 'পেজ লোড করা যায়নি। ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।';
+                _error = t(ref, 'bkashCheckoutLoadError');
               });
             }
           },
@@ -97,7 +100,7 @@ class _BkashCheckoutScreenState extends State<BkashCheckoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('বিকাশ পেমেন্ট'),
+        title: Text(t(ref, 'bkashPaymentTitle')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(null),
@@ -121,7 +124,7 @@ class _BkashCheckoutScreenState extends State<BkashCheckoutScreen> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _retry,
-                    child: const Text('আবার চেষ্টা করুন'),
+                    child: Text(t(ref, 'retry')),
                   ),
                 ],
               ),

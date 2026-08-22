@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/config/env.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../event_scanner/screens/event_scanner_screen.dart';
 
 class LiveEventDashboardScreen extends ConsumerStatefulWidget {
@@ -71,9 +72,9 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
   @override
   Widget build(BuildContext context) {
     if (isLoading && stats == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF9FAFB), // gray 50
-        body: Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+      return Scaffold(
+        backgroundColor: context.bgFill,
+        body: const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
       );
     }
 
@@ -93,13 +94,13 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
         : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: context.bgFill,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardFill,
         elevation: 0,
         centerTitle: true,
         leading: BackButton(
-          color: Colors.grey.shade800,
+          color: context.textHigh,
           onPressed: () => context.pop(),
         ),
         title: Column(
@@ -132,7 +133,7 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
               stats!['eventTitle'] ?? 'Event',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.grey.shade900,
+                color: context.textHigh,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -150,7 +151,7 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardFill,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -172,10 +173,10 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
                         children: [
                           Text(
                             t(ref, 'checkInActivity'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: context.textHigh,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -184,7 +185,7 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade400,
+                              color: context.textMed,
                             ),
                           ),
                         ],
@@ -204,7 +205,7 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       height: 16,
-                      color: Colors.grey.shade100,
+                      color: context.cardFill2,
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: expectedCount > 0 ? (arrivedCount / expectedCount).clamp(0.0, 1.0) : 0,
@@ -236,25 +237,37 @@ class _LiveEventDashboardScreenState extends ConsumerState<LiveEventDashboardScr
                 _StatCard(
                   title: t(ref, 'expected'),
                   value: '$expectedCount',
-                  gradient: [Colors.blue.shade50, Colors.transparent],
+                  gradient: [
+                    context.isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.shade50,
+                    Colors.transparent,
+                  ],
                   textColor: Colors.blueAccent,
                 ),
                 _StatCard(
                   title: t(ref, 'arrived'),
                   value: '$arrivedCount',
-                  gradient: [Colors.green.shade50, Colors.transparent],
+                  gradient: [
+                    context.isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50,
+                    Colors.transparent,
+                  ],
                   textColor: Colors.green,
                 ),
                 _StatCard(
                   title: t(ref, 'remaining'),
                   value: '$remainingCount',
-                  gradient: [Colors.amber.shade50, Colors.transparent],
+                  gradient: [
+                    context.isDark ? Colors.amber.withValues(alpha: 0.15) : Colors.amber.shade50,
+                    Colors.transparent,
+                  ],
                   textColor: Colors.amber.shade700,
                 ),
                 _StatCard(
                   title: t(ref, 'attendanceRate'),
                   value: '$attendanceRate%',
-                  gradient: [Colors.purple.shade50, Colors.transparent],
+                  gradient: [
+                    context.isDark ? Colors.purple.withValues(alpha: 0.15) : Colors.purple.shade50,
+                    Colors.transparent,
+                  ],
                   textColor: Colors.purpleAccent,
                 ),
               ],
@@ -283,9 +296,9 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardFill,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: context.borderFill),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -316,10 +329,10 @@ class _StatCard extends StatelessWidget {
                   Text(
                     title.toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      color: context.textMed,
                       letterSpacing: 1,
                     ),
                   ),

@@ -1,5 +1,6 @@
 /// Shared shape returned by both `GET /event-registrations/status/:token`
-/// and `GET /event-registrations/check-phone/:phone` (the latter as a list).
+/// and `POST /event-registrations/check-phone/verify-otp` (the latter as a
+/// list, only returned once the phone's OTP has been verified).
 class EventRegistrationSummary {
   final String? id;
   final String name;

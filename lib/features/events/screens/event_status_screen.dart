@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_retry_view.dart';
@@ -23,7 +24,8 @@ class EventStatusScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/events'),
         ),
         title: Text(t(ref, 'yourTicket')),
       ),
@@ -75,8 +77,9 @@ class EventStatusScreen extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             DateFormat('MMM d, yyyy · h:mm a').format(date),
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.textHigh,
+                              fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),
                           ),
@@ -85,8 +88,9 @@ class EventStatusScreen extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             reg.eventLocation!,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.textHigh,
+                              fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),
                           ),
@@ -95,8 +99,9 @@ class EventStatusScreen extends ConsumerWidget {
                         Text(
                           cfg.message,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.textHigh,
+                            fontWeight: FontWeight.w600,
                             fontSize: 13.5,
                           ),
                         ),

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/shimmer_loader.dart';
@@ -13,9 +14,6 @@ import '../../../models/event.dart';
 import '../providers/events_providers.dart';
 
 const _royalBlue = Color(0xFF316BF3);
-const _surfaceBright = Color(0xFFFAF8FF);
-const _surfaceContainerLow = Color(0xFFF2F3FF);
-const _onSurfaceVariant = Color(0xFF444651);
 
 class EventDetailScreen extends ConsumerWidget {
   final String slug;
@@ -27,14 +25,14 @@ class EventDetailScreen extends ConsumerWidget {
     final eventAsync = ref.watch(eventBySlugProvider(slug));
 
     return Scaffold(
-      backgroundColor: _surfaceBright,
+      backgroundColor: context.bgFill,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardFill,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shape: const Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+        shape: Border(bottom: BorderSide(color: context.borderFill, width: 1)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF131B2E)),
+          icon: Icon(Icons.arrow_back, color: context.textHigh),
           onPressed: () => context.pop(),
         ),
         centerTitle: true,
@@ -43,7 +41,7 @@ class EventDetailScreen extends ConsumerWidget {
           style: GoogleFonts.libreCaslonText(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF191C1E),
+            color: context.textHigh,
           ),
         ),
       ),
@@ -134,7 +132,7 @@ class _EventDetailBody extends ConsumerWidget {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              border: Border.all(color: context.borderFill),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.02),
@@ -148,8 +146,8 @@ class _EventDetailBody extends ConsumerWidget {
               child: CachedNetworkImage(
                 imageUrl: event.imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (_, _) => Container(color: _surfaceContainerLow, height: 200),
-                errorWidget: (_, _, _) => Container(color: _surfaceContainerLow, height: 200),
+                placeholder: (_, _) => Container(color: context.cardFill2, height: 200),
+                errorWidget: (_, _, _) => Container(color: context.cardFill2, height: 200),
               ),
             ),
           ),
@@ -160,7 +158,7 @@ class _EventDetailBody extends ConsumerWidget {
           style: GoogleFonts.hindSiliguri(
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF131B2E),
+            color: context.textHigh,
             height: 1.3,
           ),
         ),
@@ -181,7 +179,7 @@ class _EventDetailBody extends ConsumerWidget {
                     cleanDesc,
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 15,
-                      color: const Color(0xFF131B2E),
+                      color: context.textHigh,
                       height: 1.6,
                       fontWeight: FontWeight.w600,
                     ),
@@ -196,14 +194,14 @@ class _EventDetailBody extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 24),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: _surfaceContainerLow,
+            color: context.cardFill2,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            border: Border.all(color: context.borderFill),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.restaurant, color: Colors.grey, size: 24),
+              Icon(Icons.restaurant, color: context.textMed, size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -211,7 +209,7 @@ class _EventDetailBody extends ConsumerWidget {
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF131B2E),
+                    color: context.textHigh,
                     height: 1.5,
                   ),
                 ),
@@ -254,17 +252,17 @@ class _MetaInfoGrid extends ConsumerWidget {
         : event.date;
 
     final items = [
-      _buildItem('Date & Time', dateLabel, Icons.calendar_month),
-      _buildItem('Registration Fee', '${Formatters.bdt(event.feePerPerson)} / person', Icons.payments),
+      _buildItem(context, 'Date & Time', dateLabel, Icons.calendar_month),
+      _buildItem(context, 'Registration Fee', '${Formatters.bdt(event.feePerPerson)} / person', Icons.payments),
       if (event.registrationDeadline != null)
-        _buildItem('Deadline', event.registrationDeadline!, Icons.schedule),
-      _buildItem('Location', event.location, Icons.location_on),
+        _buildItem(context, 'Deadline', event.registrationDeadline!, Icons.schedule),
+      _buildItem(context, 'Location', event.location, Icons.location_on),
     ];
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardFill,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _royalBlue.withOpacity(0.08)),
         boxShadow: [
@@ -287,13 +285,13 @@ class _MetaInfoGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildItem(String title, String value, IconData icon) {
+  Widget _buildItem(BuildContext context, String title, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _surfaceContainerLow,
+        color: context.cardFill2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: context.borderFill),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +316,7 @@ class _MetaInfoGrid extends ConsumerWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
-                    color: _onSurfaceVariant,
+                    color: context.textMed,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -327,7 +325,7 @@ class _MetaInfoGrid extends ConsumerWidget {
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF131B2E),
+                    color: context.textHigh,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -351,9 +349,9 @@ class _RegistrationStats extends ConsumerWidget {
     Widget buildRow(String totalSeats, String seatsLeft) {
       return Row(
         children: [
-          Expanded(child: _buildStatCard('Total Seats', totalSeats, true)),
+          Expanded(child: _buildStatCard(context, 'Total Seats', totalSeats, true)),
           const SizedBox(width: 16),
-          Expanded(child: _buildStatCard('Seats Left', seatsLeft, false)),
+          Expanded(child: _buildStatCard(context, 'Seats Left', seatsLeft, false)),
         ],
       );
     }
@@ -366,10 +364,10 @@ class _RegistrationStats extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(String label, String value, bool isBlue) {
+  Widget _buildStatCard(BuildContext context, String label, String value, bool isBlue) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardFill,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _royalBlue.withOpacity(0.08)),
         boxShadow: [
@@ -386,7 +384,7 @@ class _RegistrationStats extends ConsumerWidget {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isBlue ? _royalBlue : const Color(0xFF131B2E).withOpacity(0.2),
+                color: isBlue ? _royalBlue : context.textHigh.withOpacity(0.2),
                 width: 4,
               ),
             ),
@@ -399,7 +397,7 @@ class _RegistrationStats extends ConsumerWidget {
                 style: GoogleFonts.publicSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: isBlue ? _royalBlue : const Color(0xFF131B2E),
+                  color: isBlue ? _royalBlue : context.textHigh,
                   height: 1,
                 ),
               ),
@@ -410,7 +408,7 @@ class _RegistrationStats extends ConsumerWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.1,
-                  color: _onSurfaceVariant,
+                  color: context.textMed,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -431,7 +429,7 @@ class _WarningBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _surfaceContainerLow,
+        color: context.cardFill2,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -460,7 +458,7 @@ class _WarningBanner extends StatelessWidget {
                   text,
                   style: GoogleFonts.hindSiliguri(
                     fontSize: 14,
-                    color: const Color(0xFF131B2E),
+                    color: context.textHigh,
                     height: 1.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -490,11 +488,11 @@ class _PaymentInfoCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (pc['bankName'] != null || pc['bankAccount'] != null) ...[
-          _buildBankCard(pc),
+          _buildBankCard(context, pc),
           const SizedBox(height: 24),
         ],
         if (methods.isNotEmpty) ...[
-          _buildMobileBankingCard(methods),
+          _buildMobileBankingCard(context, methods),
           const SizedBox(height: 24),
         ],
         if (event.branches.isNotEmpty) ...[
@@ -505,10 +503,10 @@ class _PaymentInfoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildCardBase({required String title, required IconData icon, required Widget child}) {
+  Widget _buildCardBase({required BuildContext context, required String title, required IconData icon, required Widget child}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardFill,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _royalBlue.withOpacity(0.08)),
         boxShadow: [
@@ -551,8 +549,9 @@ class _PaymentInfoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildBankCard(Map<String, dynamic> pc) {
+  Widget _buildBankCard(BuildContext context, Map<String, dynamic> pc) {
     return _buildCardBase(
+      context: context,
       title: 'Bank Details',
       icon: Icons.account_balance,
       child: Column(
@@ -563,7 +562,7 @@ class _PaymentInfoCard extends ConsumerWidget {
             style: GoogleFonts.publicSans(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF131B2E),
+              color: context.textHigh,
             ),
           ),
           const SizedBox(height: 4),
@@ -577,23 +576,23 @@ class _PaymentInfoCard extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (pc['bankAccount'] != null)
-            _buildBankField('Account Number', pc['bankAccount'].toString()),
+            _buildBankField(context, 'Account Number', pc['bankAccount'].toString()),
           if (pc['bankRouting'] != null) ...[
             const SizedBox(height: 16),
-            _buildBankField('Routing Number', pc['bankRouting'].toString()),
+            _buildBankField(context, 'Routing Number', pc['bankRouting'].toString()),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildBankField(String label, String value) {
+  Widget _buildBankField(BuildContext context, String label, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _surfaceContainerLow,
+        color: context.cardFill2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: context.borderFill),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -604,7 +603,7 @@ class _PaymentInfoCard extends ConsumerWidget {
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.2,
-              color: _onSurfaceVariant,
+              color: context.textMed,
             ),
           ),
           const SizedBox(height: 6),
@@ -613,7 +612,7 @@ class _PaymentInfoCard extends ConsumerWidget {
             style: GoogleFonts.publicSans(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: const Color(0xFF131B2E),
+              color: context.textHigh,
             ),
           ),
         ],
@@ -621,8 +620,9 @@ class _PaymentInfoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildMobileBankingCard(List<EventPaymentMethod> methods) {
+  Widget _buildMobileBankingCard(BuildContext context, List<EventPaymentMethod> methods) {
     return _buildCardBase(
+      context: context,
       title: 'Mobile Banking',
       icon: Icons.smartphone,
       child: Column(
@@ -652,7 +652,7 @@ class _PaymentInfoCard extends ConsumerWidget {
                             style: GoogleFonts.publicSans(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF131B2E),
+                              color: context.textHigh,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -680,13 +680,13 @@ class _PaymentInfoCard extends ConsumerWidget {
                         style: GoogleFonts.publicSans(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF131B2E),
+                          color: context.textHigh,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.content_copy, color: Colors.grey, size: 20),
+                Icon(Icons.content_copy, color: context.textMed, size: 20),
               ],
             ),
           );
@@ -697,6 +697,7 @@ class _PaymentInfoCard extends ConsumerWidget {
 
   Widget _buildBranchesCard(BuildContext context, List<dynamic> branches) {
     return _buildCardBase(
+      context: context,
       title: 'Institutional Locations',
       icon: Icons.corporate_fare,
       child: Column(
@@ -705,7 +706,7 @@ class _PaymentInfoCard extends ConsumerWidget {
             if (i > 0)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Divider(color: Colors.grey.withOpacity(0.2)),
+                child: Divider(color: context.borderFill),
               ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -721,7 +722,7 @@ class _PaymentInfoCard extends ConsumerWidget {
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF131B2E),
+                          color: context.textHigh,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -731,7 +732,7 @@ class _PaymentInfoCard extends ConsumerWidget {
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF131B2E),
+                            color: context.textHigh,
                             height: 1.5,
                           ),
                         ),
@@ -805,9 +806,9 @@ class _BottomActionBar extends ConsumerWidget {
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: context.cardFill.withOpacity(0.9),
         border: Border(
-          top: BorderSide(color: Colors.grey.withOpacity(0.2)),
+          top: BorderSide(color: context.borderFill),
         ),
       ),
       child: ElevatedButton.icon(
@@ -825,7 +826,7 @@ class _BottomActionBar extends ConsumerWidget {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
         ),
