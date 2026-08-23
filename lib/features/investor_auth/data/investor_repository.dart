@@ -52,6 +52,28 @@ class InvestorRepository {
     return res.data as Map<String, dynamic>;
   }
 
+  /// `POST /investors/:id/request-deletion` — submits an account deletion
+  /// request. Does NOT revoke portal access; access stays fully intact until
+  /// a superadmin actually approves the request from the admin dashboard.
+  Future<void> requestAccountDeletion({
+    required String id,
+    required String phone,
+    required String reason,
+    String? details,
+  }) async {
+    final res = await _api.post('/investors/$id/request-deletion', {
+      'phone': phone,
+      'reason': reason,
+      if (details != null && details.trim().isNotEmpty) 'details': details.trim(),
+    });
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Failed to submit deletion request',
+        statusCode: res.statusCode,
+      );
+    }
+  }
+
   /// `GET /investors/public-stats` — live totals for the home screen.
   /// Response is shaped `{success, stats: {...}}` (not `data`), so unwrap
   /// `stats` explicitly rather than relying on [ApiClient]'s default `data` key.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/adaptive_colors.dart';
@@ -102,9 +103,25 @@ class FaqScreen extends ConsumerWidget {
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               children: [
                 // ── Header Section ─────────────────────────────────────────
+                Center(
+                  child: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: Lottie.asset(
+                      'assets/animations/Question.json',
+                      fit: BoxFit.contain,
+                      frameRate: const FrameRate(30),
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.quiz_outlined,
+                        size: 72,
+                        color: const Color(0xFF316BF3).withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
                 Text(
                   'INVESTOR RESOURCES',
                   style: GoogleFonts.inter(

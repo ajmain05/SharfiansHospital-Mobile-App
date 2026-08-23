@@ -43,6 +43,7 @@ class GalleryScreen extends ConsumerWidget {
                         'assets/animations/camera.json',
                         height: 180,
                         fit: BoxFit.contain,
+                        frameRate: const FrameRate(30),
                       ),
                     ),
                   ),

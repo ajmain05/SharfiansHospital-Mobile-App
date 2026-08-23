@@ -78,8 +78,9 @@ class _CareerClosed extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Lottie.asset(
-                    'assets/animations/career.json', // Add your lottie json here!
+                    'assets/animations/career.json',
                     fit: BoxFit.contain,
+                    frameRate: const FrameRate(30),
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.business_center_rounded,
                       size: 60,

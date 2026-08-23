@@ -25,6 +25,7 @@ class ErrorRetryView extends ConsumerWidget {
               child: Lottie.asset(
                 'assets/animations/No internet connection.json',
                 fit: BoxFit.contain,
+                frameRate: const FrameRate(30),
                 errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.wifi_off_rounded,
                   size: 48,

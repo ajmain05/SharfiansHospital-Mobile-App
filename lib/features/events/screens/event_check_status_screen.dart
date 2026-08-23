@@ -131,6 +131,7 @@ class _EventCheckStatusScreenState
                 child: Lottie.asset(
                   'assets/animations/Searching.json',
                   fit: BoxFit.contain,
+                  frameRate: const FrameRate(30),
                   errorBuilder: (context, error, stackTrace) => Icon(
                     Icons.confirmation_number_rounded,
                     size: 38,

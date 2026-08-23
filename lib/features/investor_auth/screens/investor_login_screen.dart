@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -47,7 +48,9 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA),
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         elevation: 0,
@@ -82,64 +85,65 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Profile Icon & Welcome Header ─────────────────────────────
-                Container(
+                SizedBox(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                        blurRadius: 30,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
                   child: Column(
                     children: [
-                      // Avatar Badge
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF316BF3), Color(0xFF60A5FA)],
-                            begin: Alignment.bottomLeft,
-                            end: Alignment.topRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF316BF3).withValues(alpha: 0.35),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: Colors.white,
-                          size: 36,
+                      SizedBox(
+                        width: 190,
+                        height: 190,
+                        child: Lottie.asset(
+                          'assets/animations/Man account Icon.json',
+                          fit: BoxFit.contain,
+                          frameRate: const FrameRate(30),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF316BF3),
+                                      Color(0xFF60A5FA),
+                                    ],
+                                    begin: Alignment.bottomLeft,
+                                    end: Alignment.topRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF316BF3,
+                                      ).withValues(alpha: 0.35),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.person_rounded,
+                                  color: Colors.white,
+                                  size: 36,
+                                ),
+                              ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 4),
                       Text(
                         t(ref, 'myPortalTitle'),
                         style: GoogleFonts.libreCaslonText(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0A192F),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0A192F),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -149,7 +153,10 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4A5568),
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF4A5568),
                         ),
                       ),
                     ],
@@ -161,10 +168,14 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFEFF6FF),
+                    color: isDark
+                        ? const Color(0xFF1E293B).withValues(alpha: 0.5)
+                        : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFDBEAFE),
+                      color: isDark
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFDBEAFE),
                     ),
                   ),
                   child: Row(
@@ -173,10 +184,14 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFDBEAFE),
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFDBEAFE),
                           ),
                         ),
                         child: const Icon(
@@ -189,10 +204,15 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                       Expanded(
                         child: Text(
                           t(ref, 'loginHelpText'),
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.publicSans(
                             fontSize: 13,
+                            fontWeight: FontWeight.w500,
                             height: 1.5,
-                            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF0A192F).withValues(alpha: 0.85),
+                            color: isDark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(
+                                    0xFF0A192F,
+                                  ).withValues(alpha: 0.85),
                           ),
                         ),
                       ),
@@ -209,39 +229,74 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                     children: [
                       Text(
                         t(ref, 'phoneNumber').toUpperCase(),
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.publicSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF0A192F).withValues(alpha: 0.6),
+                          color: isDark
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF0A192F).withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.publicSans(
                           fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : const Color(0xFF0A192F),
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0A192F),
                         ),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.phone_outlined,
-                            color: Color(0xFF94A3B8),
-                            size: 20,
+                          prefixIconConstraints: const BoxConstraints(minWidth: 0),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(left: 16, right: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '+880',
+                                  style: GoogleFonts.publicSans(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF0A192F).withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  width: 1,
+                                  height: 20,
+                                  color: isDark
+                                      ? const Color(0xFF334155)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                              ],
+                            ),
                           ),
-                          hintText: 'e.g. 017XXXXXXXX',
-                          hintStyle: GoogleFonts.inter(
-                            color: isDark ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                          hintText: '017XXXXXXXX',
+                          hintStyle: GoogleFonts.publicSans(
+                            color: isDark
+                                ? const Color(0xFF64748B)
+                                : const Color(0xFFCBD5E1),
                           ),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          fillColor: isDark
+                              ? const Color(0xFF1E293B)
+                              : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : const Color(0xFFE2E8F0),
                               width: 1.2,
                             ),
                           ),
@@ -279,7 +334,9 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF316BF3).withValues(alpha: 0.35),
+                              color: const Color(
+                                0xFF316BF3,
+                              ).withValues(alpha: 0.35),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -306,7 +363,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                                 )
                               : Text(
                                   t(ref, 'continueBtn'),
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.publicSans(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -338,7 +395,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                         Expanded(
                           child: Text(
                             _error!,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.publicSans(
                               color: AppColors.error,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -352,27 +409,38 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Become an Investor Outline Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: OutlinedButton(
+                // Become an Investor — secondary link
+                Center(
+                  child: TextButton(
                     onPressed: () => context.go('/register'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF316BF3),
-                      side: const BorderSide(
-                        color: Color(0xFF316BF3),
-                        width: 2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                     ),
-                    child: Text(
-                      t(ref, 'becomeInvestor'),
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${t(ref, 'newHereQuestion')} ',
+                            style: GoogleFonts.publicSans(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                          TextSpan(
+                            text: t(ref, 'becomeInvestor'),
+                            style: GoogleFonts.publicSans(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF316BF3),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

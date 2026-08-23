@@ -165,6 +165,7 @@ class _HeroSection extends StatelessWidget {
                         'assets/animations/hero_bg.json',
                         width: double.infinity,
                         fit: BoxFit.fitWidth,
+                        frameRate: const FrameRate(30),
                         errorBuilder: (context, error, stackTrace) => const SizedBox(height: 0),
                       ),
                     ),
@@ -914,11 +915,15 @@ class _ImpactCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.white,
-                        size: 15,
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: 15,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -929,6 +934,7 @@ class _ImpactCard extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -16,6 +17,7 @@ import '../../../models/investor.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
+import '../widgets/delete_account_dialog.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
   const InvestorDashboardScreen({super.key});
@@ -47,27 +49,61 @@ class _InvestorDashboardScreenState
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
+          centerTitle: false,
+          titleSpacing: 16,
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: Text(
-            'Welcome, ${account.displayName}',
-            style: GoogleFonts.libreCaslonText(
-              fontSize: 20, // Slightly reduced to fit better
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.2,
-            ),
-            maxLines: 2,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                t(ref, 'welcomeGreeting'),
+                style: GoogleFonts.publicSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                account.displayName,
+                style: GoogleFonts.libreCaslonText(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.15,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
-            tooltip: t(ref, 'logout'),
-            onPressed: () async {
-              await ref.read(investorSessionProvider.notifier).logout();
-              if (context.mounted) context.go('/investor/login');
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Material(
+              color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () async {
+                  await ref.read(investorSessionProvider.notifier).logout();
+                  if (context.mounted) context.go('/investor/login');
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Tooltip(
+                    message: t(ref, 'logout'),
+                    child: const Icon(
+                      Icons.logout_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
         bottom: TabBar(
@@ -117,46 +153,36 @@ class _OverviewTab extends ConsumerWidget {
     final category = InvestorCategory.of(account.shareAmount);
 
     return ListView(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 160),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 32),
       children: [
-        if (category.isDirector)
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: category.gradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: category.color.withValues(alpha: 0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                      spreadRadius: -6,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  category.label.toUpperCase(),
-                  style: GoogleFonts.publicSans(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: category.gradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: category.color.withValues(alpha: 0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                    spreadRadius: -6,
                   ),
+                ],
+              ),
+              child: Text(
+                category.label.toUpperCase(),
+                style: GoogleFonts.publicSans(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
-            ],
-          )
-        else
-          Text(
-            category.label,
-            style: GoogleFonts.publicSans(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
             ),
-          ),
+          ],
+        ),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(24),
@@ -224,52 +250,6 @@ class _OverviewTab extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 20),
-        if (!category.isDirector)
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFDE68A), Color(0xFFF59E0B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 28),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Directorship Goal',
-                        style: GoogleFonts.publicSans(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF78350F)),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Increase your share to ${Formatters.bdt(1000000)} to unlock exclusive benefits as a Director!',
-                        style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF92400E)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (!category.isDirector) const SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -316,6 +296,88 @@ class _OverviewTab extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 28),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => DeleteAccountDialog.show(
+              context,
+              investorId: account.id,
+              phone: account.phone,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -10,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_remove_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t(ref, 'deleteMyAccount'),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFEF4444),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t(ref, 'deleteAccountTileSubtitle'),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -498,33 +560,31 @@ class _AccountsTab extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                       ),
                     ),
-                    if (category.isDirector) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: category.gradient,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: category.color.withValues(alpha: 0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 8),
-                              spreadRadius: -6,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          category.label.toUpperCase(),
-                          style: GoogleFonts.publicSans(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: category.gradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: category.color.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                            spreadRadius: -6,
                           ),
+                        ],
+                      ),
+                      child: Text(
+                        category.label.toUpperCase(),
+                        style: GoogleFonts.publicSans(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -661,15 +721,28 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.account_balance_wallet_outlined,
-                size: 48,
-                color: AppColors.primary400,
+              SizedBox(
+                width: 240,
+                height: 240,
+                child: Lottie.asset(
+                  'assets/animations/not-found.json',
+                  fit: BoxFit.contain,
+                  frameRate: const FrameRate(30),
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 48,
+                    color: AppColors.primary400,
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 t(ref, 'noPaymentRecords'),
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: GoogleFonts.publicSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
