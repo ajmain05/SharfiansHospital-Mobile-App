@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../settings/providers/site_settings_provider.dart';
 import '../../home/providers/public_stats_provider.dart';
 import '../../events/providers/events_providers.dart';
+import '../../../core/services/app_update_service.dart';
 /// Animated Splash Screen
 /// Uses ONLY Flutter built-in animations — no extra packages.
 /// Designed for maximum performance on all devices.
@@ -160,6 +161,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     if (!mounted) return;
     context.go('/');
+
+    // Checked here rather than at app startup so the update-nag dialog can't
+    // ever appear on top of this splash sequence — it only shows once Home
+    // has taken over. siteSettingsProvider is already resolved by now (it's
+    // part of preloadFuture above), so this doesn't add a visible delay.
+    checkForAppUpdate(ref);
   }
 
   @override

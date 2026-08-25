@@ -347,6 +347,10 @@ class SiteSettings {
   final List<FaqItem> faqs;
   final BankDetails bankDetails;
   final CareerSettings careerSettings;
+  final String appLatestVersionAndroid;
+  final String appLatestVersionIos;
+  final String appAndroidStoreUrl;
+  final String appIosStoreUrl;
 
   const SiteSettings({
     required this.heroTitle,
@@ -380,6 +384,10 @@ class SiteSettings {
     required this.faqs,
     required this.bankDetails,
     required this.careerSettings,
+    this.appLatestVersionAndroid = '',
+    this.appLatestVersionIos = '',
+    this.appAndroidStoreUrl = '',
+    this.appIosStoreUrl = '',
   });
 
   factory SiteSettings.fallback() => const SiteSettings(
@@ -507,6 +515,10 @@ class SiteSettings {
                             ? json['career_enabled']
                             : json,
       ),
+      appLatestVersionAndroid: s('appLatestVersionAndroid', ''),
+      appLatestVersionIos: s('appLatestVersionIos', ''),
+      appAndroidStoreUrl: s('appAndroidStoreUrl', ''),
+      appIosStoreUrl: s('appIosStoreUrl', ''),
     );
   }
 }

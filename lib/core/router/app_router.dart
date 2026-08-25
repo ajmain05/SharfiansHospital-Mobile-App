@@ -1,5 +1,4 @@
-// ignore: unused_import
-import 'package:flutter/material.dart' show BuildContext, Animation, Widget;
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/events/screens/event_check_status_screen.dart';
@@ -27,7 +26,13 @@ import '../widgets/tap_scale.dart';
 import '../widgets/main_scaffold.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
+// Lets services outside the widget tree (e.g. the app-update check in
+// app.dart) show a dialog via rootNavigatorKey.currentContext, since they
+// have no BuildContext of their own that's actually inside this Navigator.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: '/splash',
   routes: [
     // ── Splash ──────────────────────────────────────────────────────────────
