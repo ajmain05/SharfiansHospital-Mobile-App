@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,6 +14,7 @@ import '../../../core/utils/investor_category.dart';
 import '../../../models/deposit.dart';
 import '../../../models/investor.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
+import '../../investor_auth/screens/investor_login_screen.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
 import '../widgets/delete_account_dialog.dart';
@@ -34,11 +34,13 @@ class _InvestorDashboardScreenState
   Widget build(BuildContext context) {
     final session = ref.watch(investorSessionProvider);
 
+    // Render the login form in place rather than navigating to '/investor/login':
+    // this is the Portal tab's own branch of the bottom-nav shell, so a
+    // context.go() here would replace the whole navigation stack (losing Home,
+    // Events, Settings) and leave the hardware back button with nothing to
+    // pop — Android would then close the app outright instead of going back.
     if (!session.isLoggedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/investor/login');
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const InvestorLoginScreen();
     }
 
     final account = session.activeAccount!;
@@ -88,8 +90,10 @@ class _InvestorDashboardScreenState
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () async {
+                  // No navigation needed: this widget already watches
+                  // investorSessionProvider and switches to the login form
+                  // in place once logged out (see build() above).
                   await ref.read(investorSessionProvider.notifier).logout();
-                  if (context.mounted) context.go('/investor/login');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(10),

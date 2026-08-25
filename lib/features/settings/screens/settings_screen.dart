@@ -284,7 +284,13 @@ class _ThemeToggleTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final mode = ref.watch(themeProvider);
+    // ThemeMode.system resolves to whatever the OS brightness is — reflect
+    // that here too, so the switch always matches what's actually on screen
+    // instead of only recognizing an explicit ThemeMode.dark.
+    final isDark = mode == ThemeMode.dark ||
+        (mode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _tileDecoration(colorScheme),
@@ -318,7 +324,12 @@ class _ThemeToggleTile extends ConsumerWidget {
           Switch(
             value: isDark,
             activeThumbColor: colorScheme.primary,
-            onChanged: (_) => ref.read(themeProvider.notifier).toggle(),
+            // Always sets an explicit mode matching exactly what the switch
+            // will show next — no more "toggle twice to actually get light"
+            // when the previous state was ThemeMode.system.
+            onChanged: (dark) => ref
+                .read(themeProvider.notifier)
+                .setMode(dark ? ThemeMode.dark : ThemeMode.light),
           ),
         ],
       ),

@@ -77,9 +77,18 @@ class InvestorRepository {
   /// `GET /investors/public-stats` — live totals for the home screen.
   /// Response is shaped `{success, stats: {...}}` (not `data`), so unwrap
   /// `stats` explicitly rather than relying on [ApiClient]'s default `data` key.
+  /// A real request failure (offline, timeout, server error) is rethrown so
+  /// the home screen lands in an `AsyncError` and shows the retry UI instead
+  /// of silently displaying "0 investors" as if that were live data.
   Future<Map<String, dynamic>> getPublicStats() async {
     final res = await _api.get('/investors/public-stats');
-    if (!res.success || res.data is! Map<String, dynamic>) return const {};
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Failed to load stats',
+        statusCode: res.statusCode,
+      );
+    }
+    if (res.data is! Map<String, dynamic>) return const {};
     final body = res.data as Map<String, dynamic>;
     final stats = body['stats'];
     return stats is Map<String, dynamic> ? stats : const {};

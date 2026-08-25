@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.1+4
+version: 1.0.2+5
 
 environment:
   sdk: ^3.11.5
@@ -149,12 +149,12 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
+  # Solid background only, no logo — matches SplashScreen's own bgColor
+  # exactly, so the native→Flutter handoff reads as one continuous screen
+  # instead of swapping from a bare logo to the badge-wrapped one Dart
+  # renders (see lib/features/splash/screens/splash_screen.dart).
   color: "#FFFFFF"
-  image: "assets/images/logo.png"
-  image_dark: "assets/images/logo.png"
   color_dark: "#111827"
   android_12:
     color: "#FFFFFF"
-    image: "assets/images/logo.png"
     color_dark: "#111827"
-    image_dark: "assets/images/logo.png"

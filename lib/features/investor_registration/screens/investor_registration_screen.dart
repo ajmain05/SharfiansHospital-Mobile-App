@@ -45,6 +45,7 @@ class _InvestorRegistrationScreenState
 
   bool _loading = false;
   Map<String, dynamic>? _submitted;
+  String _lastValidCharity = '';
 
   String? _eduCategory;
 
@@ -90,6 +91,28 @@ class _InvestorRegistrationScreenState
   void initState() {
     super.initState();
     _shareCtrl.addListener(() => setState(() {}));
+    _charityCtrl.addListener(_onCharityChanged);
+  }
+
+  // Rejects the keystroke that would push the value over 100 — silently,
+  // no popup, since the field's label already states the 0-100% range up
+  // front (see donationPercentage in the translation files) rather than
+  // relying on a reactive error every time someone types past it.
+  void _onCharityChanged() {
+    final text = _charityCtrl.text;
+    if (text.isEmpty) {
+      _lastValidCharity = text;
+      return;
+    }
+    final value = num.tryParse(text);
+    if (value == null || value > 100) {
+      _charityCtrl.value = TextEditingValue(
+        text: _lastValidCharity,
+        selection: TextSelection.collapsed(offset: _lastValidCharity.length),
+      );
+      return;
+    }
+    _lastValidCharity = text;
   }
 
   @override
@@ -690,7 +713,6 @@ class _InvestorRegistrationScreenState
                                     _BespokeField(
                                       controller: _charityCtrl,
                                       label: t(ref, 'donationPercentage'),
-                                      icon: Icons.percent,
                                       placeholder: '0',
                                       keyboardType: TextInputType.number,
                                       isOptional: true,
@@ -952,7 +974,7 @@ class _PickerFormField extends StatelessWidget {
 class _BespokeField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final String? placeholder;
   final bool isRequired;
   final bool isOptional;
@@ -964,7 +986,7 @@ class _BespokeField extends StatefulWidget {
   const _BespokeField({
     required this.controller,
     required this.label,
-    required this.icon,
+    this.icon,
     this.placeholder,
     this.isRequired = false,
     this.isOptional = false,
@@ -1007,14 +1029,16 @@ class _BespokeFieldState extends State<_BespokeField> {
         children: [
           Row(
             children: [
-              Icon(
-                widget.icon,
-                size: 18,
-                color: _isFocused
-                    ? const Color(0xFF316BF3)
-                    : context.textMed, // slate-600
-              ),
-              const SizedBox(width: 8),
+              if (widget.icon != null) ...[
+                Icon(
+                  widget.icon,
+                  size: 18,
+                  color: _isFocused
+                      ? const Color(0xFF316BF3)
+                      : context.textMed, // slate-600
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Row(
                   children: [

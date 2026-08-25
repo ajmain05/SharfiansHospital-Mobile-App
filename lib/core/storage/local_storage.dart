@@ -67,17 +67,27 @@ class LocalStorage {
       return legacyValue;
     }
 
-    _adminToken = await migrate(_kAdminToken);
-    _investorPhone = await migrate(_kInvestorPhone);
+    // Each read is its own Keystore/Keychain round-trip, so run all four
+    // concurrently rather than one-by-one — this runs before the first
+    // Flutter frame paints, so serial reads here directly add to the delay
+    // the user sees stuck on the native launch screen.
+    final results = await Future.wait([
+      migrate(_kAdminToken),
+      migrate(_kInvestorPhone),
+      migrate(_kAdminData),
+      migrate(_kInvestorData),
+    ]);
+    _adminToken = results[0];
+    _investorPhone = results[1];
 
-    final adminDataRaw = await migrate(_kAdminData);
+    final adminDataRaw = results[2];
     if (adminDataRaw != null) {
       try {
         _adminData = jsonDecode(adminDataRaw) as Map<String, dynamic>;
       } catch (_) {}
     }
 
-    final investorDataRaw = await migrate(_kInvestorData);
+    final investorDataRaw = results[3];
     if (investorDataRaw != null) {
       try {
         _investorAccounts = (jsonDecode(investorDataRaw) as List)

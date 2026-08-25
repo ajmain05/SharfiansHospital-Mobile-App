@@ -15,65 +15,83 @@ class MainScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1E293B).withValues(alpha: 0.95)
-                  : Colors.white.withValues(alpha: 0.95),
-              border: Border(
-                top: BorderSide(color: context.borderFill.withValues(alpha: 0.5), width: 1.0),
+    // Bottom-nav tabs otherwise have nothing to pop once you're at a branch's
+    // root, so the hardware back button would close the app straight from
+    // Events/Portal/Settings instead of returning to Home. Only actually
+    // exit once we're on Home with nothing left to pop.
+    return PopScope(
+      canPop: context.canPop() || navigationShell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _onTap(0);
+      },
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.95)
+                    : Colors.white.withValues(alpha: 0.95),
+                border: Border(
+                  top: BorderSide(
+                    color: context.borderFill.withValues(alpha: 0.5),
+                    width: 1.0,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 30,
+                    offset: const Offset(0, -8),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 30, offset: const Offset(0, -8)),
-              ],
-            ),
-            child: SafeArea(
-              child: SizedBox(
-                height: 64,
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
-                  label: t(ref, 'home'),
-                  isSelected: navigationShell.currentIndex == 0,
-                  onTap: () => _onTap(0),
+              child: SafeArea(
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_outlined,
+                        activeIcon: Icons.home_rounded,
+                        label: t(ref, 'home'),
+                        isSelected: navigationShell.currentIndex == 0,
+                        onTap: () => _onTap(0),
+                      ),
+                      _NavItem(
+                        icon: Icons.calendar_today_outlined,
+                        activeIcon: Icons.calendar_month_rounded,
+                        label: t(ref, 'events'),
+                        isSelected: navigationShell.currentIndex == 1,
+                        onTap: () => _onTap(1),
+                      ),
+                      _NavItem(
+                        icon: Icons.person_outline_rounded,
+                        activeIcon: Icons.person_rounded,
+                        label: t(ref, 'myPortal'),
+                        isSelected: navigationShell.currentIndex == 2,
+                        onTap: () => _onTap(2),
+                      ),
+                      _NavItem(
+                        icon: Icons.settings_outlined,
+                        activeIcon: Icons.settings_rounded,
+                        label: t(ref, 'settings'),
+                        isSelected: navigationShell.currentIndex == 3,
+                        onTap: () => _onTap(3),
+                      ),
+                    ],
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.calendar_today_outlined,
-                  activeIcon: Icons.calendar_month_rounded,
-                  label: t(ref, 'events'),
-                  isSelected: navigationShell.currentIndex == 1,
-                  onTap: () => _onTap(1),
-                ),
-                _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: t(ref, 'myPortal'),
-                  isSelected: navigationShell.currentIndex == 2,
-                  onTap: () => _onTap(2),
-                ),
-                _NavItem(
-                  icon: Icons.settings_outlined,
-                  activeIcon: Icons.settings_rounded,
-                  label: t(ref, 'settings'),
-                  isSelected: navigationShell.currentIndex == 3,
-                  onTap: () => _onTap(3),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   void _onTap(int index) {
@@ -104,7 +122,9 @@ class _NavItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeBg = isDark ? const Color(0xFF2563EB) : const Color(0xFF316BF3);
     final activeColor = Colors.white;
-    final inactiveColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF45464D);
+    final inactiveColor = isDark
+        ? const Color(0xFF94A3B8)
+        : const Color(0xFF45464D);
 
     return GestureDetector(
       onTap: onTap,

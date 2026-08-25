@@ -59,7 +59,8 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
             Icons.arrow_back_rounded,
             color: isDark ? Colors.white : const Color(0xFF0A192F),
           ),
-          onPressed: () => context.go('/'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/'),
         ),
         title: Text(
           t(ref, 'myPortal'),
@@ -412,7 +413,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                 // Become an Investor — secondary link
                 Center(
                   child: TextButton(
-                    onPressed: () => context.go('/register'),
+                    onPressed: () => context.push('/register'),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,

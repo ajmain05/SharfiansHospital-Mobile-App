@@ -6,9 +6,18 @@ import '../../../models/event_registration_summary.dart';
 class EventsRepository {
   final _api = ApiClient();
 
+  /// A real request failure (offline, timeout, server error) is rethrown so
+  /// the events list lands in an `AsyncError` and shows the retry UI instead
+  /// of silently displaying "No upcoming events" as if that were live data.
   Future<List<Event>> getPublicEvents() async {
     final res = await _api.get('/events/public');
-    if (!res.success || res.data is! List) return const [];
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Failed to load events',
+        statusCode: res.statusCode,
+      );
+    }
+    if (res.data is! List) return const [];
     return (res.data as List)
         .map((e) => Event.fromJson(e as Map<String, dynamic>))
         .toList();

@@ -46,7 +46,7 @@ class HomeScreen extends ConsumerWidget {
                 lang: lang,
                 loggedIn: loggedIn,
                 ref: ref,
-                onNavigate: (p) => context.go(p),
+                onNavigate: (p) => context.push(p),
                 onEventsTab: () => context.push('/events'),
               ),
             ),
@@ -56,7 +56,9 @@ class HomeScreen extends ConsumerWidget {
               child: _QuickAccessRow(
                 ref: ref,
                 loggedIn: loggedIn,
-                onPortal: () => context.go(loggedIn ? '/investor/dashboard' : '/investor/login'),
+                onPortal: () => loggedIn
+                    ? context.go('/investor/dashboard')
+                    : context.push('/investor/login'),
                 onEvents: () => context.push('/events'),
                 onBankDetails: () => context.push('/bank-details'),
               ),

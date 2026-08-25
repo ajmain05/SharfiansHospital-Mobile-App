@@ -185,14 +185,6 @@ class EventPaymentMethod {
       );
     }
 
-    if (methods.length == 1) {
-      methods.insertAll(0, const [
-        EventPaymentMethod(id: 'bKash', label: 'bKash', channel: 'bKash'),
-        EventPaymentMethod(id: 'Nagad', label: 'Nagad', channel: 'Nagad'),
-        EventPaymentMethod(id: 'Bank', label: 'Bank', channel: 'Bank'),
-      ]);
-    }
-
     return methods;
   }
 }

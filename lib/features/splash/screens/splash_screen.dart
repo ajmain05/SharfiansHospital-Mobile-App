@@ -81,10 +81,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       curve: const Interval(0.2, 1.0),
     ));
 
-    // Logo entrance — scale from 0.5 + fade in + slide up
+    // Logo entrance — scale from 0.5 + fade in + slide up.
+    // Starts already-completed (value: 1.0): the native splash screen shows
+    // this same logo fully visible from process start, and is dismissed the
+    // instant Flutter draws its first frame — animating an entrance here
+    // would make the logo visibly vanish then pop back in at that handoff.
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
+      value: 1.0,
     );
 
     _logoScale = Tween<double>(begin: 0.4, end: 1.0).animate(
@@ -134,13 +139,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ref.read(publicEventsProvider.future),
     ]);
 
-    // Logo enters
-    await Future.delayed(const Duration(milliseconds: 200));
-    if (!mounted) return;
-    _logoController.forward();
-
-    // Text slides in after logo settles
-    await Future.delayed(const Duration(milliseconds: 700));
+    // Text slides in shortly after (logo is already settled from frame one)
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     _textController.forward();
 

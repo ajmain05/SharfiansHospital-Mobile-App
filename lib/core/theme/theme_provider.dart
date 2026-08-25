@@ -7,10 +7,14 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   ThemeModeNotifier() : super(_initialMode());
 
   static ThemeMode _initialMode() {
+    // Defaults to light regardless of the phone's own system setting — the
+    // Settings screen only ever exposes an explicit light/dark switch, never
+    // a "follow system" option, so falling back to ThemeMode.system here
+    // just meant a fresh install silently inherited the OS theme instead of
+    // showing what the app actually looks like by default.
     final cached = LocalStorage.getThemeMode();
-    if (cached == 'light') return ThemeMode.light;
     if (cached == 'dark') return ThemeMode.dark;
-    return ThemeMode.system;
+    return ThemeMode.light;
   }
 
   void toggle() {
