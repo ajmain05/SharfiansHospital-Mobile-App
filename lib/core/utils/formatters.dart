@@ -22,4 +22,17 @@ class Formatters {
   }
 
   static String number(num? value) => _bdt.format(value ?? 0);
+
+  static final _shortDate = DateFormat('d MMM yyyy');
+
+  /// "2026-05-03" -> "3 May 2026" — the raw ISO string is too wide to fit
+  /// on one line next to a short value like "1" in the dashboard's
+  /// side-by-side info cards. Falls back to the raw string if it doesn't
+  /// parse as a date, rather than hiding a real value behind "—".
+  static String shortDate(String? iso) {
+    if (iso == null || iso.isEmpty) return '—';
+    final parsed = DateTime.tryParse(iso);
+    if (parsed == null) return iso;
+    return _shortDate.format(parsed);
+  }
 }

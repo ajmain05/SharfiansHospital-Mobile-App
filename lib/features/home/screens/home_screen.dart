@@ -890,12 +890,23 @@ class _ImpactCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.88),
-              fontWeight: FontWeight.w600,
+          // This label is admin-editable (Stats Section in the web panel),
+          // so its length isn't under our control — FittedBox keeps it on
+          // one line by shrinking just enough to fit, instead of wrapping
+          // and making this card taller than the one next to it whenever
+          // an admin picks a longer label (e.g. "Committed Amount" vs
+          // "Total Investors").
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.88),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
 

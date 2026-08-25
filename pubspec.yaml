@@ -159,3 +159,9 @@ flutter_native_splash:
   android_12:
     color: "#FFFFFF"
     color_dark: "#111827"
+    # Android 12+ always shows an icon during launch regardless of app
+    # config — leaving this unset makes it silently default to the
+    # launcher icon instead, which is the actual source of the brief
+    # logo flash. A transparent icon is the only way to suppress it.
+    image: "assets/images/transparent_icon.png"
+    image_dark: "assets/images/transparent_icon.png"

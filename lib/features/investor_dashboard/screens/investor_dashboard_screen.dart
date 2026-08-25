@@ -68,16 +68,19 @@ class _InvestorDashboardScreenState
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              Text(
-                account.displayName,
-                style: GoogleFonts.libreCaslonText(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.15,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  account.displayName,
+                  style: GoogleFonts.libreCaslonText(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.15,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -114,8 +117,13 @@ class _InvestorDashboardScreenState
           labelColor: AppColors.primary600,
           unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
           indicatorColor: AppColors.primary600,
-          labelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.2),
-          unselectedLabelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+          // letterSpacing 1.2 combined with the selected tab's heavier w900
+          // weight made wider words like "ACCOUNTS"/"PAYMENTS" (unlike
+          // "OVERVIEW") just barely exceed their tab's share of the bar's
+          // width, clipping the trailing letter — 0.6 leaves enough margin
+          // for the widest word at the heaviest weight to fit cleanly.
+          labelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+          unselectedLabelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.6),
           indicatorWeight: 2,
           dividerColor: Theme.of(context).colorScheme.outlineVariant,
           tabs: [
@@ -271,7 +279,7 @@ class _OverviewTab extends ConsumerWidget {
                 context,
                 Icons.event_outlined,
                 t(ref, 'lastPayment'),
-                summary.lastPaymentDate ?? '—',
+                Formatters.shortDate(summary.lastPaymentDate),
                 const Color(0xFFD97706),
               ),
             ),
@@ -470,11 +478,19 @@ class _OverviewTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: isFullWidth 
-                ? GoogleFonts.publicSans(fontSize: 26, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)
-                : GoogleFonts.publicSans(fontSize: 19, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
+          // FittedBox shrinks the text just enough to actually fit instead
+          // of guessing a font size or date format that might still
+          // overflow on some device width — it can never truncate.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: isFullWidth
+                  ? GoogleFonts.publicSans(fontSize: 26, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)
+                  : GoogleFonts.publicSans(fontSize: 19, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
         ],
       ),
