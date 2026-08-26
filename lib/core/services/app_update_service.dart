@@ -27,9 +27,19 @@ bool _isNewer(String latest, String current) {
 /// in the web admin's Homepage Content → App Update Notice section) is newer
 /// than what's installed. Silently does nothing if settings haven't loaded,
 /// no version is configured for this platform, or the app is already current.
-Future<void> checkForAppUpdate(WidgetRef ref) async {
+///
+/// Deliberately takes no WidgetRef: this is called from the splash screen
+/// right as it navigates away and disposes itself (see splash_screen.dart),
+/// so a WidgetRef tied to that screen's lifecycle can throw mid-check. Reads
+/// providers via dialogNavigatorKey's own ProviderContainer instead, which
+/// outlives any individual screen.
+Future<void> checkForAppUpdate() async {
   try {
-    final settings = await ref.read(siteSettingsProvider.future);
+    final context = dialogNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
+
+    final settings = await container.read(siteSettingsProvider.future);
     final latestVersion = Platform.isIOS
         ? settings.appLatestVersionIos
         : settings.appLatestVersionAndroid;
@@ -38,10 +48,13 @@ Future<void> checkForAppUpdate(WidgetRef ref) async {
     final packageInfo = await PackageInfo.fromPlatform();
     if (!_isNewer(latestVersion, packageInfo.version)) return;
 
-    final context = rootNavigatorKey.currentContext;
-    if (context == null || !context.mounted) return;
-
+    if (!context.mounted) return;
     final storeUrl = Platform.isIOS ? settings.appIosStoreUrl : settings.appAndroidStoreUrl;
+    // Deliberately shown on dialogNavigatorKey (a Navigator that sits above
+    // GoRouter's own, see app_router.dart) — showing it on GoRouter's
+    // navigator instead let it get silently dismissed whenever GoRouter next
+    // reconciled that Navigator's page list, e.g. right after the splash
+    // screen's own context.go('/') a moment earlier.
     await showAppUpdateDialog(context, latestVersion: latestVersion, storeUrl: storeUrl);
   } catch (_) {
     // Never block app usage over a failed update check.

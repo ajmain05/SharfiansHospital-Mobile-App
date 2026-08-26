@@ -166,7 +166,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // ever appear on top of this splash sequence — it only shows once Home
     // has taken over. siteSettingsProvider is already resolved by now (it's
     // part of preloadFuture above), so this doesn't add a visible delay.
-    checkForAppUpdate(ref);
+    checkForAppUpdate();
   }
 
   @override

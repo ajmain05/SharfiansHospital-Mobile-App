@@ -24,10 +24,22 @@ import '../widgets/tap_scale.dart';
 import '../widgets/main_scaffold.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
-// Lets services outside the widget tree (e.g. the app-update check in
-// app.dart) show a dialog via rootNavigatorKey.currentContext, since they
-// have no BuildContext of their own that's actually inside this Navigator.
+// GoRouter's own navigator — every route transition (context.go/push) plays
+// out on this one.
 final rootNavigatorKey = GlobalKey<NavigatorState>();
+
+// A separate Navigator (wired up in app.dart's MaterialApp.router `builder`)
+// that sits OUTSIDE/above GoRouter's own Navigator, holding nothing but a
+// single page wrapping GoRouter's entire routed content. Dialogs shown from
+// outside the widget tree (e.g. the app-update check) must use THIS key, not
+// rootNavigatorKey — pushing a dialog onto rootNavigatorKey means it lives on
+// the exact same Navigator GoRouter reconciles on every route change, so a
+// dialog shown around the same time as a context.go() can get silently
+// dismissed when GoRouter rebuilds that Navigator's page list a moment later
+// (this is what caused the update-nag dialog to flash and vanish right after
+// the splash screen's context.go('/')). This outer Navigator is never
+// touched by GoRouter, so anything pushed here is immune to that.
+final dialogNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
