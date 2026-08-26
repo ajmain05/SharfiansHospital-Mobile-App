@@ -93,9 +93,13 @@ class AppUpdateDialog extends StatelessWidget {
                           foregroundColor: context.textMed,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
-                        child: const Text(
-                          'Update Later',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: const Text(
+                            'Update Later',
+                            maxLines: 1,
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
                         ),
                       ),
                     ),
@@ -113,9 +117,13 @@ class AppUpdateDialog extends StatelessWidget {
                           foregroundColor: const Color(0xFF4F84FF),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
-                        child: const Text(
-                          'Update Now',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: const Text(
+                            'Update Now',
+                            maxLines: 1,
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
                         ),
                       ),
                     ),

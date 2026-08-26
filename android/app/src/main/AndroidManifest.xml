@@ -6,10 +6,33 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
 
+    <!-- Android 11+ (API 30+) hides all other apps from package-visibility
+         queries by default, so url_launcher's canLaunchUrl()/launchUrl()
+         silently return false/fail for a scheme unless it's declared here —
+         even when a perfectly capable app (browser, dialer) is installed.
+         This is url_launcher's own documented fix; covers every https/tel
+         link this app opens (tutorial video, event contact numbers, staff
+         directory calls, app-store update links, notification deep links). -->
     <queries>
         <intent>
             <action android:name="android.intent.action.DIAL" />
             <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mailto" />
         </intent>
     </queries>
 

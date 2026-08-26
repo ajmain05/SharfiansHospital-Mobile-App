@@ -12,6 +12,7 @@ import 'package:lottie/lottie.dart';
 import '../../../core/config/env.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/cloudinary_uploader.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/event.dart';
@@ -242,6 +243,12 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
         'paymentProofUrl': proofUrl,
       });
 
+      // Attach this phone to the device's push token now that it has a real
+      // registration — without this, admin approval/rejection pushes have no
+      // device to target unless the registrant separately logs into My
+      // Portal on this same device with the same number.
+      ref.read(pushNotificationServiceProvider).registerToken(phone: _phoneCtrl.text.trim());
+
       if (!mounted) return;
       setState(() => _submitted = true);
     } catch (e) {
@@ -305,6 +312,8 @@ class _RegistrationFormState extends ConsumerState<_RegistrationForm> {
       if (qrCodeToken == null) {
         throw Exception(t(ref, 'bkashPaymentVerifyFailed'));
       }
+
+      ref.read(pushNotificationServiceProvider).registerToken(phone: _phoneCtrl.text.trim());
 
       if (!mounted) return;
       GoRouter.of(context).go('/events/status/$qrCodeToken');

@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/investor_category.dart';
@@ -225,6 +226,13 @@ class _InvestorRegistrationScreenState
       final result = await ref
           .read(investorRepositoryProvider)
           .register(payload);
+
+      // Attach this phone to the device's push token now that it belongs to
+      // a real investor — otherwise this device stays invisible to any
+      // phone-targeted push until the investor separately logs into My
+      // Portal on it.
+      ref.read(pushNotificationServiceProvider).registerToken(phone: _phoneCtrl.text.trim());
+
       if (!mounted) return;
       setState(() => _submitted = result);
     } catch (e) {
@@ -327,7 +335,14 @@ class _InvestorRegistrationScreenState
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Transform.translate(
-                      offset: const Offset(0, -40),
+                      // The -40 overlap is designed around the video CTA
+                      // card absorbing it (it floats up over the hero's
+                      // rounded bottom edge). Without that card — e.g. site
+                      // settings hasn't finished loading yet, or no tutorial
+                      // video is configured — there's nothing to absorb the
+                      // shift and it drags the Individual/Organization tabs
+                      // straight into the hero box instead.
+                      offset: Offset(0, tutorialVideoUrl.isNotEmpty ? -40 : 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -1291,12 +1306,17 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      monthlyPayment > 0 ? Formatters.bdt(monthlyPayment) : '—',
-                      style: GoogleFonts.publicSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: context.textHigh,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        monthlyPayment > 0 ? Formatters.bdt(monthlyPayment) : '—',
+                        maxLines: 1,
+                        style: GoogleFonts.publicSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.textHigh,
+                        ),
                       ),
                     ),
                   ],
@@ -1315,12 +1335,17 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      share > 0 ? t(ref, 'oneYear') : '—',
-                      style: GoogleFonts.publicSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: context.textHigh,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        share > 0 ? t(ref, 'oneYear') : '—',
+                        maxLines: 1,
+                        style: GoogleFonts.publicSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.textHigh,
+                        ),
                       ),
                     ),
                   ],
@@ -1684,12 +1709,16 @@ class _SuccessView extends ConsumerWidget {
                             size: 16,
                             color: context.textHigh,
                           ),
-                          label: Text(
-                            t(ref, 'registerAnother'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: context.textHigh,
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              t(ref, 'registerAnother'),
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: context.textHigh,
+                              ),
                             ),
                           ),
                         ),
@@ -1711,12 +1740,16 @@ class _SuccessView extends ConsumerWidget {
                             size: 16,
                             color: Colors.white,
                           ),
-                          label: Text(
-                            t(ref, 'goHome'),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              t(ref, 'goHome'),
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

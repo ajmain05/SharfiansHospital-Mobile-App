@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/event_registration_summary.dart';
 import '../providers/events_providers.dart';
@@ -77,6 +78,16 @@ class _EventCheckStatusScreenState
         _results = results;
         if (results.isEmpty) _error = t(ref, 'noRegistrationsFound');
       });
+
+      // OTP verification just proved this device's owner really controls
+      // this phone — the same proof My Portal login relies on — so this is
+      // also the right moment to attach it to the push token. Covers anyone
+      // who registered for an event on the website (or before this fix
+      // existed) and is only now checking status from the app, without ever
+      // logging into My Portal.
+      if (results.isNotEmpty) {
+        ref.read(pushNotificationServiceProvider).registerToken(phone: phone);
+      }
     } catch (e) {
       final message = switch (e) {
         ApiException(statusCode: 429) => t(ref, 'tooManyAttempts'),

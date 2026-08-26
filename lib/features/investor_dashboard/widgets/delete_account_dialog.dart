@@ -315,11 +315,15 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
                           ),
                           side: BorderSide(color: colorScheme.outlineVariant),
                         ),
-                        child: Text(
-                          t(ref, 'cancel'),
-                          style: GoogleFonts.publicSans(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            t(ref, 'cancel'),
+                            maxLines: 1,
+                            style: GoogleFonts.publicSans(
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
                       ),
@@ -344,10 +348,14 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(
-                                t(ref, 'submitRequest'),
-                                style: GoogleFonts.publicSans(
-                                  fontWeight: FontWeight.w700,
+                            : FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  t(ref, 'submitRequest'),
+                                  maxLines: 1,
+                                  style: GoogleFonts.publicSans(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                       ),
