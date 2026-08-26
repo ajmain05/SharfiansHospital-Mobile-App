@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import 'package:go_router/go_router.dart';
-
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
@@ -78,29 +76,6 @@ class _EventScannerScreenState extends ConsumerState<EventScannerScreen>
     }
   }
 
-  Future<void> _openLiveDashboard() async {
-    setState(() => _isProcessing = true);
-    try {
-      final repo = ref.read(scannerRepoProvider);
-      final activeEvent = await repo.getActiveEvent();
-      if (activeEvent != null && activeEvent['id'] != null) {
-        if (!mounted) return;
-        context.push('/admin/live-dashboard/${activeEvent['id']}');
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(t(ref, 'noActiveEventFound'))));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      setState(() => _isProcessing = false);
-    }
-  }
 
   void _showResultBottomSheet(Map<String, dynamic> result) {
     showModalBottomSheet(
@@ -138,12 +113,6 @@ class _EventScannerScreenState extends ConsumerState<EventScannerScreen>
           ),
         ),
         actions: [
-          _GlassIconButton(
-            icon: Icons.dashboard_rounded,
-            tooltip: t(ref, 'liveDashboard'),
-            iconColor: AppColors.primary400,
-            onPressed: _openLiveDashboard,
-          ),
           _GlassIconButton(
             icon: Icons.flip_camera_ios_rounded,
             onPressed: () => _scannerController.switchCamera(),

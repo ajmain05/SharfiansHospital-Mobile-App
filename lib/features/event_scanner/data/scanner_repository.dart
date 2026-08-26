@@ -34,18 +34,4 @@ class ScannerRepository {
 
     return res.raw as Map<String, dynamic>;
   }
-
-  /// `GET /events/public/active`
-  Future<Map<String, dynamic>?> getActiveEvent() async {
-    final res = await _api.get('/events/public/active');
-    if (!res.success) return null;
-    return res.data as Map<String, dynamic>;
-  }
-
-  /// `GET /events/:id/live-stats`
-  Future<Map<String, dynamic>?> getLiveStats(String eventId) async {
-    final res = await _api.get('/events/$eventId/live-stats');
-    if (!res.success) return null;
-    return res.data as Map<String, dynamic>;
-  }
 }

@@ -78,29 +78,11 @@ class StaffDashboardScreen extends ConsumerWidget {
                     onTap: () => context.push('/admin/scanner'),
                   ),
                   _ActionCard(
-                    title: 'Approvals',
-                    subtitle: 'Review pending requests',
-                    icon: Icons.fact_check_rounded,
-                    gradient: AppColors.cardGradientGold,
-                    onTap: () => context.push('/admin/approvals'),
-                  ),
-                  _ActionCard(
                     title: 'Directory',
                     subtitle: 'Search investors',
                     icon: Icons.contact_phone_rounded,
                     gradient: AppColors.cardGradientTeal,
                     onTap: () => context.push('/admin/directory'),
-                  ),
-                  _ActionCard(
-                    title: 'Live Dashboard',
-                    subtitle: 'Active event stats',
-                    icon: Icons.bar_chart_rounded,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    onTap: () => context.push('/admin/scanner'),
                   ),
                 ],
               ),
@@ -247,12 +229,17 @@ class _StatChip extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
           ),
           const SizedBox(height: 2),

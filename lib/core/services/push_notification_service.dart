@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Color;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -9,6 +10,40 @@ import '../network/api_client.dart';
 import '../router/app_router.dart';
 
 final pushNotificationServiceProvider = Provider((ref) => PushNotificationService());
+
+// Brand accent used to tint Android notification icons — matches the app's
+// primary blue everywhere else in the UI (and android/.../colors.xml's
+// notification_color, used for background/killed-state notifications the
+// native FCM SDK renders without ever going through this Dart code).
+const _brandColor = Color(0xFF316BF3);
+
+// One channel per notification category so a user can mute/prioritize them
+// separately in system settings, instead of everything funneling into one
+// channel at max importance. `category` in the FCM data payload picks one of
+// these; anything missing/unrecognized (e.g. a manually composed admin
+// notification, which has no category) falls back to `_generalChannel`.
+const _paymentChannel = AndroidNotificationChannel(
+  'payments_channel',
+  'Payments',
+  description: 'Deposit confirmations and payment due reminders.',
+  importance: Importance.max,
+);
+const _eventChannel = AndroidNotificationChannel(
+  'events_channel',
+  'Events',
+  description: 'Event registration updates, new events, and reminders.',
+  importance: Importance.max,
+);
+const _generalChannel = AndroidNotificationChannel(
+  'general_channel',
+  'General',
+  description: 'Announcements and other notifications.',
+  importance: Importance.max,
+);
+const _channelsByCategory = {
+  'payment': _paymentChannel,
+  'event': _eventChannel,
+};
 
 class PushNotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -32,7 +67,7 @@ class PushNotificationService {
     // carried through as the plain-string payload since flutter_local_notifications
     // only supports a single string, not the full data map FCM gives the
     // other two tap paths below.
-    const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
+    const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@drawable/ic_notification');
     const DarwinInitializationSettings iosInit = DarwinInitializationSettings();
     const InitializationSettings initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
     await _localNotifications.initialize(
@@ -40,6 +75,14 @@ class PushNotificationService {
       onDidReceiveNotificationResponse: (response) =>
           _handleNotificationTap(response.payload),
     );
+
+    // Pre-register all 3 channels so they show up (and are mutable) in
+    // system notification settings even before the first push of each kind
+    // ever arrives.
+    final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    for (final channel in [_paymentChannel, _eventChannel, _generalChannel]) {
+      await androidPlugin?.createNotificationChannel(channel);
+    }
 
     // 3. Listen to foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -117,6 +160,8 @@ class PushNotificationService {
         }
       }
 
+      final channel = _channelsByCategory[message.data['category']] ?? _generalChannel;
+
       _localNotifications.show(
         id: notification.hashCode,
         title: notification.title,
@@ -124,12 +169,13 @@ class PushNotificationService {
         payload: message.data['link'],
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            'high_importance_channel', // id
-            'High Importance Notifications', // title
-            channelDescription: 'This channel is used for important notifications.',
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
             importance: Importance.max,
             priority: Priority.high,
-            icon: android?.smallIcon ?? '@mipmap/launcher_icon',
+            icon: android?.smallIcon ?? '@drawable/ic_notification',
+            color: _brandColor,
             styleInformation: styleInformation,
           ),
           iOS: const DarwinNotificationDetails(

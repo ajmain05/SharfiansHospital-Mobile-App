@@ -16,9 +16,7 @@ import '../../features/investor_dashboard/screens/investor_dashboard_screen.dart
 import '../../features/investor_registration/screens/investor_registration_screen.dart';
 import '../../features/admin_auth/screens/staff_login_screen.dart';
 import '../../features/event_scanner/screens/event_scanner_screen.dart';
-import '../../features/event_dashboard/screens/live_event_dashboard_screen.dart';
 import '../../features/admin_dashboard/screens/staff_dashboard_screen.dart';
-import '../../features/admin_dashboard/screens/staff_approvals_screen.dart';
 import '../../features/admin_dashboard/screens/staff_directory_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../storage/local_storage.dart';
@@ -243,20 +241,6 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(
-      path: '/admin/approvals',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const StaffApprovalsScreen(),
-        transitionsBuilder: slideUpTransition,
-        transitionDuration: const Duration(milliseconds: 320),
-      ),
-      redirect: (context, state) {
-        final token = LocalStorage.getAdminToken();
-        if (token == null) return '/admin/login';
-        return null;
-      },
-    ),
-    GoRoute(
       path: '/admin/directory',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
@@ -275,20 +259,6 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
         child: const EventScannerScreen(),
-        transitionsBuilder: scaleUpTransition,
-        transitionDuration: const Duration(milliseconds: 350),
-      ),
-      redirect: (context, state) {
-        final token = LocalStorage.getAdminToken();
-        if (token == null) return '/admin/login';
-        return null;
-      },
-    ),
-    GoRoute(
-      path: '/admin/live-dashboard/:id',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: LiveEventDashboardScreen(eventId: state.pathParameters['id']!),
         transitionsBuilder: scaleUpTransition,
         transitionDuration: const Duration(milliseconds: 350),
       ),

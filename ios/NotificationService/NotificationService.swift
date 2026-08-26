@@ -1,10 +1,3 @@
-// TEMPLATE ONLY — this file is not part of any Xcode target and does nothing
-// on its own. After creating the "Notification Service Extension" target in
-// Xcode (File → New → Target → Notification Service Extension, named
-// "NotificationService"), copy this entire content into the
-// NotificationService.swift file Xcode generates inside that new target's
-// folder, replacing its default stub content. Then delete this file.
-
 import UserNotifications
 
 class NotificationService: UNNotificationServiceExtension {

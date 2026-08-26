@@ -45,6 +45,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Branding for notifications the FCM SDK renders natively — i.e.
+             background/killed-app state, which bypasses all the Dart
+             notification code in push_notification_service.dart entirely.
+             Without these, those notifications fall back to Android's
+             generic bell icon instead of the app's own icon/color. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="general_channel" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
