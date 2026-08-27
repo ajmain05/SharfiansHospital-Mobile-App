@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../core/network/api_client.dart';
@@ -10,7 +11,22 @@ class NotificationsRepository {
   /// This device's own current FCM token — every inbox call is keyed by it
   /// (same trust level as /register-token; there's no investor bearer-auth
   /// yet to require instead, see push_notification_service.dart).
-  Future<String?> _currentToken() => FirebaseMessaging.instance.getToken();
+  ///
+  /// On iOS, getToken() throws until the OS has delivered an APNs token to
+  /// the app — a real device passes this within moments of granting
+  /// permission, but there's an inherent race right after launch, and the
+  /// iOS Simulator never gets one at all. Treating that as "no token yet" (a
+  /// perfectly normal, temporary state) rather than letting it propagate is
+  /// what keeps the inbox screen from showing a scary connection-error
+  /// state for something that isn't a connection error.
+  Future<String?> _currentToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      debugPrint('FCM token not available yet: $e');
+      return null;
+    }
+  }
 
   Future<List<NotificationItem>> getInbox() async {
     final token = await _currentToken();

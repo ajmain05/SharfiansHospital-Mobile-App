@@ -707,6 +707,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
       if (!mounted) return;
       await OpenFilex.open(path);
     } catch (e) {
+      debugPrint('Receipt download failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -716,17 +717,36 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
     }
   }
 
+  /// iPadOS/macOS present the share sheet as a popover anchored to a screen
+  /// rect — without one, shareXFiles throws ("sharePositionOrigin argument
+  /// must be set") instead of silently ignoring it the way iPhone/Android
+  /// do. Falls back to the full screen if this widget's own RenderBox isn't
+  /// available/sized yet, so it's never zero (which throws the same error).
+  Rect _sharePositionOrigin() {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize && box.size.width > 0 && box.size.height > 0) {
+      return box.localToGlobal(Offset.zero) & box.size;
+    }
+    final size = MediaQuery.of(context).size;
+    return Rect.fromLTWH(0, 0, size.width, size.height);
+  }
+
   Future<void> _shareReceipt(Deposit dep) async {
     setState(() => _downloadingId = dep.id);
     try {
       final path = await _receiptPath(dep);
       if (!mounted) return;
-      await Share.shareXFiles([XFile(path)]);
+      await Share.shareXFiles([XFile(path)], sharePositionOrigin: _sharePositionOrigin());
     } catch (e) {
+      // Logged with its real type/message (not just the generic snackbar
+      // text) since share-sheet failures on iOS are otherwise a black box —
+      // this is what actually tells us whether it's the download step or
+      // the native share sheet itself that's failing.
+      debugPrint('Receipt share failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(t(ref, 'downloadFailed'))));
+      ).showSnackBar(SnackBar(content: Text(t(ref, 'shareFailed'))));
     } finally {
       if (mounted) setState(() => _downloadingId = null);
     }
@@ -859,19 +879,48 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> {
                         ),
                       )
                     else
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          tooltip: t(ref, 'download'),
-                          onPressed: () => _downloadReceipt(dep),
-                          icon: const Icon(
-                            Icons.download_rounded,
-                            color: AppColors.primary600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Download — back to the original filled/tinted
+                          // circle look.
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              tooltip: t(ref, 'download'),
+                              onPressed: () => _downloadReceipt(dep),
+                              icon: const Icon(
+                                Icons.download_rounded,
+                                color: AppColors.primary600,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 10),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              tooltip: t(ref, 'share'),
+                              onPressed: () => _shareReceipt(dep),
+                              // Pre-tinted to AppColors.primary600 in the
+                              // asset itself (not via color/colorBlendMode
+                              // here) — BlendMode.srcIn on this image was
+                              // rendering as a solid block on iOS/Impeller
+                              // instead of respecting its alpha shape.
+                              icon: Image.asset(
+                                'assets/images/share_icon.png',
+                                width: 26,
+                                height: 26,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                   ],
                 ),

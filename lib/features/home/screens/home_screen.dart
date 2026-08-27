@@ -292,7 +292,8 @@ class _NotificationBellButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadCount = ref.watch(unreadNotificationCountProvider);
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final hasUnread = unreadCount > 0;
+    final dark = context.isDark;
 
     return Material(
       color: Colors.transparent,
@@ -306,16 +307,27 @@ class _NotificationBellButton extends ConsumerWidget {
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: dark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
                   shape: BoxShape.circle,
-                  border: Border.all(color: dark ? const Color(0xFF334155) : const Color(0xFFDBEAFE)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF316BF3).withValues(alpha: dark ? 0.25 : 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(Icons.notifications_rounded, color: dark ? Colors.white : const Color(0xFF1D4ED8), size: 20),
+                child: Icon(
+                  Icons.notifications_rounded,
+                  color: const Color(0xFF316BF3),
+                  size: 21,
+                ),
               ),
-              if (unreadCount > 0)
+              if (hasUnread)
                 Positioned(
                   top: -2,
                   right: -2,
@@ -323,9 +335,12 @@ class _NotificationBellButton extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626),
+                      gradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFDC2626)]),
                       borderRadius: BorderRadius.circular(9),
-                      border: Border.all(color: dark ? const Color(0xFF1E293B) : Colors.white, width: 1.5),
+                      border: Border.all(color: context.bgFill, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFFDC2626).withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
                     ),
                     child: Center(
                       child: Text(

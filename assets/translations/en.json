@@ -259,5 +259,7 @@
   "minutesAgo": "{count}m ago",
   "hoursAgo": "{count}h ago",
   "daysAgo": "{count}d ago",
-  "failedToLoadNotifications": "Failed to load notifications."
+  "failedToLoadNotifications": "Failed to load notifications.",
+  "share": "Share",
+  "shareFailed": "Couldn't open the share sheet. Please try again."
 }
