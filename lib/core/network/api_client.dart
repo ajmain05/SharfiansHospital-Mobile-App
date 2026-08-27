@@ -86,6 +86,15 @@ class ApiClient {
     }
   }
 
+  Future<ApiResponse> delete(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final res = await _dio.delete(path, queryParameters: query);
+      return _success(res);
+    } on DioException catch (e) {
+      return _fail(e);
+    }
+  }
+
   /// Streams a binary response (e.g. a deposit receipt PDF) straight to disk.
   Future<void> download(String path, String savePath) async {
     await _dio.download(path, savePath);

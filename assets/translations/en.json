@@ -246,5 +246,18 @@
   "bkashPaymentStartFailed": "Failed to start the bKash payment.",
   "bkashPaymentCancelledOrFailed": "Payment was cancelled or failed.",
   "bkashPaymentVerifyFailed": "Failed to verify the payment.",
-  "payWithBkash": "Pay with bKash"
+  "payWithBkash": "Pay with bKash",
+
+  "notifications": "Notifications",
+  "noNewNotifications": "No new notifications",
+  "noNewNotificationsHint": "You're all caught up! We'll let you know when something new arrives.",
+  "clearAll": "Clear All",
+  "markAllRead": "Mark all as read",
+  "clearNotificationsConfirmTitle": "Clear all notifications?",
+  "clearNotificationsConfirmBody": "This can't be undone.",
+  "justNow": "Just now",
+  "minutesAgo": "{count}m ago",
+  "hoursAgo": "{count}h ago",
+  "daysAgo": "{count}d ago",
+  "failedToLoadNotifications": "Failed to load notifications."
 }

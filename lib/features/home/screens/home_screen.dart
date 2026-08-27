@@ -13,6 +13,7 @@ import '../../../core/widgets/language_toggle_button.dart';
 import '../../../core/widgets/theme_toggle_button.dart';
 import '../../../models/site_settings.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
+import '../../notifications/providers/notifications_provider.dart';
 import '../../settings/providers/site_settings_provider.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../providers/public_stats_provider.dart';
@@ -142,7 +143,7 @@ class _HeroSection extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Empty row since settings moved to quick access
+                    _NotificationBellButton(onTap: () => onNavigate('/notifications')),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -283,7 +284,64 @@ class _HeroSection extends StatelessWidget {
   Widget _circle(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color));
 }
 
+class _NotificationBellButton extends ConsumerWidget {
+  final VoidCallback onTap;
 
+  const _NotificationBellButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: dark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: dark ? const Color(0xFF334155) : const Color(0xFFDBEAFE)),
+                ),
+                child: Icon(Icons.notifications_rounded, color: dark ? Colors.white : const Color(0xFF1D4ED8), size: 20),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: dark ? const Color(0xFF1E293B) : Colors.white, width: 1.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 9 ? '9+' : '$unreadCount',
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _HeroCTA extends StatelessWidget {
   final IconData icon;

@@ -246,5 +246,18 @@
   "bkashPaymentStartFailed": "বিকাশ পেমেন্ট শুরু করতে সমস্যা হয়েছে।",
   "bkashPaymentCancelledOrFailed": "পেমেন্ট বাতিল হয়েছে বা ব্যর্থ হয়েছে।",
   "bkashPaymentVerifyFailed": "পেমেন্ট ভেরিফাই করতে সমস্যা হয়েছে।",
-  "payWithBkash": "বিকাশ দিয়ে পে করুন"
+  "payWithBkash": "বিকাশ দিয়ে পে করুন",
+
+  "notifications": "নোটিফিকেশন",
+  "noNewNotifications": "কোনো নতুন নোটিফিকেশন নেই",
+  "noNewNotificationsHint": "সব দেখা হয়ে গেছে! নতুন কিছু আসলে আপনাকে জানানো হবে।",
+  "clearAll": "সব মুছুন",
+  "markAllRead": "সব পঠিত হিসেবে চিহ্নিত করুন",
+  "clearNotificationsConfirmTitle": "সব নোটিফিকেশন মুছে ফেলবেন?",
+  "clearNotificationsConfirmBody": "এটি ফিরিয়ে আনা যাবে না।",
+  "justNow": "এইমাত্র",
+  "minutesAgo": "{count} মিনিট আগে",
+  "hoursAgo": "{count} ঘণ্টা আগে",
+  "daysAgo": "{count} দিন আগে",
+  "failedToLoadNotifications": "নোটিফিকেশন লোড করতে সমস্যা হয়েছে।"
 }

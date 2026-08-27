@@ -11,6 +11,7 @@ import '../../features/career/screens/career_screen.dart';
 import '../../features/faq/screens/faq_screen.dart';
 import '../../features/gallery/screens/gallery_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/investor_auth/screens/investor_login_screen.dart';
 import '../../features/investor_dashboard/screens/investor_dashboard_screen.dart';
 import '../../features/investor_registration/screens/investor_registration_screen.dart';
@@ -104,6 +105,15 @@ final appRouter = GoRouter(
                   pageBuilder: (context, state) => CustomTransitionPage(
                     key: state.pageKey,
                     child: const CareerScreen(),
+                    transitionsBuilder: slideUpTransition,
+                    transitionDuration: const Duration(milliseconds: 320),
+                  ),
+                ),
+                GoRoute(
+                  path: 'notifications',
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    child: const NotificationsScreen(),
                     transitionsBuilder: slideUpTransition,
                     transitionDuration: const Duration(milliseconds: 320),
                   ),

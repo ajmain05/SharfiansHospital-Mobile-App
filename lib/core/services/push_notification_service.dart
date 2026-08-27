@@ -8,8 +8,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../network/api_client.dart';
 import '../router/app_router.dart';
+import '../../features/notifications/providers/notifications_provider.dart';
 
-final pushNotificationServiceProvider = Provider((ref) => PushNotificationService());
+final pushNotificationServiceProvider = Provider((ref) => PushNotificationService(ref));
+
+/// Routes an optional admin-attached link: an in-app path (relative, or
+/// absolute pointing at our own domain) is handled by the app's own router
+/// so it opens natively instead of in a browser tab; anything else is
+/// handed to the device's browser/relevant app. No link at all falls back
+/// to Home. Shared by a tapped push (see PushNotificationService below) and
+/// a tapped entry in the notification history screen — same destination
+/// either way.
+void handleNotificationLink(String? link) {
+  if (link == null || link.isEmpty) {
+    appRouter.go('/');
+    return;
+  }
+  final uri = Uri.tryParse(link);
+  if (uri == null) {
+    appRouter.go('/');
+    return;
+  }
+  const ownHosts = {'sharfianshospital.com', 'www.sharfianshospital.com'};
+  if (uri.host.isEmpty || ownHosts.contains(uri.host)) {
+    appRouter.go(uri.path.isEmpty ? '/' : '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}');
+    return;
+  }
+  launchUrl(uri, mode: LaunchMode.externalApplication);
+}
 
 // Brand accent used to tint Android notification icons — matches the app's
 // primary blue everywhere else in the UI (and android/.../colors.xml's
@@ -46,9 +72,12 @@ const _channelsByCategory = {
 };
 
 class PushNotificationService {
+  final Ref _ref;
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   final ApiClient _api = ApiClient();
+
+  PushNotificationService(this._ref);
 
   Future<void> init() async {
     // 1. Request permissions for iOS
@@ -73,7 +102,7 @@ class PushNotificationService {
     await _localNotifications.initialize(
       settings: initSettings,
       onDidReceiveNotificationResponse: (response) =>
-          _handleNotificationTap(response.payload),
+          handleNotificationLink(response.payload),
     );
 
     // Pre-register all 3 channels so they show up (and are mutable) in
@@ -90,11 +119,11 @@ class PushNotificationService {
     // 4. Tapped from background, or app cold-started from a terminated state
     // by tapping a notification.
     FirebaseMessaging.onMessageOpenedApp.listen(
-      (message) => _handleNotificationTap(message.data['link']),
+      (message) => handleNotificationLink(message.data['link']),
     );
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationTap(initialMessage.data['link']);
+      handleNotificationLink(initialMessage.data['link']);
     }
 
     // 5. Register this device unconditionally, even if nobody has logged in
@@ -104,31 +133,6 @@ class PushNotificationService {
     // afterwards; the backend upsert never blanks out an identity that's
     // already attached, so this can't undo an existing login.
     registerToken();
-  }
-
-  void _navigateHome() => appRouter.go('/');
-
-  /// Routes a tapped notification's optional admin-attached link: an
-  /// in-app path (relative, or absolute pointing at our own domain) is
-  /// handled by the app's own router so it opens natively instead of in a
-  /// browser tab; anything else is handed to the device's browser/relevant
-  /// app. No link at all falls back to Home, same as before this existed.
-  void _handleNotificationTap(String? link) {
-    if (link == null || link.isEmpty) {
-      _navigateHome();
-      return;
-    }
-    final uri = Uri.tryParse(link);
-    if (uri == null) {
-      _navigateHome();
-      return;
-    }
-    const ownHosts = {'sharfianshospital.com', 'www.sharfianshospital.com'};
-    if (uri.host.isEmpty || ownHosts.contains(uri.host)) {
-      appRouter.go(uri.path.isEmpty ? '/' : '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}');
-      return;
-    }
-    launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
@@ -185,6 +189,11 @@ class PushNotificationService {
           ),
         ),
       );
+
+      // The backend already persisted this notification to the recipient's
+      // inbox before sending it — refresh so the bell badge/list reflect it
+      // immediately instead of only on next app open.
+      _ref.invalidate(notificationsInboxProvider);
     }
   }
 
