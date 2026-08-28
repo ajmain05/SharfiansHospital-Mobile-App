@@ -81,6 +81,7 @@ class AdminSessionNotifier extends StateNotifier<AdminSessionState> {
   }
 
   Future<void> logout() async {
+    await _pushService.detachToken(clearUserId: true);
     await LocalStorage.clearAdminSession();
     state = const AdminSessionState();
   }

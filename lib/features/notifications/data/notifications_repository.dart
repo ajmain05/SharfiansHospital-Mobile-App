@@ -45,6 +45,10 @@ class NotificationsRepository {
     await _api.post('/notifications/inbox/$recipientId/read');
   }
 
+  Future<void> deleteOne(String recipientId) async {
+    await _api.delete('/notifications/inbox/$recipientId');
+  }
+
   Future<void> markAllRead() async {
     final token = await _currentToken();
     if (token == null) return;

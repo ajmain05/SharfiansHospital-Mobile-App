@@ -261,5 +261,6 @@
   "daysAgo": "{count} দিন আগে",
   "failedToLoadNotifications": "নোটিফিকেশন লোড করতে সমস্যা হয়েছে।",
   "share": "শেয়ার",
-  "shareFailed": "শেয়ার করা যায়নি। আবার চেষ্টা করুন।"
+  "shareFailed": "শেয়ার করা যায়নি। আবার চেষ্টা করুন।",
+  "deleteNotification": "মুছুন"
 }

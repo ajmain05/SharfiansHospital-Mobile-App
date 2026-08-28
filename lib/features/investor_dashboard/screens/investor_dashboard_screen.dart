@@ -117,19 +117,19 @@ class _InvestorDashboardScreenState
           labelColor: AppColors.primary600,
           unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
           indicatorColor: AppColors.primary600,
-          // letterSpacing 1.2 combined with the selected tab's heavier w900
-          // weight made wider words like "ACCOUNTS"/"PAYMENTS" (unlike
-          // "OVERVIEW") just barely exceed their tab's share of the bar's
-          // width, clipping the trailing letter — 0.6 leaves enough margin
-          // for the widest word at the heaviest weight to fit cleanly.
           labelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.6),
           unselectedLabelStyle: GoogleFonts.publicSans(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.6),
           indicatorWeight: 2,
           dividerColor: Theme.of(context).colorScheme.outlineVariant,
+          // A fixed letterSpacing/weight combo that "just fits" only holds at
+          // one specific screen width and system font scale — narrower
+          // phones or a larger accessibility text size push wider words like
+          // "ACCOUNTS"/"PAYMENTS" past their equal third of the bar again.
+          // FittedBox shrinks instead of clipping, so it holds at any width.
           tabs: [
-            Tab(text: t(ref, 'overview').toUpperCase()),
-            Tab(text: t(ref, 'accounts').toUpperCase()),
-            Tab(text: t(ref, 'payments').toUpperCase()),
+            Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(t(ref, 'overview').toUpperCase()))),
+            Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(t(ref, 'accounts').toUpperCase()))),
+            Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(t(ref, 'payments').toUpperCase()))),
           ],
         ),
       ),

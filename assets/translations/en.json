@@ -261,5 +261,6 @@
   "daysAgo": "{count}d ago",
   "failedToLoadNotifications": "Failed to load notifications.",
   "share": "Share",
-  "shareFailed": "Couldn't open the share sheet. Please try again."
+  "shareFailed": "Couldn't open the share sheet. Please try again.",
+  "deleteNotification": "Delete"
 }

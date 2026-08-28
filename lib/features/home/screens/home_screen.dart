@@ -295,18 +295,24 @@ class _NotificationBellButton extends ConsumerWidget {
     final hasUnread = unreadCount > 0;
     final dark = context.isDark;
 
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
+    // The unread badge deliberately sits in the corner, just outside the
+    // bell circle. It must NOT be a descendant of the Material below —
+    // Material's own shape:CircleBorder + clipBehavior:antiAlias clips its
+    // whole subtree to the inscribed circle (that's what keeps the ink
+    // ripple round), and a corner sits outside that circle, so the badge
+    // was getting silently sliced by its own container's ripple clip.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Container(
                 width: 42,
                 height: 42,
                 alignment: Alignment.center,
@@ -327,33 +333,35 @@ class _NotificationBellButton extends ConsumerWidget {
                   size: 21,
                 ),
               ),
-              if (hasUnread)
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFDC2626)]),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(color: context.bgFill, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(color: const Color(0xFFDC2626).withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 2)),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        unreadCount > 9 ? '9+' : '$unreadCount',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
+        if (hasUnread)
+          Positioned(
+            top: 2,
+            right: 2,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFDC2626)]),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: context.bgFill, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFFDC2626).withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    unreadCount > 9 ? '9+' : '$unreadCount',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

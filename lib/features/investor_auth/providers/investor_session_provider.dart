@@ -135,6 +135,7 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   }
 
   Future<void> logout() async {
+    await _pushService.detachToken(clearPhone: true);
     await LocalStorage.clearInvestorSession();
     state = const InvestorSessionState();
   }

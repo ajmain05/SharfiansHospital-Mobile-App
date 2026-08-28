@@ -72,6 +72,17 @@ class NotificationsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _handleDelete(WidgetRef ref, NotificationItem item) async {
+    // The swipe animation already gave visual confirmation the item is
+    // gone — invalidate afterwards only to reconcile with the server, not
+    // to drive the removal itself.
+    try {
+      await ref.read(notificationsRepositoryProvider).deleteOne(item.id);
+    } finally {
+      ref.invalidate(notificationsInboxProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inboxAsync = ref.watch(notificationsInboxProvider);
@@ -193,10 +204,27 @@ class NotificationsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               itemCount: items.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _NotificationCard(
-                item: items[index],
-                onTap: () => _handleTap(ref, items[index]),
-              ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return Dismissible(
+                  key: ValueKey(item.id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (_) => _handleDelete(ref, item),
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 22),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(Icons.delete_rounded, color: Colors.white),
+                  ),
+                  child: _NotificationCard(
+                    item: item,
+                    onTap: () => _handleTap(ref, item),
+                  ),
+                );
+              },
             );
           },
         ),

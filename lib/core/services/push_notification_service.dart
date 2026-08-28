@@ -216,4 +216,28 @@ class PushNotificationService {
       debugPrint('Failed to register FCM token: $e');
     }
   }
+
+  /// Clears an identity from this device's token on logout — otherwise a
+  /// device that's since logged into a different account (or logged all the
+  /// way out) keeps being matched by phone/userId-based push targeting for
+  /// whoever was last logged in here, including anything already queued
+  /// before the switch (FCM can't recall an in-flight message once sent to
+  /// a token). Call with clearPhone from investor logout, clearUserId from
+  /// admin/staff logout — never both, so logging out of one identity on a
+  /// device that also has the other attached doesn't blank that one too.
+  Future<void> detachToken({bool clearPhone = false, bool clearUserId = false}) async {
+    if (!clearPhone && !clearUserId) return;
+    try {
+      final token = await _fcm.getToken();
+      if (token == null) return;
+
+      await _api.post('/notifications/detach-token', {
+        'token': token,
+        'clearPhone': clearPhone,
+        'clearUserId': clearUserId,
+      });
+    } catch (e) {
+      debugPrint('Failed to detach FCM token identity: $e');
+    }
+  }
 }
