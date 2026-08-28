@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../models/site_settings.dart';
 import '../providers/site_settings_provider.dart';
@@ -134,13 +135,19 @@ class AboutScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           Center(
-            child: Text(
-              'Version 1.0.0',
-              style: GoogleFonts.publicSans(
-                fontSize: 12,
-                color: colorScheme.outline,
-                fontWeight: FontWeight.w600,
-              ),
+            child: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final version = snapshot.data?.version;
+                return Text(
+                  version != null ? 'Version $version' : '',
+                  style: GoogleFonts.publicSans(
+                    fontSize: 12,
+                    color: colorScheme.outline,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              },
             ),
           ),
         ],
