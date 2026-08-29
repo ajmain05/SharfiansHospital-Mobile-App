@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/investor_category.dart';
 import '../data/scanner_repository.dart';
 
 final scannerRepoProvider = Provider((ref) => ScannerRepository());
@@ -439,6 +440,30 @@ class _ScanResultSheet extends ConsumerWidget {
                         labelKey: 'scanDetailName',
                         value: data['name'].toString(),
                       ),
+                    if (data['investorBadge'] is Map) ...[
+                      const SizedBox(height: 12),
+                      Builder(builder: (context) {
+                        final badge = data['investorBadge'] as Map;
+                        final isInvestor = badge['isInvestor'] == true;
+                        final tierId = badge['tierId'] as String?;
+                        final category = isInvestor
+                            ? InvestorCategory.tiers.firstWhere(
+                                (c) => c.id == tierId,
+                                orElse: () => InvestorCategory.regular,
+                              )
+                            : InvestorCategory.regular;
+                        return _DetailRow(
+                          icon: isInvestor
+                              ? Icons.workspace_premium_rounded
+                              : Icons.person_outline_rounded,
+                          labelKey: 'scanDetailInvestorStatus',
+                          value: isInvestor
+                              ? (badge['tierLabel'] as String? ?? '')
+                              : t(ref, 'nonInvestor'),
+                          valueColor: isInvestor ? category.color : null,
+                        );
+                      }),
+                    ],
                     if (data['personsCount'] != null) ...[
                       const SizedBox(height: 12),
                       _DetailRow(
@@ -495,11 +520,13 @@ class _DetailRow extends ConsumerWidget {
   final IconData icon;
   final String labelKey;
   final String value;
+  final Color? valueColor;
 
   const _DetailRow({
     required this.icon,
     required this.labelKey,
     required this.value,
+    this.valueColor,
   });
 
   @override
@@ -525,7 +552,7 @@ class _DetailRow extends ConsumerWidget {
             style: GoogleFonts.publicSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: context.textHigh,
+              color: valueColor ?? context.textHigh,
             ),
           ),
         ),

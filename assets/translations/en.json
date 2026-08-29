@@ -229,6 +229,8 @@
   "scanStatusNotApproved": "Not Approved",
   "scanStatusInvalid": "Invalid Ticket",
   "scanDetailName": "Name",
+  "scanDetailInvestorStatus": "Status",
+  "nonInvestor": "Non-Investor",
   "scanDetailPersons": "Persons",
   "scanDetailEvent": "Event",
   "noActiveEventFound": "No active event found",

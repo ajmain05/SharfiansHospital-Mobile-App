@@ -229,6 +229,8 @@
   "scanStatusNotApproved": "অনুমোদিত নয়",
   "scanStatusInvalid": "অবৈধ টিকিট",
   "scanDetailName": "নাম",
+  "scanDetailInvestorStatus": "স্ট্যাটাস",
+  "nonInvestor": "নন-ইনভেস্টর",
   "scanDetailPersons": "ব্যক্তি",
   "scanDetailEvent": "ইভেন্ট",
   "noActiveEventFound": "কোনো সক্রিয় ইভেন্ট পাওয়া যায়নি",
