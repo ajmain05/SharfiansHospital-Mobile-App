@@ -12,11 +12,18 @@ import '../../../core/widgets/shimmer_loader.dart';
 import '../../../models/site_settings.dart';
 import '../../settings/providers/site_settings_provider.dart';
 
-class GalleryScreen extends ConsumerWidget {
+class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
+}
+
+class _GalleryScreenState extends ConsumerState<GalleryScreen> {
+  String _categoryFilter = '';
+
+  @override
+  Widget build(BuildContext context) {
     final settingsAsync = ref.watch(siteSettingsProvider);
 
     return Scaffold(
@@ -32,6 +39,14 @@ class GalleryScreen extends ConsumerWidget {
         child: settingsAsync.when(
           data: (settings) {
             if (settings.galleryImages.isEmpty) return _EmptyGallery();
+
+            final categories = galleryCategoriesOf(settings.galleryImages);
+            final filtered = _categoryFilter.isEmpty
+                ? settings.galleryImages
+                : settings.galleryImages
+                    .where((img) => img.category.trim().toLowerCase() == _categoryFilter.toLowerCase())
+                    .toList();
+
             return CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -48,37 +63,121 @@ class GalleryScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.9,
+                if (categories.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 44,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          _CategoryChip(
+                            label: t(ref, 'galleryAllCategories'),
+                            selected: _categoryFilter.isEmpty,
+                            onTap: () => setState(() => _categoryFilter = ''),
+                          ),
+                          ...categories.map(
+                            (c) => Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: _CategoryChip(
+                                label: c,
+                                selected: _categoryFilter.toLowerCase() == c.toLowerCase(),
+                                onTap: () => setState(() => _categoryFilter = c),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _GalleryTile(
-                        image: settings.galleryImages[index],
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => _GalleryViewer(
-                              images: settings.galleryImages,
-                              initialIndex: index,
+                  ),
+                if (categories.isNotEmpty) const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                if (filtered.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48),
+                      child: Center(
+                        child: Text(
+                          t(ref, 'galleryNoPhotosInCategory'),
+                          style: TextStyle(color: context.textMed),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.9,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _GalleryTile(
+                          image: filtered[index],
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => _GalleryViewer(
+                                images: filtered,
+                                initialIndex: index,
+                              ),
                             ),
                           ),
                         ),
+                        childCount: filtered.length,
                       ),
-                      childCount: settings.galleryImages.length,
                     ),
                   ),
-                ),
               ],
             );
           },
           loading: () => const ShimmerLoader(),
           error: (err, stack) => ErrorRetryView(
             onRetry: () => ref.invalidate(siteSettingsProvider),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : context.cardFill2,
+            borderRadius: BorderRadius.circular(20),
+            border: selected
+                ? null
+                : Border.all(color: context.borderFill),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : context.textMed,
+            ),
           ),
         ),
       ),

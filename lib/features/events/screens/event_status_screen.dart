@@ -32,8 +32,12 @@ class EventStatusScreen extends ConsumerWidget {
       body: statusAsync.when(
         data: (reg) {
           final cfg = _statusConfig(ref, reg.status);
+          // Stored/sent as a UTC ('Z'-suffixed) ISO string — .toLocal()
+          // converts to the device's local (Bangladesh) time before
+          // formatting, otherwise the UTC wall-clock hour prints verbatim
+          // (e.g. 6 PM admin input showing as noon).
           final date = reg.eventDate != null
-              ? DateTime.tryParse(reg.eventDate!)
+              ? DateTime.tryParse(reg.eventDate!)?.toLocal()
               : null;
 
           return Center(

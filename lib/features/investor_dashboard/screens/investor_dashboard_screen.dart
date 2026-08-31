@@ -18,6 +18,7 @@ import '../../investor_auth/screens/investor_login_screen.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/circular_progress_ring.dart';
 import '../widgets/delete_account_dialog.dart';
+import '../widgets/increase_share_dialog.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
   const InvestorDashboardScreen({super.key});
@@ -310,6 +311,89 @@ class _OverviewTab extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 28),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => IncreaseShareDialog.show(
+              context,
+              investorId: account.id,
+              phone: account.phone,
+              currentShareAmount: account.shareAmount,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -10,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: Color(0xFF16A34A),
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t(ref, 'increaseMyShare'),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF16A34A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t(ref, 'increaseShareTileSubtitle'),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         Material(
           color: Colors.transparent,
           child: InkWell(

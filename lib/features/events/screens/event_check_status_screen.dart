@@ -29,6 +29,24 @@ class _EventCheckStatusScreenState
   String? _error;
   List<EventRegistrationSummary>? _results;
 
+  // Set when reached from a specific event's detail page (its bottom action
+  // bar) — narrows results to just that event instead of showing every
+  // registration this phone has ever made, and reflects that in the copy.
+  String? _scopedEventId;
+  String? _scopedEventTitle;
+  bool _scopeRead = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_scopeRead) {
+      final qp = GoRouterState.of(context).uri.queryParameters;
+      _scopedEventId = qp['eventId'];
+      _scopedEventTitle = qp['eventTitle'];
+      _scopeRead = true;
+    }
+  }
+
   @override
   void dispose() {
     _phoneCtrl.dispose();
@@ -74,9 +92,12 @@ class _EventCheckStatusScreenState
       final results = await ref
           .read(eventsRepositoryProvider)
           .verifyCheckPhoneOtp(phone, code);
+      final scoped = _scopedEventId != null
+          ? results.where((r) => r.eventId == _scopedEventId).toList()
+          : results;
       setState(() {
-        _results = results;
-        if (results.isEmpty) _error = t(ref, 'noRegistrationsFound');
+        _results = scoped;
+        if (scoped.isEmpty) _error = t(ref, 'noRegistrationsFound');
       });
 
       // OTP verification just proved this device's owner really controls
@@ -155,7 +176,9 @@ class _EventCheckStatusScreenState
             Text(
               _otpSent
                   ? '${t(ref, 'verificationCodeSentTo')} ${_phoneCtrl.text.trim()}'
-                  : t(ref, 'checkStatusSubtitle'),
+                  : _scopedEventTitle != null
+                      ? t(ref, 'checkStatusSubtitleForEvent', params: {'event': _scopedEventTitle!})
+                      : t(ref, 'checkStatusSubtitle'),
               textAlign: TextAlign.center,
               style: GoogleFonts.publicSans(
                 color: colorScheme.onSurfaceVariant,
@@ -331,10 +354,91 @@ class _EventCheckStatusScreenState
             ),
             if (_results != null && _results!.isNotEmpty) ...[
               const SizedBox(height: 24),
-              for (final r in _results!) _ResultCard(result: r),
+              // Grouped by event (not a flat list) — one phone can have
+              // registrations across several different events, and a bare
+              // list of cards made it unclear which result belonged to
+              // which event at a glance.
+              for (final group in _groupByEvent(_results!)) ...[
+                _EventGroupHeader(sample: group.first),
+                const SizedBox(height: 10),
+                for (final r in group) _ResultCard(result: r),
+                const SizedBox(height: 8),
+              ],
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Groups registrations by event while preserving each group's first-seen
+// order (matches the backend's most-recent-first ordering) — a phone can
+// have registrations across several different events, so a bare flat list
+// left it unclear which result belonged to which.
+List<List<EventRegistrationSummary>> _groupByEvent(
+  List<EventRegistrationSummary> results,
+) {
+  final order = <String>[];
+  final groups = <String, List<EventRegistrationSummary>>{};
+  for (final r in results) {
+    final key = r.eventId ?? r.eventTitle ?? r.id ?? r.hashCode.toString();
+    if (!groups.containsKey(key)) order.add(key);
+    groups.putIfAbsent(key, () => []).add(r);
+  }
+  return [for (final key in order) groups[key]!];
+}
+
+class _EventGroupHeader extends StatelessWidget {
+  final EventRegistrationSummary sample;
+
+  const _EventGroupHeader({required this.sample});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Stored/sent as a UTC ('Z'-suffixed) ISO string — .toLocal() converts to
+    // the device's local (Bangladesh) time before formatting.
+    final date = sample.eventDate != null
+        ? DateTime.tryParse(sample.eventDate!)?.toLocal()
+        : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.event_outlined,
+            size: 18,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sample.eventTitle ?? '',
+                  style: GoogleFonts.publicSans(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (date != null)
+                  Text(
+                    DateFormat('MMM d, yyyy').format(date),
+                    style: GoogleFonts.publicSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -349,9 +453,6 @@ class _ResultCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final cfg = _statusConfig(result.status);
-    final date = result.eventDate != null
-        ? DateTime.tryParse(result.eventDate!)
-        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -385,7 +486,7 @@ class _ResultCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        result.eventTitle ?? '',
+                        result.name,
                         style: GoogleFonts.publicSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -393,18 +494,10 @@ class _ResultCard extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      if (date != null)
-                        Text(
-                          DateFormat('MMM d, yyyy').format(date),
-                          style: GoogleFonts.publicSans(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      const SizedBox(height: 4),
                       Text(
-                        Formatters.bdt(result.totalAmount),
+                        result.personsCount > 1
+                            ? '${Formatters.bdt(result.totalAmount)} · ${result.personsCount} persons'
+                            : Formatters.bdt(result.totalAmount),
                         style: GoogleFonts.publicSans(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,

@@ -81,6 +81,14 @@ class EventRegistrationScreen extends ConsumerWidget {
               if (!event.isActive) {
                 return _ClosedView(message: t(ref, 'eventClosedMsg'));
               }
+              // Checked separately from isDeadlinePassed — a deadline that's
+              // missing, or set later than the event's own date (a possible
+              // data-entry mistake), would otherwise leave this reachable
+              // for an event that's already happened, e.g. via a stale
+              // shared link or notification.
+              if (event.isCompleted) {
+                return _ClosedView(message: t(ref, 'eventCompletedMsg'));
+              }
               if (event.isDeadlinePassed) {
                 return _ClosedView(message: t(ref, 'deadlinePassed'));
               }

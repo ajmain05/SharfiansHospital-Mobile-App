@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../models/investor.dart';
 import '../data/investor_repository.dart';
@@ -98,22 +99,82 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
         state = state.copyWith(isLoading: false);
         return false;
       }
-      await LocalStorage.saveInvestorAccounts(raw);
-      await LocalStorage.saveInvestorPhone(phone);
-      final accounts = raw.map(Investor.fromJson).toList();
-      state = InvestorSessionState(
-        accounts: accounts,
-        activeAccountId: accounts.first.id,
-      );
-      
-      // Register FCM token for this phone
-      _pushService.registerToken(phone: phone);
-      
+      await _applyLoggedInAccounts(raw, phone);
       return true;
+    } on ApiException catch (e) {
+      // A genuine "no such account" (404) leaves error null so the screen
+      // falls back to its own localized "no account found" text; anything
+      // else (network/server issue) surfaces here so the screen doesn't
+      // tell a real investor their account doesn't exist when the actual
+      // problem was connectivity or server load.
+      state = state.copyWith(isLoading: false, error: e.statusCode == 404 ? null : e.message);
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }
+  }
+
+  /// Explicit-login entry point (OTP-gated for BD numbers). Returns
+  /// `otpRequired: true` when [verifyOtpAndLogin] must be called next;
+  /// `otpRequired: false` means login is already complete (non-BD number),
+  /// identical in effect to [loginWithPhone].
+  Future<({bool otpRequired, bool loggedIn})> startPhoneAuth(String phone) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final result = await _repo.startPhoneAuth(phone);
+      if (result.otpRequired) {
+        state = state.copyWith(isLoading: false);
+        return (otpRequired: true, loggedIn: false);
+      }
+      if (result.accounts.isEmpty) {
+        state = state.copyWith(isLoading: false);
+        return (otpRequired: false, loggedIn: false);
+      }
+      await _applyLoggedInAccounts(result.accounts, phone);
+      return (otpRequired: false, loggedIn: true);
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.statusCode == 404 ? null : e.message);
+      return (otpRequired: false, loggedIn: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return (otpRequired: false, loggedIn: false);
+    }
+  }
+
+  /// Verifies the code sent by [startPhoneAuth] and completes login.
+  /// Returns true on success, false on a wrong/expired code.
+  Future<bool> verifyOtpAndLogin(String phone, String code) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final raw = await _repo.verifyPhoneAuthOtp(phone, code);
+      if (raw.isEmpty) {
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+      await _applyLoggedInAccounts(raw, phone);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<void> _applyLoggedInAccounts(
+    List<Map<String, dynamic>> raw,
+    String phone,
+  ) async {
+    await LocalStorage.saveInvestorAccounts(raw);
+    await LocalStorage.saveInvestorPhone(phone);
+    final accounts = raw.map(Investor.fromJson).toList();
+    state = InvestorSessionState(
+      accounts: accounts,
+      activeAccountId: accounts.first.id,
+    );
+    _pushService.registerToken(phone: phone);
   }
 
   Future<void> refresh() => _silentRefresh();

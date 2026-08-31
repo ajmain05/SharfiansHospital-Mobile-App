@@ -8,14 +8,65 @@ import '../../../core/network/api_exception.dart';
 class InvestorRepository {
   final _api = ApiClient();
 
-  /// `POST /investors/auth-phone` — the app's chosen login mechanism (no
-  /// OTP/password). Returns every investor account matching this phone
-  /// number, each with its `deposits` embedded.
+  /// `POST /investors/auth-phone` — unchanged, still used for the silent
+  /// background refresh of an already-logged-in session (see
+  /// [InvestorSessionNotifier]), which must never itself trigger an OTP/SMS.
   Future<List<Map<String, dynamic>>> loginWithPhone(String phone) async {
     final res = await _api.post('/investors/auth-phone', {'phone': phone});
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Login failed',
+        statusCode: res.statusCode,
+      );
+    }
+    final data = res.data;
+    if (data is List) return data.cast<Map<String, dynamic>>();
+    return const [];
+  }
+
+  /// `POST /investors/auth-phone/start` — the explicit login screen's entry
+  /// point, OTP-gated for BD numbers only. Returns `otpRequired: false` with
+  /// `accounts` already populated for a non-BD number (login already
+  /// complete, identical to today's [loginWithPhone]), or `otpRequired: true`
+  /// with an empty `accounts` list when [verifyPhoneAuthOtp] must be called
+  /// next. Reads from `res.raw` (not `res.data`) because [ApiClient] only
+  /// populates `res.data` from the body's `data` key when present, which
+  /// would silently drop the `otpRequired` flag itself in the non-BD case.
+  Future<({bool otpRequired, List<Map<String, dynamic>> accounts})> startPhoneAuth(
+    String phone,
+  ) async {
+    final res = await _api.post('/investors/auth-phone/start', {'phone': phone});
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Login failed',
+        statusCode: res.statusCode,
+      );
+    }
+    final body = res.raw;
+    final otpRequired = body is Map && body['otpRequired'] == true;
+    final rawAccounts = body is Map ? body['data'] : null;
+    return (
+      otpRequired: otpRequired,
+      accounts: rawAccounts is List
+          ? rawAccounts.cast<Map<String, dynamic>>()
+          : const <Map<String, dynamic>>[],
+    );
+  }
+
+  /// `POST /investors/auth-phone/verify` — verifies the code sent by
+  /// [startPhoneAuth] and completes login, returning the same shape as
+  /// [loginWithPhone].
+  Future<List<Map<String, dynamic>>> verifyPhoneAuthOtp(
+    String phone,
+    String code,
+  ) async {
+    final res = await _api.post('/investors/auth-phone/verify', {
+      'phone': phone,
+      'code': code,
+    });
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Verification failed',
         statusCode: res.statusCode,
       );
     }
@@ -69,6 +120,28 @@ class InvestorRepository {
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Failed to submit deletion request',
+        statusCode: res.statusCode,
+      );
+    }
+  }
+
+  /// `POST /investors/:id/request-share-increase` — submits how much MORE
+  /// the investor wants to invest (not a new total), gated by an admin's
+  /// approval from the dashboard. Does not change share_amount itself yet.
+  Future<void> requestShareIncrease({
+    required String id,
+    required String phone,
+    required num additionalAmount,
+    String? reason,
+  }) async {
+    final res = await _api.post('/investors/$id/request-share-increase', {
+      'phone': phone,
+      'additionalAmount': additionalAmount,
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+    });
+    if (!res.success) {
+      throw ApiException(
+        res.error ?? 'Failed to submit share increase request',
         statusCode: res.statusCode,
       );
     }

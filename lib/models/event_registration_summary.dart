@@ -9,6 +9,7 @@ class EventRegistrationSummary {
   final String status; // PENDING | APPROVED | REJECTED
   final String? qrCodeToken; // only present once APPROVED
   final String? scannedAt;
+  final String? eventId;
   final String? eventTitle;
   final String? eventDate;
   final String? eventLocation;
@@ -22,6 +23,7 @@ class EventRegistrationSummary {
     required this.status,
     this.qrCodeToken,
     this.scannedAt,
+    this.eventId,
     this.eventTitle,
     this.eventDate,
     this.eventLocation,
@@ -38,6 +40,7 @@ class EventRegistrationSummary {
       status: (json['status'] ?? 'PENDING').toString(),
       qrCodeToken: json['qrCodeToken'] as String?,
       scannedAt: json['scannedAt'] as String?,
+      eventId: event?['id'] as String?,
       eventTitle: event?['title'] as String?,
       eventDate: event?['date'] as String?,
       eventLocation: event?['location'] as String?,

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/storage/local_storage.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../admin_auth/providers/admin_session_provider.dart';
 import '../data/admin_dashboard_repository.dart';
 
 final staffStatsProvider = FutureProvider.autoDispose((ref) {
@@ -30,9 +30,17 @@ class StaffDashboardScreen extends ConsumerWidget {
           slivers: [
             // ── Header ───────────────────────────────────────────────────
             SliverToBoxAdapter(
-              child: _DashboardHeader(ref: ref, onLogout: () {
-                LocalStorage.clearAdminSession();
-                context.go('/admin/login');
+              child: _DashboardHeader(ref: ref, onLogout: () async {
+                // Was clearing local storage directly, bypassing
+                // adminSessionProvider's logout() — which is also the only
+                // thing that detaches this device's identity from its push
+                // token (see admin_session_provider.dart). Skipping it here
+                // meant a staff logout on a shared device (e.g. the same
+                // tablet used for QR scanning) left the FCM token still
+                // attached to the logged-out staff member's userId, so
+                // their targeted notifications kept reaching this device.
+                await ref.read(adminSessionProvider.notifier).logout();
+                if (context.mounted) context.go('/admin/login');
               }),
             ),
 

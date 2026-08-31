@@ -32,6 +32,7 @@ class _InvestorRegistrationScreenState
   final _fatherCtrl = TextEditingController();
   final _motherCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _educationLevelCtrl = TextEditingController();
   final _passingYearCtrl = TextEditingController();
@@ -45,10 +46,12 @@ class _InvestorRegistrationScreenState
   final _charityCtrl = TextEditingController();
 
   bool _loading = false;
+  bool _donorConsent = false;
   Map<String, dynamic>? _submitted;
   String _lastValidCharity = '';
 
   String? _eduCategory;
+  String? _gender;
 
   static const _degreeOptions = {
     'Madrasa': [
@@ -82,6 +85,7 @@ class _InvestorRegistrationScreenState
       'MCPS',
       'MRCP',
       'FRCS',
+      'DHMS',
       'Diploma',
       'MPhil (Medical)',
       'MPH',
@@ -124,6 +128,7 @@ class _InvestorRegistrationScreenState
       _fatherCtrl,
       _motherCtrl,
       _phoneCtrl,
+      _emailCtrl,
       _addressCtrl,
       _educationLevelCtrl,
       _passingYearCtrl,
@@ -184,6 +189,10 @@ class _InvestorRegistrationScreenState
 
   Future<void> _submit(num minShareAmount) async {
     if (!_formKey.currentState!.validate()) return;
+    if (_gender == null) {
+      _showErrorSnackBar(context, t(ref, 'genderRequired'));
+      return;
+    }
     if (_share < minShareAmount) {
       _showErrorSnackBar(
         context,
@@ -193,6 +202,10 @@ class _InvestorRegistrationScreenState
           params: {'amount': Formatters.number(minShareAmount)},
         ),
       );
+      return;
+    }
+    if (_investorType == 'Donor' && !_donorConsent) {
+      _showErrorSnackBar(context, t(ref, 'donorConsentRequired'));
       return;
     }
     setState(() => _loading = true);
@@ -206,6 +219,9 @@ class _InvestorRegistrationScreenState
         'mother_name': _motherCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
+        'gender': _gender,
+        if (_emailCtrl.text.trim().isNotEmpty)
+          'email': _emailCtrl.text.trim(),
         'share_amount': _share,
         'number_of_persons': int.tryParse(_personsCtrl.text) ?? 1,
         if (_educationLevelCtrl.text.trim().isNotEmpty)
@@ -220,7 +236,9 @@ class _InvestorRegistrationScreenState
             'nominee_nid': _nomineeNidCtrl.text.trim(),
           'nominee_address': _nomineeAddressCtrl.text.trim(),
         },
-        if (_charityCtrl.text.trim().isNotEmpty)
+        if (_investorType == 'Donor')
+          'charity_percentage': 100
+        else if (_charityCtrl.text.trim().isNotEmpty)
           'charity_percentage': num.tryParse(_charityCtrl.text.trim()),
       };
       final result = await ref
@@ -483,6 +501,27 @@ class _InvestorRegistrationScreenState
                                       isRequired: true,
                                       keyboardType: TextInputType.phone,
                                     ),
+                                    _PickerFormField(
+                                      label: t(ref, 'gender'),
+                                      icon: Icons.wc_outlined,
+                                      value: _gender,
+                                      options: {
+                                        'Male': t(ref, 'male'),
+                                        'Female': t(ref, 'female'),
+                                      },
+                                      onChanged: (val) {
+                                        setState(() => _gender = val);
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _BespokeField(
+                                      controller: _emailCtrl,
+                                      label: t(ref, 'email'),
+                                      icon: Icons.email_outlined,
+                                      placeholder: 'name@example.com',
+                                      keyboardType: TextInputType.emailAddress,
+                                      isOptional: true,
+                                    ),
                                     _BespokeField(
                                       controller: _addressCtrl,
                                       label: t(ref, 'address'),
@@ -645,21 +684,24 @@ class _InvestorRegistrationScreenState
                                         label: t(ref, 'nomineeName'),
                                         icon: Icons.person_outline,
                                         placeholder: 'Enter nominee name',
-                                        isRequired: true,
+                                        isRequired: _investorType == 'Individual',
+                                        isOptional: _investorType != 'Individual',
                                       ),
                                       _BespokeField(
                                         controller: _nomineeRelationCtrl,
                                         label: t(ref, 'nomineeRelation'),
                                         icon: Icons.diversity_1,
                                         placeholder: 'Relation with nominee',
-                                        isRequired: true,
+                                        isRequired: _investorType == 'Individual',
+                                        isOptional: _investorType != 'Individual',
                                       ),
                                       _BespokeField(
                                         controller: _nomineePhoneCtrl,
                                         label: t(ref, 'nomineePhone'),
                                         icon: Icons.phone_outlined,
                                         placeholder: '+880',
-                                        isRequired: true,
+                                        isRequired: _investorType == 'Individual',
+                                        isOptional: _investorType != 'Individual',
                                         keyboardType: TextInputType.phone,
                                       ),
                                       _BespokeField(
@@ -674,66 +716,149 @@ class _InvestorRegistrationScreenState
                                         label: t(ref, 'nomineeAddress'),
                                         icon: Icons.home_outlined,
                                         placeholder: 'Enter nominee address',
-                                        isRequired: true,
+                                        isRequired: _investorType == 'Individual',
+                                        isOptional: _investorType != 'Individual',
                                         maxLines: 2,
                                       ),
                                     ],
                                   ),
 
                                 // Charity Section
-                                _EditorialSection(
-                                  title: 'Charitable Contribution',
-                                  bgColor: context.isDark
-                                      ? context.cardFill2
-                                      : const Color(0xFFFAFAF9),
-                                  borderColor: context.isDark
-                                      ? context.borderFill
-                                      : const Color(0xFFE7E5E4),
-                                  headerContent: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      margin: const EdgeInsets.only(bottom: 16),
-                                      decoration: BoxDecoration(
-                                        color: context.isDark
-                                            ? Colors.red.withValues(alpha: 0.15)
-                                            : Colors.red.shade50,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
+                                if (_investorType != 'Donor')
+                                  _EditorialSection(
+                                    title: 'Charitable Contribution',
+                                    bgColor: context.isDark
+                                        ? context.cardFill2
+                                        : const Color(0xFFFAFAF9),
+                                    borderColor: context.isDark
+                                        ? context.borderFill
+                                        : const Color(0xFFE7E5E4),
+                                    headerContent: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        margin: const EdgeInsets.only(bottom: 16),
+                                        decoration: BoxDecoration(
                                           color: context.isDark
-                                              ? Colors.red.withValues(
-                                                  alpha: 0.3,
-                                                )
-                                              : Colors.red.shade100,
+                                              ? Colors.red.withValues(alpha: 0.15)
+                                              : Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: context.isDark
+                                                ? Colors.red.withValues(
+                                                    alpha: 0.3,
+                                                  )
+                                                : Colors.red.shade100,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.volunteer_activism,
+                                          color: Colors.red.shade400,
+                                          size: 24,
                                         ),
                                       ),
-                                      child: Icon(
-                                        Icons.volunteer_activism,
-                                        color: Colors.red.shade400,
-                                        size: 24,
+                                      Text(
+                                        t(ref, 'charityDesc'),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: context.textMed,
+                                          height: 1.5,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      t(ref, 'charityDesc'),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: context.textMed,
-                                        height: 1.5,
+                                      const SizedBox(height: 24),
+                                    ],
+                                    children: [
+                                      _BespokeField(
+                                        controller: _charityCtrl,
+                                        label: t(ref, 'donationPercentage'),
+                                        placeholder: '0',
+                                        keyboardType: TextInputType.number,
+                                        isOptional: true,
                                       ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                  ],
-                                  children: [
-                                    _BespokeField(
-                                      controller: _charityCtrl,
-                                      label: t(ref, 'donationPercentage'),
-                                      placeholder: '0',
-                                      keyboardType: TextInputType.number,
-                                      isOptional: true,
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+
+                                // Donor 100%-charity consent
+                                if (_investorType == 'Donor')
+                                  _EditorialSection(
+                                    title: t(ref, 'donorConsentTitle'),
+                                    bgColor: context.isDark
+                                        ? Colors.red.withValues(alpha: 0.08)
+                                        : Colors.red.shade50,
+                                    borderColor: context.isDark
+                                        ? Colors.red.withValues(alpha: 0.3)
+                                        : Colors.red.shade100,
+                                    headerContent: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        margin: const EdgeInsets.only(bottom: 16),
+                                        decoration: BoxDecoration(
+                                          color: context.isDark
+                                              ? Colors.red.withValues(alpha: 0.15)
+                                              : Colors.red.shade100,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: context.isDark
+                                                ? Colors.red.withValues(
+                                                    alpha: 0.3,
+                                                  )
+                                                : Colors.red.shade200,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.volunteer_activism,
+                                          color: Colors.red.shade400,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ],
+                                    children: [
+                                      Text(
+                                        t(ref, 'donorConsentBody'),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: context.textMed,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: context.cardFill,
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(
+                                            color: context.isDark
+                                                ? Colors.red.withValues(alpha: 0.3)
+                                                : Colors.red.shade200,
+                                          ),
+                                        ),
+                                        child: CheckboxListTile(
+                                          value: _donorConsent,
+                                          onChanged: (v) => setState(
+                                            () => _donorConsent = v ?? false,
+                                          ),
+                                          controlAffinity:
+                                              ListTileControlAffinity.leading,
+                                          activeColor: Colors.red.shade400,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                          title: Text(
+                                            t(ref, 'donorConsentCheckbox'),
+                                            style: GoogleFonts.publicSans(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.textHigh,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
 
                                 // Live Calculator
                                 _LiveCalculatorCard(
@@ -1143,8 +1268,12 @@ class _TypeToggle extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: context.borderFill)),
       ),
+      // spaceEvenly spreads all 3 tabs across the full row width instead of
+      // shrink-wrapping them into a small centered cluster (which left large
+      // dead margins on both sides) — content alone comfortably fits even a
+      // 360dp-wide phone with 16px side padding, so no scroll fallback needed.
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _toggleButton(
             context,
@@ -1153,13 +1282,19 @@ class _TypeToggle extends StatelessWidget {
             'Individual',
             value == 'Individual',
           ),
-          const SizedBox(width: 32),
           _toggleButton(
             context,
             'Organization',
             'domain',
             'Organization',
             value == 'Organization',
+          ),
+          _toggleButton(
+            context,
+            'Donor',
+            'favorite',
+            'Donor',
+            value == 'Donor',
           ),
         ],
       ),
@@ -1183,15 +1318,19 @@ class _TypeToggle extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  iconName == 'person' ? Icons.person : Icons.domain,
+                  iconName == 'person'
+                      ? Icons.person
+                      : iconName == 'domain'
+                      ? Icons.domain
+                      : Icons.favorite,
                   color: isSelected ? const Color(0xFF316BF3) : context.textMed,
-                  size: 18,
+                  size: 17,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w600,
                     color: isSelected
                         ? const Color(0xFF316BF3)

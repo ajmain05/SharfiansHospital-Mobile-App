@@ -66,8 +66,14 @@ class GalleryImage {
   final String url;
   final String title;
   final String caption;
+  final String category;
 
-  const GalleryImage({required this.url, this.title = '', this.caption = ''});
+  const GalleryImage({
+    required this.url,
+    this.title = '',
+    this.caption = '',
+    this.category = '',
+  });
 
   factory GalleryImage.fromJson(dynamic raw) {
     if (raw is String) return GalleryImage(url: raw);
@@ -78,8 +84,24 @@ class GalleryImage {
       url: _stringFrom(json, const ['url', 'imageUrl', 'src', 'secure_url']),
       title: _stringFrom(json, const ['title', 'name']),
       caption: _stringFrom(json, const ['caption', 'description']),
+      category: _stringFrom(json, const ['category', 'tag']),
     );
   }
+}
+
+/// Categories are never stored as their own list — purely derived from
+/// whatever `category` each photo happens to have, grouped case/whitespace-
+/// insensitively (so "Proposal Meeting" and "proposal meeting " don't
+/// fragment into two chips), keeping the first-seen casing for display.
+List<String> galleryCategoriesOf(List<GalleryImage> images) {
+  final seen = <String, String>{};
+  for (final img in images) {
+    final raw = img.category.trim();
+    if (raw.isEmpty) continue;
+    final key = raw.toLowerCase();
+    seen.putIfAbsent(key, () => raw);
+  }
+  return seen.values.toList();
 }
 
 class FaqItem {

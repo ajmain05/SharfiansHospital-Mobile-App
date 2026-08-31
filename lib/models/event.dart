@@ -46,6 +46,13 @@ class Event {
   bool get isCapacityFull =>
       maxCapacity != null && totalRegistered >= maxCapacity!;
 
+  /// The event's own date/time has passed — distinct from [isDeadlinePassed]
+  /// (registration can close well before the event actually happens).
+  bool get isCompleted {
+    final eventDate = DateTime.tryParse(date);
+    return eventDate != null && DateTime.now().isAfter(eventDate);
+  }
+
   int? get remainingSeats => maxCapacity != null
       ? (maxCapacity! - totalRegistered).clamp(0, maxCapacity!)
       : null;

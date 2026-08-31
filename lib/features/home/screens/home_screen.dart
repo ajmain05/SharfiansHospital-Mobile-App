@@ -1102,7 +1102,7 @@ class _ExploreSection extends StatelessWidget {
 
     final items = [
       _ExploreItem(Icons.photo_library_rounded, t(ref, 'gallery'), '/gallery', AppColors.cardGradientTeal, 'View photos & moments'),
-      _ExploreItem(Icons.help_rounded, t(ref, 'faq'), '/faq', const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Frequently asked questions'),
+      _ExploreItem(Icons.help_rounded, t(ref, 'faq'), '/faq', const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Common questions'),
       _ExploreItem(Icons.account_balance_rounded, t(ref, 'bankDetails'), '/bank-details', AppColors.cardGradientGold, 'Official payment details'),
       _ExploreItem(Icons.work_rounded, t(ref, 'career'), '/career', const LinearGradient(colors: [Color(0xFFDB2777), Color(0xFFF472B6)], begin: Alignment.topLeft, end: Alignment.bottomRight), careerSubtitle),
       _ExploreItem(Icons.event_rounded, t(ref, 'events'), '/events', AppColors.cardGradientGreen, 'Upcoming programs'),
@@ -1127,7 +1127,15 @@ class _ExploreSection extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 1.15, // Made slightly taller to fit 2 lines of text
+              // A fixed pixel height, not childAspectRatio — aspectRatio ties
+              // card height to card WIDTH, so a narrower phone gets a
+              // shorter card for the exact same (fixed-size) text, which is
+              // what caused the gap/overflow tuning fights above. A fixed
+              // height sizes every card to exactly what the content needs,
+              // on any screen: icon 40 + gap 14 + 1-line title ~20 + gap 2 +
+              // 1-line subtitle ~16 + 32 padding ≈ 124, +8 buffer for font
+              // metric/accessibility text-scale variance.
+              mainAxisExtent: 132,
             ),
             itemBuilder: (context, i) => _ExploreCard(item: items[i], onTap: () => onNavigate(items[i].route)),
           ),
@@ -1179,7 +1187,13 @@ class _ExploreCard extends StatelessWidget {
               const SizedBox(height: 14), // Replaced Spacer with fixed gap
               Text(item.label, style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14, color: context.textHigh), maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
-              Text(item.subtitle, style: GoogleFonts.nunito(fontSize: 11, color: context.textMed), maxLines: 1, overflow: TextOverflow.ellipsis),
+              // Plain system font, not GoogleFonts.nunito — a bold Nunito
+              // variant is a brand-new fetch never requested elsewhere in the
+              // app, so on a device/simulator with flaky network it silently
+              // stays unbolded (network fetch failures here don't surface as
+              // errors, and no rebuild retries them). A locally-available
+              // weight has no such risk.
+              Text(item.subtitle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: context.textMed), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         ),

@@ -37,7 +37,10 @@ String _timeAgo(WidgetRef ref, DateTime dateTime) {
     return t(ref, 'hoursAgo', params: {'count': '${diff.inHours}'});
   if (diff.inDays < 7)
     return t(ref, 'daysAgo', params: {'count': '${diff.inDays}'});
-  return DateFormat.yMMMd().format(dateTime);
+  // .toLocal() matters here even with no time-of-day shown — sentAt is a
+  // UTC instant, and formatting it without converting first can show the
+  // wrong calendar day for anything sent late evening Bangladesh time.
+  return DateFormat.yMMMd().format(dateTime.toLocal());
 }
 
 class NotificationsScreen extends ConsumerWidget {

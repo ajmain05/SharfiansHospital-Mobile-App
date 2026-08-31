@@ -12,6 +12,7 @@ import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../models/event.dart';
 import '../providers/events_providers.dart';
+import '../widgets/event_status_badge.dart';
 
 const _royalBlue = Color(0xFF316BF3);
 
@@ -70,8 +71,20 @@ class _EventDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canRegister =
-        event.isActive && !event.isDeadlinePassed && !event.isCapacityFull;
+    // isCompleted (the event's own date has passed) is checked separately
+    // from isDeadlinePassed — a deadline that's missing, or (as can happen
+    // from a data-entry mistake) set later than the event's own date, would
+    // otherwise leave registration looking open for an event that's already
+    // happened.
+    final canRegister = event.isActive &&
+        !event.isCompleted &&
+        !event.isDeadlinePassed &&
+        !event.isCapacityFull;
+    // Check Status stays useful right up until the event itself has
+    // happened (you may have registered before the deadline/capacity closed
+    // it) — only "Completed" retires the whole bar. Register Now is still
+    // gated on canRegister alone within the bar.
+    final showBottomBar = !event.isCompleted;
 
     return Stack(
       children: [
@@ -85,7 +98,7 @@ class _EventDetailBody extends ConsumerWidget {
                 isDesktop ? 40 : 16,
                 isDesktop ? 40 : 16,
                 isDesktop ? 40 : 16,
-                canRegister ? 100 : 40,
+                showBottomBar ? 100 : 40,
               ),
               children: [
                 if (isDesktop)
@@ -112,12 +125,12 @@ class _EventDetailBody extends ConsumerWidget {
             );
           }
         ),
-        if (canRegister)
+        if (showBottomBar)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _BottomActionBar(event: event),
+            child: _BottomActionBar(event: event, canRegister: canRegister),
           ),
       ],
     );
@@ -162,7 +175,16 @@ class _EventDetailBody extends ConsumerWidget {
             height: 1.3,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
+        // Without Align, this stretches to the full width of the parent
+        // Column (crossAxisAlignment.stretch, for the title/description text
+        // above and below) — the badge's own Row sizes itself to just its
+        // icon+label, leaving a large empty pill behind it.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: EventStatusBadge(event: event),
+        ),
+        const SizedBox(height: 16),
         if (event.description != null && event.description!.trim().isNotEmpty) ...[
           Builder(
             builder: (context) {
@@ -246,16 +268,27 @@ class _MetaInfoGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final date = DateTime.tryParse(event.date);
+    // The backend stores/sends these as UTC ('Z'-suffixed) ISO strings —
+    // DateTime.parse keeps them UTC, so formatting without .toLocal() first
+    // prints the UTC wall-clock hour verbatim instead of the device's local
+    // (Bangladesh) time, e.g. an admin-entered 6:00 PM showing as 12:00 PM.
+    final date = DateTime.tryParse(event.date)?.toLocal();
     final dateLabel = date != null
         ? DateFormat('MMM d, yyyy · h:mm a').format(date)
         : event.date;
 
+    final deadline = event.registrationDeadline != null
+        ? DateTime.tryParse(event.registrationDeadline!)?.toLocal()
+        : null;
+    final deadlineLabel = deadline != null
+        ? DateFormat('MMM d, yyyy · h:mm a').format(deadline)
+        : event.registrationDeadline;
+
     final items = [
       _buildItem(context, 'Date & Time', dateLabel, Icons.calendar_month),
       _buildItem(context, 'Registration Fee', '${Formatters.bdt(event.feePerPerson)} / person', Icons.payments),
-      if (event.registrationDeadline != null)
-        _buildItem(context, 'Deadline', event.registrationDeadline!, Icons.schedule),
+      if (deadlineLabel != null)
+        _buildItem(context, 'Deadline', deadlineLabel, Icons.schedule),
       _buildItem(context, 'Location', event.location, Icons.location_on),
     ];
 
@@ -791,13 +824,43 @@ class _PaymentInfoCard extends ConsumerWidget {
   }
 }
 
+// Built whenever the event isn't Completed yet (see `showBottomBar` in
+// _EventDetailBody) — Check Status stays useful through both "open" and
+// "registration closed but event hasn't happened yet" states, so it always
+// renders here; Register Now only renders alongside it while canRegister.
 class _BottomActionBar extends ConsumerWidget {
   final Event event;
+  final bool canRegister;
 
-  const _BottomActionBar({required this.event});
+  const _BottomActionBar({required this.event, required this.canRegister});
+
+  void _goToCheckStatus(BuildContext context) {
+    context.push(
+      Uri(
+        path: '/events/check',
+        queryParameters: {'eventId': event.id, 'eventTitle': event.title},
+      ).toString(),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final checkStatusButton = ElevatedButton.icon(
+      onPressed: () => _goToCheckStatus(context),
+      icon: const Icon(Icons.fact_check_outlined, size: 20),
+      label: Text(
+        t(ref, 'checkStatus'),
+        style: GoogleFonts.publicSans(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _royalBlue,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+      ),
+    );
+
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -811,26 +874,31 @@ class _BottomActionBar extends ConsumerWidget {
           top: BorderSide(color: context.borderFill),
         ),
       ),
-      child: ElevatedButton.icon(
-        onPressed: () => context.push('/events/${event.slug}/register'),
-        icon: const Icon(Icons.how_to_reg, size: 20),
-        label: Text(
-          t(ref, 'registerNow'),
-          style: GoogleFonts.publicSans(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _royalBlue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-      ),
+      child: canRegister
+          ? Row(
+              children: [
+                Expanded(child: checkStatusButton),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push('/events/${event.slug}/register'),
+                    icon: const Icon(Icons.how_to_reg, size: 20),
+                    label: Text(
+                      t(ref, 'registerNow'),
+                      style: GoogleFonts.publicSans(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _royalBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : checkStatusButton,
     );
   }
 }
