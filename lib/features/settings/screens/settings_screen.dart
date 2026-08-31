@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'about_screen.dart';
+import 'contact_us_screen.dart';
 import 'investment_guidelines_screen.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -59,6 +60,17 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const InvestmentGuidelinesScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _SettingsTile(
+              icon: Icons.contact_phone_rounded,
+              title: 'Contact Us',
+              subtitle: 'Phone, email, and address',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ContactUsScreen()),
                 );
               },
             ),

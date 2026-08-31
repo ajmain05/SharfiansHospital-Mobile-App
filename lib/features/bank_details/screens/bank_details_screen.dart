@@ -11,6 +11,7 @@ import '../../../core/widgets/error_retry_view.dart';
 import '../../../core/widgets/shimmer_loader.dart';
 import '../../../models/site_settings.dart';
 import '../../settings/providers/site_settings_provider.dart';
+import '../../settings/screens/contact_us_screen.dart';
 
 class BankDetailsScreen extends ConsumerWidget {
   const BankDetailsScreen({super.key});
@@ -122,6 +123,7 @@ class _BankDetailsBody extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -133,13 +135,46 @@ class _BankDetailsBody extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(
-                      'After making a transfer, please notify us via phone or email so we can update your investment portfolio.',
-                      style: GoogleFonts.nunito(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'After making a transfer, please let us know via Contact Us so we can update your investment portfolio.',
+                          style: GoogleFonts.nunito(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(30),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const ContactUsScreen()),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                'Contact Us',
+                                style: GoogleFonts.publicSans(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

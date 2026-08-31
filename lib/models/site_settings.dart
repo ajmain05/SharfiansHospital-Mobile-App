@@ -373,6 +373,11 @@ class SiteSettings {
   final String appLatestVersionIos;
   final String appAndroidStoreUrl;
   final String appIosStoreUrl;
+  final String contactPhone;
+  final String contactEmail;
+  final String contactAddress;
+  final String socialFacebook;
+  final String socialYoutube;
 
   const SiteSettings({
     required this.heroTitle,
@@ -410,6 +415,11 @@ class SiteSettings {
     this.appLatestVersionIos = '',
     this.appAndroidStoreUrl = '',
     this.appIosStoreUrl = '',
+    this.contactPhone = '',
+    this.contactEmail = '',
+    this.contactAddress = '',
+    this.socialFacebook = '',
+    this.socialYoutube = '',
   });
 
   factory SiteSettings.fallback() => const SiteSettings(
@@ -541,6 +551,19 @@ class SiteSettings {
       appLatestVersionIos: s('appLatestVersionIos', ''),
       appAndroidStoreUrl: s('appAndroidStoreUrl', ''),
       appIosStoreUrl: s('appIosStoreUrl', ''),
+      contactPhone: s('contactPhone', fb.contactPhone),
+      contactEmail: s('contactEmail', fb.contactEmail),
+      contactAddress: s('contactAddress', fb.contactAddress),
+      socialFacebook: _stringFrom(
+        (json['socialLinks'] as Map?)?.cast<String, dynamic>() ?? const {},
+        const ['facebook'],
+        fallback: fb.socialFacebook,
+      ),
+      socialYoutube: _stringFrom(
+        (json['socialLinks'] as Map?)?.cast<String, dynamic>() ?? const {},
+        const ['youtube'],
+        fallback: fb.socialYoutube,
+      ),
     );
   }
 }

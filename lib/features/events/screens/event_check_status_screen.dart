@@ -1,9 +1,13 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smart_auth/smart_auth.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
@@ -51,7 +55,25 @@ class _EventCheckStatusScreenState
   void dispose() {
     _phoneCtrl.dispose();
     _otpCtrl.dispose();
+    _stopOtpAutofillListener();
     super.dispose();
+  }
+
+  // See the matching comment in investor_login_screen.dart — same
+  // SMS User Consent API approach, same reason SMS Retriever was skipped.
+  Future<void> _listenForOtpAutofill() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    final result = await SmartAuth.instance.getSmsWithUserConsentApi();
+    if (!mounted) return;
+    final code = result.data?.code;
+    if (code != null && code.length == 6) {
+      setState(() => _otpCtrl.text = code);
+    }
+  }
+
+  void _stopOtpAutofillListener() {
+    if (kIsWeb || !Platform.isAndroid) return;
+    SmartAuth.instance.removeUserConsentApiListener();
   }
 
   bool _isValidBdPhone(String phone) => RegExp(r'^01\d{9}$').hasMatch(phone);
@@ -69,6 +91,7 @@ class _EventCheckStatusScreenState
     try {
       await ref.read(eventsRepositoryProvider).requestCheckPhoneOtp(phone);
       setState(() => _otpSent = true);
+      _listenForOtpAutofill();
     } catch (e) {
       final message = e is ApiException && e.statusCode == 429
           ? t(ref, 'tooManyAttempts')
@@ -92,6 +115,7 @@ class _EventCheckStatusScreenState
       final results = await ref
           .read(eventsRepositoryProvider)
           .verifyCheckPhoneOtp(phone, code);
+      _stopOtpAutofillListener();
       final scoped = _scopedEventId != null
           ? results.where((r) => r.eventId == _scopedEventId).toList()
           : results;
@@ -122,6 +146,7 @@ class _EventCheckStatusScreenState
   }
 
   void _changeNumber() {
+    _stopOtpAutofillListener();
     setState(() {
       _otpSent = false;
       _results = null;
@@ -251,26 +276,33 @@ class _EventCheckStatusScreenState
                       ],
                     ),
                   ] else ...[
-                    TextField(
-                      controller: _otpCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      style: GoogleFonts.publicSans(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                        letterSpacing: 4,
-                        color: colorScheme.onSurface,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: t(ref, 'enterVerificationCode'),
-                        labelStyle: GoogleFonts.publicSans(
-                          fontWeight: FontWeight.w600,
+                    AutofillGroup(
+                      child: TextField(
+                        controller: _otpCtrl,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        // See the matching comment in
+                        // investor_login_screen.dart for why this covers
+                        // iOS only, with Android handled separately via
+                        // the SmartAuth listener above.
+                        autofillHints: const [AutofillHints.oneTimeCode],
+                        style: GoogleFonts.publicSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          letterSpacing: 4,
+                          color: colorScheme.onSurface,
                         ),
-                        prefixIcon: Icon(
-                          Icons.lock_outline_rounded,
-                          color: colorScheme.primary,
+                        decoration: InputDecoration(
+                          labelText: t(ref, 'enterVerificationCode'),
+                          labelStyle: GoogleFonts.publicSans(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.lock_outline_rounded,
+                            color: colorScheme.primary,
+                          ),
+                          counterText: '',
                         ),
-                        counterText: '',
                       ),
                     ),
                     const SizedBox(height: 16),

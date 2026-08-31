@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smart_auth/smart_auth.dart';
 
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -35,7 +38,29 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
     _phoneController.dispose();
     _otpController.dispose();
     _cooldownTimer?.cancel();
+    _stopOtpAutofillListener();
     super.dispose();
+  }
+
+  // SMS User Consent API (Android only — iOS gets the code via the
+  // AutofillHints.oneTimeCode QuickType suggestion on the field itself, no
+  // package needed there). Not SMS Retriever: that needs an 11-char app
+  // signature hash baked into the SMS text, and that hash differs between
+  // debug and release signing, so one SMS template can't cleanly support
+  // both — see the plan notes for why User Consent was chosen instead.
+  Future<void> _listenForOtpAutofill() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    final result = await SmartAuth.instance.getSmsWithUserConsentApi();
+    if (!mounted) return;
+    final code = result.data?.code;
+    if (code != null && code.length == 6) {
+      setState(() => _otpController.text = code);
+    }
+  }
+
+  void _stopOtpAutofillListener() {
+    if (kIsWeb || !Platform.isAndroid) return;
+    SmartAuth.instance.removeUserConsentApiListener();
   }
 
   void _startCooldown() {
@@ -71,6 +96,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
         _otpController.clear();
       });
       _startCooldown();
+      _listenForOtpAutofill();
       return;
     }
     // A real network/server failure has no genuine "not found" response —
@@ -90,6 +116,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
         .verifyOtpAndLogin(_phoneController.text.trim(), code);
     if (!mounted) return;
     if (ok) {
+      _stopOtpAutofillListener();
       context.go('/investor/dashboard');
     } else {
       final sessionError = ref.read(investorSessionProvider).error;
@@ -110,6 +137,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
     }
     if (result.otpRequired) {
       _startCooldown();
+      _listenForOtpAutofill();
     } else {
       final sessionError = ref.read(investorSessionProvider).error;
       setState(() => _error = sessionError ?? t(ref, 'tooManyAttempts'));
@@ -118,6 +146,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
 
   void _changeNumber() {
     _cooldownTimer?.cancel();
+    _stopOtpAutofillListener();
     setState(() {
       _otpStep = false;
       _otpController.clear();
@@ -143,8 +172,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
             Icons.arrow_back_rounded,
             color: isDark ? Colors.white : const Color(0xFF0A192F),
           ),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
         ),
         title: Text(
           t(ref, 'myPortal'),
@@ -308,157 +336,167 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
 
                 // ── Login Form ──────────────────────────────────────────────
                 if (!_otpStep)
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t(ref, 'phoneNumber').toUpperCase(),
-                        style: GoogleFonts.publicSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                          color: isDark
-                              ? const Color(0xFF94A3B8)
-                              : const Color(0xFF0A192F).withValues(alpha: 0.6),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        style: GoogleFonts.publicSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF0A192F),
-                        ),
-                        decoration: InputDecoration(
-                          prefixIconConstraints: const BoxConstraints(minWidth: 0),
-                          prefixIcon: Padding(
-                            padding: const EdgeInsets.only(left: 16, right: 10),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '+880',
-                                  style: GoogleFonts.publicSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF0A192F).withValues(alpha: 0.6),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Container(
-                                  width: 1,
-                                  height: 20,
-                                  color: isDark
-                                      ? const Color(0xFF334155)
-                                      : const Color(0xFFE2E8F0),
-                                ),
-                              ],
-                            ),
-                          ),
-                          hintText: '017XXXXXXXX',
-                          hintStyle: GoogleFonts.publicSans(
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t(ref, 'phoneNumber').toUpperCase(),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
                             color: isDark
-                                ? const Color(0xFF64748B)
-                                : const Color(0xFFCBD5E1),
+                                ? const Color(0xFF94A3B8)
+                                : const Color(
+                                    0xFF0A192F,
+                                  ).withValues(alpha: 0.6),
                           ),
-                          filled: true,
-                          fillColor: isDark
-                              ? const Color(0xFF1E293B)
-                              : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          style: GoogleFonts.publicSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0A192F),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(
+                          decoration: InputDecoration(
+                            prefixIconConstraints: const BoxConstraints(
+                              minWidth: 0,
+                            ),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16,
+                                right: 10,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '+880',
+                                    style: GoogleFonts.publicSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? const Color(0xFF94A3B8)
+                                          : const Color(
+                                              0xFF0A192F,
+                                            ).withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    width: 1,
+                                    height: 20,
+                                    color: isDark
+                                        ? const Color(0xFF334155)
+                                        : const Color(0xFFE2E8F0),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            hintText: '017XXXXXXXX',
+                            hintStyle: GoogleFonts.publicSans(
                               color: isDark
-                                  ? const Color(0xFF334155)
-                                  : const Color(0xFFE2E8F0),
-                              width: 1.2,
+                                  ? const Color(0xFF64748B)
+                                  : const Color(0xFFCBD5E1),
                             ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF316BF3),
-                              width: 2,
+                            filled: true,
+                            fillColor: isDark
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
                             ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.error,
-                              width: 1.2,
-                            ),
-                          ),
-                        ),
-                        validator: (v) {
-                          final digits = (v ?? '').replaceAll(
-                            RegExp(r'\D'),
-                            '',
-                          );
-                          if (digits.length < 10) return t(ref, 'invalidPhone');
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Continue Button
-                      Container(
-                        width: double.infinity,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF316BF3,
-                              ).withValues(alpha: 0.35),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: session.isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF316BF3),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
+                            enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: isDark
+                                    ? const Color(0xFF334155)
+                                    : const Color(0xFFE2E8F0),
+                                width: 1.2,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF316BF3),
+                                width: 2,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(
+                                color: AppColors.error,
+                                width: 1.2,
+                              ),
                             ),
                           ),
-                          child: session.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  t(ref, 'continueBtn'),
-                                  style: GoogleFonts.publicSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                          validator: (v) {
+                            final digits = (v ?? '').replaceAll(
+                              RegExp(r'\D'),
+                              '',
+                            );
+                            if (digits.length < 10)
+                              return t(ref, 'invalidPhone');
+                            return null;
+                          },
                         ),
-                      ),
-                    ],
-                  ),
-                )
+                        const SizedBox(height: 28),
+
+                        // Continue Button
+                        Container(
+                          width: double.infinity,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF316BF3,
+                                ).withValues(alpha: 0.35),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: session.isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF316BF3),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: session.isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    t(ref, 'continueBtn'),
+                                    style: GoogleFonts.publicSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 else
                   _buildOtpStep(isDark, session.isLoading),
 
@@ -554,9 +592,7 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                 : const Color(0xFFECFDF5),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark
-                  ? const Color(0xFF065F46)
-                  : const Color(0xFFA7F3D0),
+              color: isDark ? const Color(0xFF065F46) : const Color(0xFFA7F3D0),
             ),
           ),
           child: Row(
@@ -596,46 +632,58 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _otpController,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          autofocus: true,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.publicSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 8,
-            color: isDark ? Colors.white : const Color(0xFF0A192F),
-          ),
-          decoration: InputDecoration(
-            counterText: '',
-            hintText: '000000',
-            hintStyle: GoogleFonts.publicSans(
-              color: isDark
-                  ? const Color(0xFF64748B)
-                  : const Color(0xFFCBD5E1),
+        AutofillGroup(
+          child: TextField(
+            controller: _otpController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            autofocus: true,
+            textAlign: TextAlign.center,
+            // iOS-side of auto-fill: offers the incoming SMS code as a
+            // one-tap QuickType suggestion above the keyboard. Android's
+            // equivalent is the SmartAuth listener started in
+            // _listenForOtpAutofill (see above) — autofillHints alone
+            // doesn't do anything on Android without SMS Retriever wired up,
+            // which this app deliberately isn't using (see that comment).
+            autofillHints: const [AutofillHints.oneTimeCode],
+            style: GoogleFonts.publicSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
               letterSpacing: 8,
+              color: isDark ? Colors.white : const Color(0xFF0A192F),
             ),
-            filled: true,
-            fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: '000000',
+              hintStyle: GoogleFonts.publicSans(
                 color: isDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFFE2E8F0),
-                width: 1.2,
+                    ? const Color(0xFF64748B)
+                    : const Color(0xFFCBD5E1),
+                letterSpacing: 8,
+              ),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFE2E8F0),
+                  width: 1.2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF316BF3),
+                  width: 2,
+                ),
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Color(0xFF316BF3), width: 2),
-            ),
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _verifyOtp(),
           ),
-          onChanged: (_) => setState(() {}),
-          onSubmitted: (_) => _verifyOtp(),
         ),
         const SizedBox(height: 20),
         Container(
@@ -699,7 +747,9 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
               ),
             ),
             TextButton(
-              onPressed: (_resendCooldown > 0 || isLoading) ? null : _resendCode,
+              onPressed: (_resendCooldown > 0 || isLoading)
+                  ? null
+                  : _resendCode,
               child: Text(
                 _resendCooldown > 0
                     ? t(ref, 'resendCodeIn', params: {'s': '$_resendCooldown'})
@@ -709,8 +759,8 @@ class _InvestorLoginScreenState extends ConsumerState<InvestorLoginScreen> {
                   fontWeight: FontWeight.w700,
                   color: (_resendCooldown > 0 || isLoading)
                       ? (isDark
-                          ? const Color(0xFF475569)
-                          : const Color(0xFFCBD5E1))
+                            ? const Color(0xFF475569)
+                            : const Color(0xFFCBD5E1))
                       : const Color(0xFF316BF3),
                 ),
               ),
