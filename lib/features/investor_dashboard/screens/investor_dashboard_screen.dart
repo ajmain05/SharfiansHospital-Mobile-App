@@ -86,6 +86,18 @@ class _InvestorDashboardScreenState
             ],
           ),
         actions: [
+          // Only shown when this phone matches more than one investor (e.g.
+          // family sharing a number, see investor_session_provider.dart's
+          // class doc) — a single-account user's AppBar looks exactly like
+          // it did before this was added.
+          if (session.accounts.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _AccountSwitcherButton(
+                accounts: session.accounts,
+                activeAccountId: session.activeAccountId,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: Material(
@@ -153,6 +165,154 @@ class _InvestorDashboardScreenState
       ),
     );
   }
+}
+
+// Badge + trigger for the account-switcher bottom sheet — a compact,
+// always-visible alternative to hunting through the ACCOUNTS tab. The count
+// badge doubles as the "you have more than one account" indicator; tapping
+// it is the "switch" action, both from the same affordance.
+class _AccountSwitcherButton extends StatelessWidget {
+  final List<Investor> accounts;
+  final String? activeAccountId;
+
+  const _AccountSwitcherButton({
+    required this.accounts,
+    required this.activeAccountId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.primary600.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showAccountSwitcher(context, accounts, activeAccountId),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.swap_horiz_rounded,
+                color: AppColors.primary600,
+                size: 20,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${accounts.length}',
+                style: GoogleFonts.publicSans(
+                  color: AppColors.primary600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showAccountSwitcher(
+  BuildContext context,
+  List<Investor> accounts,
+  String? activeAccountId,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (sheetContext) {
+      final colorScheme = Theme.of(sheetContext).colorScheme;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Consumer(
+            builder: (context, ref, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: Text(
+                      t(ref, 'selectAccount'),
+                      style: GoogleFonts.publicSans(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: accounts.length,
+                      itemBuilder: (context, i) {
+                        final acc = accounts[i];
+                        final active = acc.id == activeAccountId;
+                        final category = InvestorCategory.of(acc.shareAmount);
+                        return ListTile(
+                          onTap: () {
+                            ref
+                                .read(investorSessionProvider.notifier)
+                                .setActiveAccount(acc.id);
+                            Navigator.of(sheetContext).pop();
+                          },
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: category.color.withValues(alpha: 0.15),
+                            child: Text(
+                              acc.displayName.isNotEmpty
+                                  ? acc.displayName[0].toUpperCase()
+                                  : '?',
+                              style: GoogleFonts.publicSans(
+                                fontWeight: FontWeight.w800,
+                                color: category.color,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            acc.displayName,
+                            style: GoogleFonts.publicSans(
+                              fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 15,
+                              color: active
+                                  ? AppColors.primary600
+                                  : colorScheme.onSurface,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${acc.investorId} · ${category.label}',
+                            style: GoogleFonts.publicSans(
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          trailing: active
+                              ? const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.primary600,
+                                )
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _OverviewTab extends ConsumerWidget {

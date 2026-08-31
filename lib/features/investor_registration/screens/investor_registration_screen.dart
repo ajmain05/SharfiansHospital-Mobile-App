@@ -33,6 +33,10 @@ class _InvestorRegistrationScreenState
   final _motherCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _nidCtrl = TextEditingController();
+  final _etinCtrl = TextEditingController();
+  final _nationalityCtrl = TextEditingController(text: 'Bangladeshi');
+  final _occupationCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _educationLevelCtrl = TextEditingController();
   final _passingYearCtrl = TextEditingController();
@@ -52,6 +56,7 @@ class _InvestorRegistrationScreenState
 
   String? _eduCategory;
   String? _gender;
+  DateTime? _dob;
 
   static const _degreeOptions = {
     'Madrasa': [
@@ -129,6 +134,10 @@ class _InvestorRegistrationScreenState
       _motherCtrl,
       _phoneCtrl,
       _emailCtrl,
+      _nidCtrl,
+      _etinCtrl,
+      _nationalityCtrl,
+      _occupationCtrl,
       _addressCtrl,
       _educationLevelCtrl,
       _passingYearCtrl,
@@ -193,6 +202,10 @@ class _InvestorRegistrationScreenState
       _showErrorSnackBar(context, t(ref, 'genderRequired'));
       return;
     }
+    if (_dob == null) {
+      _showErrorSnackBar(context, t(ref, 'dobRequired'));
+      return;
+    }
     if (_share < minShareAmount) {
       _showErrorSnackBar(
         context,
@@ -222,6 +235,12 @@ class _InvestorRegistrationScreenState
         'gender': _gender,
         if (_emailCtrl.text.trim().isNotEmpty)
           'email': _emailCtrl.text.trim(),
+        'date_of_birth': _dob!.toIso8601String(),
+        'nid_no': _nidCtrl.text.trim(),
+        'nationality': _nationalityCtrl.text.trim(),
+        'occupation': _occupationCtrl.text.trim(),
+        if (_etinCtrl.text.trim().isNotEmpty)
+          'etin_no': _etinCtrl.text.trim(),
         'share_amount': _share,
         'number_of_persons': int.tryParse(_personsCtrl.text) ?? 1,
         if (_educationLevelCtrl.text.trim().isNotEmpty)
@@ -514,12 +533,49 @@ class _InvestorRegistrationScreenState
                                       },
                                     ),
                                     const SizedBox(height: 16),
+                                    _DatePickerField(
+                                      label: t(ref, 'dateOfBirth'),
+                                      icon: Icons.cake_outlined,
+                                      value: _dob,
+                                      onChanged: (val) {
+                                        setState(() => _dob = val);
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _BespokeField(
+                                      controller: _nidCtrl,
+                                      label: t(ref, 'nidNo'),
+                                      icon: Icons.badge_outlined,
+                                      placeholder: 'National ID number',
+                                      isRequired: true,
+                                    ),
                                     _BespokeField(
                                       controller: _emailCtrl,
                                       label: t(ref, 'email'),
                                       icon: Icons.email_outlined,
                                       placeholder: 'name@example.com',
                                       keyboardType: TextInputType.emailAddress,
+                                      isOptional: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _nationalityCtrl,
+                                      label: t(ref, 'nationality'),
+                                      icon: Icons.public_outlined,
+                                      placeholder: 'e.g. Bangladeshi',
+                                      isRequired: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _occupationCtrl,
+                                      label: t(ref, 'occupation'),
+                                      icon: Icons.work_outline,
+                                      placeholder: 'e.g. Doctor, Businessman, Student',
+                                      isRequired: true,
+                                    ),
+                                    _BespokeField(
+                                      controller: _etinCtrl,
+                                      label: t(ref, 'etinNo'),
+                                      icon: Icons.receipt_long_outlined,
+                                      placeholder: 'Electronic Tax Identification Number',
                                       isOptional: true,
                                     ),
                                     _BespokeField(
@@ -1100,6 +1156,69 @@ class _PickerFormField extends StatelessWidget {
         ),
         child: Text(
           value != null ? (options[value] ?? value!) : '',
+          style: GoogleFonts.publicSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: context.textHigh,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A tappable field styled to match _PickerFormField, opening the platform
+/// date picker instead of a bottom sheet — used for Date of Birth.
+class _DatePickerField extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final DateTime? value;
+  final ValueChanged<DateTime> onChanged;
+
+  const _DatePickerField({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.onChanged,
+  });
+
+  Future<void> _openPicker(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: value ?? DateTime(now.year - 25),
+      firstDate: DateTime(1920),
+      lastDate: now,
+    );
+    if (picked != null) onChanged(picked);
+  }
+
+  String _format(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _openPicker(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: context.textMed),
+          suffixIcon: Icon(
+            Icons.calendar_today_outlined,
+            color: context.textMed,
+            size: 18,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: context.borderFill),
+          ),
+          filled: true,
+          fillColor: context.cardFill2,
+        ),
+        child: Text(
+          value != null ? _format(value!) : '',
           style: GoogleFonts.publicSans(
             fontSize: 15,
             fontWeight: FontWeight.w600,
