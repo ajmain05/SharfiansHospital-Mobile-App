@@ -176,44 +176,6 @@ class _HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Badge
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(40),
-                      border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : const Color(0xFFDBEAFE)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star_rounded, color: Color(0xFF316BF3), size: 16),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              settingsAsync.maybeWhen(
-                                data: (s) => lang == 'bn' ? s.badgeTextBn : s.badgeText,
-                                orElse: () => t(ref, 'badgeText'),
-                              ),
-                              maxLines: 1,
-                              style: GoogleFonts.poppins(
-                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1D4ED8),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
                 // Title
                 Center(
                   child: Text(

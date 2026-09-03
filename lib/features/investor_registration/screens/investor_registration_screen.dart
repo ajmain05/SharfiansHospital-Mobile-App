@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/locale_provider.dart';
+import '../../../core/network/cloudinary_uploader.dart';
 import '../../../core/services/push_notification_service.dart';
 import '../../../core/theme/adaptive_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -41,6 +45,7 @@ class _InvestorRegistrationScreenState
   final _educationLevelCtrl = TextEditingController();
   final _passingYearCtrl = TextEditingController();
   final _shareCtrl = TextEditingController();
+  final _quantityCtrl = TextEditingController();
   final _personsCtrl = TextEditingController(text: '1');
   final _nomineeNameCtrl = TextEditingController();
   final _nomineeRelationCtrl = TextEditingController();
@@ -57,6 +62,10 @@ class _InvestorRegistrationScreenState
   String? _eduCategory;
   String? _gender;
   DateTime? _dob;
+  String? _photoUrl;
+  bool _photoUploading = false;
+  double _photoProgress = 0;
+  bool _shareQuantitySyncing = false;
 
   static const _degreeOptions = {
     'Madrasa': [
@@ -100,8 +109,61 @@ class _InvestorRegistrationScreenState
   @override
   void initState() {
     super.initState();
-    _shareCtrl.addListener(() => setState(() {}));
+    _shareCtrl.addListener(_onShareAmountChanged);
+    _quantityCtrl.addListener(_onShareQuantityChanged);
     _charityCtrl.addListener(_onCharityChanged);
+  }
+
+  num get _pricePerShare => ref.read(siteSettingsProvider).maybeWhen(
+    data: (s) => s.pricePerShare,
+    orElse: () => InvestorCategory.defaultPricePerShare,
+  );
+
+  // Bidirectional Share Amount <-> Share Quantity. Flutter's addListener
+  // fires on ANY text change including programmatic ones, so both
+  // directions need this guard to avoid infinite re-entry — without it,
+  // writing into _quantityCtrl here would re-trigger _onShareQuantityChanged,
+  // which would write back into _shareCtrl, forever.
+  void _onShareAmountChanged() {
+    if (_shareQuantitySyncing) return;
+    setState(() {});
+    final share = num.tryParse(_shareCtrl.text) ?? 0;
+    final price = _pricePerShare;
+    _shareQuantitySyncing = true;
+    if (share > 0 && price > 0) {
+      final qty = share / price;
+      final text = qty == qty.roundToDouble()
+          ? qty.round().toString()
+          : qty.toStringAsFixed(2);
+      _quantityCtrl.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    } else {
+      _quantityCtrl.clear();
+    }
+    _shareQuantitySyncing = false;
+  }
+
+  // Quantity -> Amount is always exact (quantity is meant to be a whole
+  // share count), unlike Amount -> Quantity which may show a fractional,
+  // in-progress value.
+  void _onShareQuantityChanged() {
+    if (_shareQuantitySyncing) return;
+    final qty = num.tryParse(_quantityCtrl.text) ?? 0;
+    final price = _pricePerShare;
+    _shareQuantitySyncing = true;
+    if (qty > 0 && price > 0) {
+      final text = (qty * price).round().toString();
+      _shareCtrl.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    } else {
+      _shareCtrl.clear();
+    }
+    _shareQuantitySyncing = false;
+    setState(() {});
   }
 
   // Rejects the keystroke that would push the value over 100 — silently,
@@ -142,6 +204,7 @@ class _InvestorRegistrationScreenState
       _educationLevelCtrl,
       _passingYearCtrl,
       _shareCtrl,
+      _quantityCtrl,
       _personsCtrl,
       _nomineeNameCtrl,
       _nomineeRelationCtrl,
@@ -156,7 +219,20 @@ class _InvestorRegistrationScreenState
   }
 
   num get _share => num.tryParse(_shareCtrl.text) ?? 0;
-  num get _monthlyPayment => _share > 0 ? (_share / 12).ceil() : 0;
+  // Frozen — always ৳21,00,000, independent of pricePerShare and the
+  // cosmetic InvestorCategory tier. This is the real cutoff
+  // computeFields() applies server-side (backend/routes/investors.js) —
+  // never derive it from InvestorCategory, or this preview could show a
+  // duration/payment that doesn't match what the server actually assigns
+  // the moment pricePerShare is ever edited away from its default.
+  num get _durationMonths => _share >= 2100000 ? 12 : 36;
+  num get _monthlyPayment =>
+      _share > 0 ? (_share / _durationMonths).ceil() : 0;
+  bool get _isWholeShare {
+    if (_share == 0) return true;
+    final qty = _share / _pricePerShare;
+    return (qty - qty.roundToDouble()).abs() < 1e-6;
+  }
 
   // The submit button lives in a pinned `Scaffold.bottomSheet`, which a
   // default/theme-floating SnackBar doesn't know to avoid — it renders right
@@ -196,8 +272,44 @@ class _InvestorRegistrationScreenState
     );
   }
 
+  Future<void> _pickPhoto() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    final file = File(picked.path);
+    if (await file.length() > 5 * 1024 * 1024) {
+      if (!mounted) return;
+      _showErrorSnackBar(context, t(ref, 'photoTooLarge'));
+      return;
+    }
+    setState(() {
+      _photoUploading = true;
+      _photoProgress = 0;
+    });
+    try {
+      final url = await CloudinaryUploader.upload(
+        file,
+        folder: 'investor_photos',
+        onProgress: (p) => setState(() => _photoProgress = p),
+      );
+      if (!mounted) return;
+      setState(() => _photoUrl = url);
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorSnackBar(context, t(ref, 'photoUploadFailed'));
+    } finally {
+      if (mounted) setState(() => _photoUploading = false);
+    }
+  }
+
   Future<void> _submit(num minShareAmount) async {
     if (!_formKey.currentState!.validate()) return;
+    if (_photoUrl == null) {
+      _showErrorSnackBar(context, t(ref, 'photoRequired'));
+      return;
+    }
     if (_gender == null) {
       _showErrorSnackBar(context, t(ref, 'genderRequired'));
       return;
@@ -217,6 +329,17 @@ class _InvestorRegistrationScreenState
       );
       return;
     }
+    if (!_isWholeShare) {
+      _showErrorSnackBar(
+        context,
+        t(
+          ref,
+          'wholeShareError',
+          params: {'price': Formatters.number(_pricePerShare)},
+        ),
+      );
+      return;
+    }
     if (_investorType == 'Donor' && !_donorConsent) {
       _showErrorSnackBar(context, t(ref, 'donorConsentRequired'));
       return;
@@ -224,6 +347,7 @@ class _InvestorRegistrationScreenState
     setState(() => _loading = true);
     try {
       final payload = {
+        'photo_url': _photoUrl,
         'investor_type': _investorType,
         if (_investorType == 'Organization')
           'organization_name': _orgNameCtrl.text.trim(),
@@ -477,6 +601,101 @@ class _InvestorRegistrationScreenState
                                 ),
                                 const SizedBox(height: 24),
 
+                                // Profile Photo — centered avatar with a
+                                // camera-badge overlay (the familiar
+                                // Instagram/WhatsApp-style profile-photo
+                                // picker) instead of a plain bordered circle
+                                // beside a text label.
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: _photoUploading ? null : _pickPhoto,
+                                    child: Column(
+                                      children: [
+                                        Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            Container(
+                                              width: 96,
+                                              height: 96,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: _photoUrl == null
+                                                    ? LinearGradient(
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                        colors: [
+                                                          const Color(0xFF316BF3).withValues(alpha: 0.12),
+                                                          const Color(0xFF316BF3).withValues(alpha: 0.04),
+                                                        ],
+                                                      )
+                                                    : null,
+                                                border: Border.all(
+                                                  color: const Color(0xFF316BF3).withValues(alpha: 0.25),
+                                                  width: 2.5,
+                                                ),
+                                              ),
+                                              child: ClipOval(
+                                                child: _photoUrl != null
+                                                    ? Image.network(
+                                                        _photoUrl!,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) =>
+                                                            const Icon(Icons.person_rounded, color: Color(0xFF316BF3), size: 40),
+                                                      )
+                                                    : (_photoUploading
+                                                        ? const Padding(
+                                                            padding: EdgeInsets.all(28),
+                                                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF316BF3)),
+                                                          )
+                                                        : const Icon(Icons.person_rounded, color: Color(0xFF316BF3), size: 40)),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 0,
+                                              right: 0,
+                                              child: Container(
+                                                width: 32,
+                                                height: 32,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: const Color(0xFF316BF3),
+                                                  border: Border.all(color: context.bgFill, width: 3),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.camera_alt_rounded,
+                                                  color: Colors.white,
+                                                  size: 15,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          _photoUploading
+                                              ? '${t(ref, 'uploading')} ${(_photoProgress * 100).round()}%'
+                                              : (_photoUrl != null ? t(ref, 'changePhoto') : t(ref, 'uploadPhoto')),
+                                          style: GoogleFonts.publicSans(
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF316BF3),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          t(ref, 'photoRequirementsHint'),
+                                          style: GoogleFonts.publicSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: context.textMed,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
                                 // Personal Info Section
                                 _EditorialSection(
                                   title: 'Personal Details',
@@ -672,39 +891,12 @@ class _InvestorRegistrationScreenState
                                             ),
                                           ),
                                           const SizedBox(height: 12),
-                                          Container(
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: context.primaryTint,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color:
-                                                    context.primaryTintBorder,
-                                              ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.info_outline,
-                                                  color: Color(0xFF3B82F6),
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Text(
-                                                    'Minimum required investment is ${Formatters.bdt(minShareAmount)}',
-                                                    style: GoogleFonts.publicSans(
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: context
-                                                          .textHigh, // blue-900
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                          _InfoAlertCard(
+                                            icon: Icons.info_outline,
+                                            accent: const Color(0xFF3B82F6),
+                                            bgColor: context.primaryTint,
+                                            title: '',
+                                            content: 'Minimum required investment is ${Formatters.bdt(minShareAmount)}',
                                           ),
                                           const SizedBox(height: 24),
                                           _BespokeField(
@@ -718,11 +910,79 @@ class _InvestorRegistrationScreenState
                                             isPrimary: true,
                                           ),
                                           _BespokeField(
+                                            controller: _quantityCtrl,
+                                            label: t(ref, 'shareQuantityLabel'),
+                                            icon: Icons.pie_chart_outline,
+                                            placeholder: t(
+                                              ref,
+                                              'shareQuantityHint',
+                                              params: {
+                                                'qty': Formatters.number(
+                                                  (minShareAmount / _pricePerShare)
+                                                      .round(),
+                                                ),
+                                              },
+                                            ),
+                                            keyboardType: TextInputType.number,
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 16,
+                                            ),
+                                            child: Text(
+                                              t(
+                                                ref,
+                                                'oneShareEquals',
+                                                params: {
+                                                  'price': Formatters.number(
+                                                    _pricePerShare,
+                                                  ),
+                                                },
+                                              ),
+                                              style: GoogleFonts.publicSans(
+                                                fontSize: 12,
+                                                color: context.textMed,
+                                              ),
+                                            ),
+                                          ),
+                                          _BespokeField(
                                             controller: _personsCtrl,
                                             label: t(ref, 'numberOfPersons'),
                                             icon: Icons.group_outlined,
                                             isRequired: true,
                                             keyboardType: TextInputType.number,
+                                          ),
+                                          _InfoAlertCard(
+                                            icon: Icons.verified_outlined,
+                                            accent: const Color(0xFF0EA5E9),
+                                            bgColor: const Color(0xFFF0F9FF),
+                                            title: 'Why ৳${Formatters.number(_pricePerShare)} per share?',
+                                            content: t(
+                                              ref,
+                                              'sharePricingTrustInfo',
+                                              params: {
+                                                'total': Formatters.number(
+                                                  settingsAsync.maybeWhen(
+                                                    data: (s) => s.totalRegisteredShares,
+                                                    orElse: () => 10000000,
+                                                  ),
+                                                ),
+                                                'price': Formatters.number(_pricePerShare),
+                                                'face': Formatters.number(
+                                                  settingsAsync.maybeWhen(
+                                                    data: (s) => s.shareFaceValue,
+                                                    orElse: () => 100,
+                                                  ),
+                                                ),
+                                                'premium': Formatters.number(
+                                                  _pricePerShare -
+                                                      settingsAsync.maybeWhen(
+                                                        data: (s) => s.shareFaceValue,
+                                                        orElse: () => 100,
+                                                      ),
+                                                ),
+                                              },
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -1375,6 +1635,91 @@ class _BespokeFieldState extends State<_BespokeField> {
   }
 }
 
+/// Bordered, left-accented info card — shared by the "Minimum required
+/// investment" and "Why ৳X per share?" boxes so they can never drift out of
+/// visual sync. High-contrast by design (a saturated 1.4px border + bold,
+/// dark-slate body text) rather than the earlier pale/thin-text version,
+/// which read as washed out against the light tinted background.
+class _InfoAlertCard extends StatelessWidget {
+  final IconData icon;
+  final Color accent;
+  final Color bgColor;
+  final String title;
+  final String content;
+
+  const _InfoAlertCard({
+    required this.icon,
+    required this.accent,
+    required this.bgColor,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border.all(color: accent.withValues(alpha: 0.45), width: 1.4),
+          boxShadow: [
+            BoxShadow(color: accent.withValues(alpha: 0.1), blurRadius: 14, offset: const Offset(0, 5)),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(width: 5, color: accent),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(color: accent.withValues(alpha: 0.18), shape: BoxShape.circle),
+                        child: Icon(icon, color: accent, size: 19),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (title.isNotEmpty) ...[
+                              Text(
+                                title,
+                                style: GoogleFonts.publicSans(fontWeight: FontWeight.w800, color: accent, fontSize: 15),
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                            Text(
+                              content,
+                              style: GoogleFonts.publicSans(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1E293B),
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TypeToggle extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
@@ -1383,90 +1728,103 @@ class _TypeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pill segmented control (mirrors the website's Register.jsx toggle —
+    // gray-100 track, white raised pill for the selected segment, each type
+    // keeping its own accent color) instead of a plain underline-tab, so the
+    // two platforms feel consistent and the selection reads at a glance.
     return Container(
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.borderFill)),
+        color: context.isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(16),
       ),
-      // spaceEvenly spreads all 3 tabs across the full row width instead of
-      // shrink-wrapping them into a small centered cluster (which left large
-      // dead margins on both sides) — content alone comfortably fits even a
-      // 360dp-wide phone with 16px side padding, so no scroll fallback needed.
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _toggleButton(
-            context,
-            'Individual',
-            'person',
-            'Individual',
-            value == 'Individual',
+          Expanded(
+            child: _segment(
+              context,
+              type: 'Individual',
+              icon: Icons.person_rounded,
+              label: 'Individual',
+              accent: const Color(0xFF316BF3),
+              isSelected: value == 'Individual',
+            ),
           ),
-          _toggleButton(
-            context,
-            'Organization',
-            'domain',
-            'Organization',
-            value == 'Organization',
+          const SizedBox(width: 6),
+          Expanded(
+            child: _segment(
+              context,
+              type: 'Organization',
+              icon: Icons.domain_rounded,
+              label: 'Organization',
+              accent: const Color(0xFF059669),
+              isSelected: value == 'Organization',
+            ),
           ),
-          _toggleButton(
-            context,
-            'Donor',
-            'favorite',
-            'Donor',
-            value == 'Donor',
+          const SizedBox(width: 6),
+          Expanded(
+            child: _segment(
+              context,
+              type: 'Donor',
+              icon: Icons.favorite_rounded,
+              label: 'Donor',
+              accent: const Color(0xFFE11D48),
+              isSelected: value == 'Donor',
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleButton(
-    BuildContext context,
-    String type,
-    String iconName,
-    String label,
-    bool isSelected,
-  ) {
+  Widget _segment(
+    BuildContext context, {
+    required String type,
+    required IconData icon,
+    required String label,
+    required Color accent,
+    required bool isSelected,
+  }) {
     return GestureDetector(
       onTap: () => onChanged(type),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Icon(
-                  iconName == 'person'
-                      ? Icons.person
-                      : iconName == 'domain'
-                      ? Icons.domain
-                      : Icons.favorite,
-                  color: isSelected ? const Color(0xFF316BF3) : context.textMed,
-                  size: 17,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? const Color(0xFF316BF3)
-                        : context.textMed,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: isSelected ? context.cardFill2 : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-              ],
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? accent : context.textMed,
+              size: 18,
             ),
-          ),
-          if (isSelected)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(height: 2, color: const Color(0xFF316BF3)),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.publicSans(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? accent : context.textMed,
+              ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1483,7 +1841,11 @@ class _LiveCalculatorCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final category = InvestorCategory.of(share);
+    final pricePerShare = ref.watch(siteSettingsProvider).maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
+    final category = InvestorCategory.of(share, pricePerShare: pricePerShare);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -1597,7 +1959,11 @@ class _LiveCalculatorCard extends ConsumerWidget {
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        share > 0 ? t(ref, 'oneYear') : '—',
+                        share > 0
+                            ? (category.isDirector
+                                ? t(ref, 'oneYear')
+                                : t(ref, 'threeYears'))
+                            : '—',
                         maxLines: 1,
                         style: GoogleFonts.publicSans(
                           fontSize: 18,

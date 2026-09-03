@@ -188,7 +188,7 @@ class BankDetails {
 
   factory BankDetails.fallback() => const BankDetails(
         bankName: 'Islami Bank Bangladesh PLC',
-        accountName: 'Sharfians Hospital Limited',
+        accountName: 'Sharfians Hospital PLC',
         accountNumber: '20503960100088814',
         branchName: 'Chalkbazar Branch, Chittagong',
         routingNumber: '125150833',
@@ -260,8 +260,8 @@ class CareerSettings {
     this.enabled = true,
     this.title = 'Career',
     this.titleBn = 'ক্যারিয়ার',
-    this.subtitle = 'Apply to join Sharfians Hospital.',
-    this.subtitleBn = 'শরফিয়ান্স হাসপাতালের সাথে কাজ করতে আবেদন করুন।',
+    this.subtitle = 'Apply to join Sharfians Hospital PLC.',
+    this.subtitleBn = 'শরফিয়ান্স হাসপাতাল পিএলসি\'র সাথে কাজ করতে আবেদন করুন।',
     this.notice = '',
     this.positions = const [],
   });
@@ -359,6 +359,9 @@ class SiteSettings {
   final String loginHelpTextBn;
   final String tutorialVideoUrl;
   final num minShareAmount;
+  final num pricePerShare;
+  final num shareFaceValue;
+  final num totalRegisteredShares;
   final num investmentTarget;
   final bool investorPortalEnabled;
   final List<CustomTranslation> customTranslations;
@@ -401,6 +404,9 @@ class SiteSettings {
     required this.loginHelpTextBn,
     required this.tutorialVideoUrl,
     required this.minShareAmount,
+    this.pricePerShare = 350,
+    this.shareFaceValue = 100,
+    this.totalRegisteredShares = 10000000,
     required this.investmentTarget,
     required this.investorPortalEnabled,
     required this.customTranslations,
@@ -423,8 +429,8 @@ class SiteSettings {
   });
 
   factory SiteSettings.fallback() => const SiteSettings(
-    heroTitle: 'Sharfians Hospital',
-    heroTitleBn: 'শরফিয়ান্স হাসপাতাল',
+    heroTitle: 'Sharfians Hospital PLC',
+    heroTitleBn: 'শরফিয়ান্স হাসপাতাল পিএলসি',
     heroSubtitle: 'Share Management System',
     heroSubtitleBn: 'শেয়ার ম্যানেজমেন্ট সিস্টেম',
     heroDescription:
@@ -438,9 +444,9 @@ class SiteSettings {
     aboutTitle: 'Building A Healthier Tomorrow Together',
     aboutTitleBn: 'একসাথে গড়ছি আগামীর সুস্থ ভবিষ্যৎ',
     aboutDescription:
-        'Sharfians Hospital is a community-owned healthcare initiative. Through collective share investment, we are building a state-of-the-art hospital that will serve our community for generations to come.',
+        'Sharfians Hospital PLC is a community-owned healthcare initiative. Through collective share investment, we are building a state-of-the-art hospital that will serve our community for generations to come.',
     aboutDescriptionBn:
-        'শরফিয়ান্স হাসপাতাল একটি কমিউনিটি-মালিকানাধীন স্বাস্থ্যসেবা উদ্যোগ। সম্মিলিত শেয়ার বিনিয়োগের মাধ্যমে আমরা একটি অত্যাধুনিক হাসপাতাল নির্মাণ করছি যা আগামী প্রজন্মের সেবা করবে।',
+        'শরফিয়ান্স হাসপাতাল পিএলসি একটি কমিউনিটি-মালিকানাধীন স্বাস্থ্যসেবা উদ্যোগ। সম্মিলিত শেয়ার বিনিয়োগের মাধ্যমে আমরা একটি অত্যাধুনিক হাসপাতাল নির্মাণ করছি যা আগামী প্রজন্মের সেবা করবে।',
     logoUrl: '',
     registerHelpText:
         'Note: You can login to My Portal using your registered phone number at any time to find your Investor ID and track your investments.',
@@ -494,6 +500,9 @@ class SiteSettings {
       loginHelpTextBn: s('loginHelpText_bn', fb.loginHelpTextBn),
       tutorialVideoUrl: s('tutorialVideoUrl', fb.tutorialVideoUrl),
       minShareAmount: (json['minShareAmount'] as num?) ?? fb.minShareAmount,
+      pricePerShare: (json['pricePerShare'] as num?) ?? fb.pricePerShare,
+      shareFaceValue: (json['shareFaceValue'] as num?) ?? fb.shareFaceValue,
+      totalRegisteredShares: (json['totalRegisteredShares'] as num?) ?? fb.totalRegisteredShares,
       investmentTarget:
           (json['investmentTarget'] as num?) ?? fb.investmentTarget,
       investorPortalEnabled: _boolFrom(json, const ['investorPortalEnabled', 'investor_portal_enabled'], fallback: fb.investorPortalEnabled),

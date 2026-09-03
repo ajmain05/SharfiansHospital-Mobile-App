@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/investor_category.dart';
 import '../../../models/investor.dart';
+import '../../settings/providers/site_settings_provider.dart';
 import '../data/admin_dashboard_repository.dart';
 
 class StaffDirectoryScreen extends ConsumerStatefulWidget {
@@ -56,7 +57,11 @@ class _StaffDirectoryScreenState extends ConsumerState<StaffDirectoryScreen> {
 
   void _showInvestorDetails(Map<String, dynamic> raw) {
     final investor = Investor.fromJson(raw);
-    final tier = InvestorCategory.of(investor.shareAmount);
+    final pricePerShare = ref.read(siteSettingsProvider).maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
+    final tier = InvestorCategory.of(investor.shareAmount, tierOverride: investor.tierOverride, pricePerShare: pricePerShare);
 
     showModalBottomSheet(
       context: context,

@@ -29,6 +29,6 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sharfians Hospital'), findsOneWidget);
+    expect(find.text('Sharfians Hospital PLC'), findsOneWidget);
   });
 }

@@ -27,6 +27,26 @@ class Investor {
   final String? nomineeRelation;
   final String? nomineeNid;
   final num? charityPercentage;
+  final String? photoUrl;
+  // These 4 (plus photo_url and nominee info) are what
+  // profileCompletion.js's checklist counts toward profileCompletionPercent —
+  // self-editable via PUT /investors/public-update/:id so an investor can
+  // actually reach 100% themselves, not just an admin.
+  final String? email;
+  final String? gender;
+  final DateTime? dateOfBirth;
+  final String? etinNo;
+  final DateTime? profileUpdatedAt;
+  // Derived server-side (backend/utils/profileCompletion.js), never stored —
+  // always fresh, drives the completion ring around the avatar.
+  final int profileCompletionPercent;
+  // Superadmin-only prestige override for the DISPLAY tier — see
+  // core/utils/investor_category.dart's `InvestorCategory.of`. Never affects
+  // shareAmount, but the backend does recompute status/monthlyPayment/
+  // totalMonths from it (a Director-tier override means the 12-month plan,
+  // an explicit 'regular' override means 36 months) — this model just
+  // reflects whatever the server already applied, no client-side logic.
+  final String? tierOverride;
   final List<Deposit> deposits;
 
   const Investor({
@@ -52,6 +72,14 @@ class Investor {
     this.nomineeRelation,
     this.nomineeNid,
     this.charityPercentage,
+    this.photoUrl,
+    this.email,
+    this.gender,
+    this.dateOfBirth,
+    this.etinNo,
+    this.profileUpdatedAt,
+    this.profileCompletionPercent = 0,
+    this.tierOverride,
     this.deposits = const [],
   });
 
@@ -83,6 +111,19 @@ class Investor {
     nomineeRelation: json['nominee_relation'] as String?,
     nomineeNid: json['nominee_nid'] as String?,
     charityPercentage: json['charity_percentage'] as num?,
+    photoUrl: json['photo_url'] as String?,
+    email: json['email'] as String?,
+    gender: json['gender'] as String?,
+    dateOfBirth: json['date_of_birth'] != null
+        ? DateTime.tryParse(json['date_of_birth'].toString())
+        : null,
+    etinNo: json['etin_no'] as String?,
+    profileUpdatedAt: json['profileUpdatedAt'] != null
+        ? DateTime.tryParse(json['profileUpdatedAt'].toString())
+        : null,
+    profileCompletionPercent:
+        (json['profileCompletionPercent'] as num?)?.toInt() ?? 0,
+    tierOverride: json['tierOverride'] as String?,
     deposits:
         (json['deposits'] as List?)
             ?.map((d) => Deposit.fromJson(d as Map<String, dynamic>))

@@ -49,6 +49,10 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
       data: (s) => s.minShareAmount,
       orElse: () => 100000,
     );
+    final pricePerShare = settingsAsync.maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -70,10 +74,19 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
           _buildAlertBox(
             context,
             'Minimum Investment',
-            'To become an investor in Sharfians Hospital, a minimum commitment of ${Formatters.bdt(minShareAmount)} is required.',
+            'To become an investor in Sharfians Hospital PLC, a minimum commitment of ${Formatters.bdt(minShareAmount)} is required.',
             Icons.info_outline_rounded,
             const Color(0xFFEFF6FF), // blue-50
             const Color(0xFF3B82F6), // blue-500
+          ),
+          const SizedBox(height: 16),
+          _buildAlertBox(
+            context,
+            'Why ৳$pricePerShare per share?',
+            'Sharfians Hospital PLC is a government-authorized Public Limited Company, registered under Joint Stock Company rules, with ${Formatters.number(settingsAsync.maybeWhen(data: (s) => s.totalRegisteredShares, orElse: () => 10000000))} registered shares. Each share is priced at ${Formatters.bdt(pricePerShare)}.',
+            Icons.verified_outlined,
+            const Color(0xFFF0F9FF),
+            const Color(0xFF0EA5E9),
           ),
           const SizedBox(height: 32),
           Text(
@@ -91,7 +104,7 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
               child: _buildTierCard(
                 context,
                 title: tier.label,
-                shareAmount: tier.minAmount,
+                shareAmount: tier.minAmountFor(pricePerShare),
                 benefits: _tierBenefits[tier.id] ?? const [],
                 gradient: tier.gradient,
                 iconColor: tier.color,
@@ -117,44 +130,75 @@ class InvestmentGuidelinesScreen extends ConsumerWidget {
   }
 
   Widget _buildAlertBox(BuildContext context, String title, String content, IconData icon, Color bgColor, Color iconColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: iconColor.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: iconColor),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.publicSans(
-                    fontWeight: FontWeight.w700,
-                    color: iconColor,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  content,
-                  style: GoogleFonts.publicSans(
-                    color: const Color(0xFF475569),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border.all(color: iconColor.withValues(alpha: 0.45), width: 1.4),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withValues(alpha: 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left accent bar — makes the card read as "highlighted" at a
+              // glance instead of a flat, low-contrast tint.
+              Container(width: 5, color: iconColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: iconColor.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: iconColor, size: 21),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: GoogleFonts.publicSans(
+                                fontWeight: FontWeight.w800,
+                                color: iconColor,
+                                fontSize: 16.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              content,
+                              style: GoogleFonts.publicSans(
+                                color: const Color(0xFF1E293B),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                height: 1.55,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

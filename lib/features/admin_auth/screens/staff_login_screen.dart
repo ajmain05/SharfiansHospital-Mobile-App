@@ -134,7 +134,7 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
 
                           // Hospital Title (Bolder)
                           Text(
-                            'Sharfians\nHospital',
+                            'Sharfians\nHospital PLC',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.libreCaslonText(
                               fontSize: 28,

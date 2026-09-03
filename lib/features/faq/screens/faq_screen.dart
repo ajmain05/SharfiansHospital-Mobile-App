@@ -72,7 +72,7 @@ class FaqScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Sharfians Hospital',
+              'Sharfians Hospital PLC',
               style: GoogleFonts.publicSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -299,15 +299,19 @@ class _FaqAccordionTileState extends State<_FaqAccordionTile> {
   }
 }
 
-class _DirectorshipTable extends StatelessWidget {
+class _DirectorshipTable extends ConsumerWidget {
   const _DirectorshipTable();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pricePerShare = ref.watch(siteSettingsProvider).maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
     final rows = InvestorCategory.tiers
         .where((t) => t.isDirector)
-        .map((t) => (t, t.minAmount))
+        .map((t) => (t, t.minAmountFor(pricePerShare)))
         .toList();
 
     return Container(

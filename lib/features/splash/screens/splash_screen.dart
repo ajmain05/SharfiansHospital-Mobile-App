@@ -321,7 +321,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
                 child: Text(
-                  'Sharfians Hospital',
+                  'Sharfians Hospital PLC',
                   style: GoogleFonts.poppins(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,

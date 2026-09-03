@@ -15,9 +15,12 @@ import '../../../models/deposit.dart';
 import '../../../models/investor.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../../investor_auth/screens/investor_login_screen.dart';
+import '../../settings/providers/site_settings_provider.dart';
 import '../providers/dashboard_provider.dart';
+import '../widgets/avatar_ring.dart';
 import '../widgets/circular_progress_ring.dart';
 import '../widgets/delete_account_dialog.dart';
+import '../widgets/edit_profile_dialog.dart';
 import '../widgets/increase_share_dialog.dart';
 
 class InvestorDashboardScreen extends ConsumerStatefulWidget {
@@ -57,30 +60,42 @@ class _InvestorDashboardScreenState
           backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                t(ref, 'welcomeGreeting'),
-                style: GoogleFonts.publicSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              GestureDetector(
+                onTap: () => EditProfileDialog.show(context, account: account),
+                child: AvatarRing(photoUrl: account.photoUrl, percent: account.profileCompletionPercent),
               ),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  account.displayName,
-                  style: GoogleFonts.libreCaslonText(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.15,
-                  ),
-                  maxLines: 1,
+              const SizedBox(width: 10),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      t(ref, 'welcomeGreeting'),
+                      style: GoogleFonts.publicSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        account.displayName,
+                        style: GoogleFonts.libreCaslonText(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          height: 1.15,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -254,7 +269,11 @@ void _showAccountSwitcher(
                       itemBuilder: (context, i) {
                         final acc = accounts[i];
                         final active = acc.id == activeAccountId;
-                        final category = InvestorCategory.of(acc.shareAmount);
+                        final pricePerShare = ref.watch(siteSettingsProvider).maybeWhen(
+                          data: (s) => s.pricePerShare,
+                          orElse: () => InvestorCategory.defaultPricePerShare,
+                        );
+                        final category = InvestorCategory.of(acc.shareAmount, tierOverride: acc.tierOverride, pricePerShare: pricePerShare);
                         return ListTile(
                           onTap: () {
                             ref
@@ -323,7 +342,11 @@ class _OverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final category = InvestorCategory.of(account.shareAmount);
+    final pricePerShare = ref.watch(siteSettingsProvider).maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
+    final category = InvestorCategory.of(account.shareAmount, tierOverride: account.tierOverride, pricePerShare: pricePerShare);
 
     return ListView(
       padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 32),
@@ -558,6 +581,106 @@ class _OverviewTab extends ConsumerWidget {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
+            onTap: () => EditProfileDialog.show(context, account: account),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 40,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -10,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF316BF3).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.manage_accounts_rounded,
+                      color: Color(0xFF316BF3),
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              t(ref, 'editMyProfile'),
+                              style: GoogleFonts.publicSans(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF316BF3),
+                              ),
+                            ),
+                            if (account.profileCompletionPercent < 100) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${account.profileCompletionPercent}% ${t(ref, 'profileComplete')}',
+                                  style: GoogleFonts.publicSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t(ref, 'editProfileTileSubtitle'),
+                          style: GoogleFonts.publicSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
             onTap: () => DeleteAccountDialog.show(
               context,
               investorId: account.id,
@@ -750,6 +873,10 @@ class _AccountsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pricePerShare = ref.watch(siteSettingsProvider).maybeWhen(
+      data: (s) => s.pricePerShare,
+      orElse: () => InvestorCategory.defaultPricePerShare,
+    );
     return ListView.separated(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 160),
       itemCount: accounts.length,
@@ -757,7 +884,7 @@ class _AccountsTab extends ConsumerWidget {
       itemBuilder: (context, i) {
         final acc = accounts[i];
         final active = acc.id == activeAccountId;
-        final category = InvestorCategory.of(acc.shareAmount);
+        final category = InvestorCategory.of(acc.shareAmount, tierOverride: acc.tierOverride, pricePerShare: pricePerShare);
         
         return InkWell(
           borderRadius: BorderRadius.circular(24),

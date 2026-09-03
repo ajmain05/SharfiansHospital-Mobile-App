@@ -142,7 +142,7 @@ class _DashboardHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Sharfians Hospital',
+                      'Sharfians Hospital PLC',
                       style: GoogleFonts.nunito(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 13,

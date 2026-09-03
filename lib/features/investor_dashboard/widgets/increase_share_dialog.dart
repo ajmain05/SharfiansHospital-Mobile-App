@@ -252,6 +252,24 @@ class _IncreaseShareSheetState extends ConsumerState<_IncreaseShareSheet> {
                     ),
                   ),
                 ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _amountCtrl,
+                  builder: (context, value, _) {
+                    final entered = num.tryParse(value.text.trim());
+                    if (entered == null || entered <= 0) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        '${t(ref, 'newTotalShareAmountLabel')}: ${Formatters.bdt(widget.currentShareAmount + entered)}',
+                        style: GoogleFonts.publicSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 16),
                 Text(
                   t(ref, 'increaseReasonLabel'),

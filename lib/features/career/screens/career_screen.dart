@@ -571,7 +571,7 @@ class _CareerBodyState extends ConsumerState<_CareerBody> {
           maxLines: 6,
           style: GoogleFonts.nunito(),
           decoration: InputDecoration(
-            hintText: 'Tell us why you want to join Sharfians Hospital...',
+            hintText: 'Tell us why you want to join Sharfians Hospital PLC...',
             hintStyle: GoogleFonts.nunito(color: context.textMed),
           ),
           onChanged: (v) => _coverLetter = v,

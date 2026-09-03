@@ -41,7 +41,7 @@ class _SharfianAppState extends ConsumerState<SharfianApp> {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
-      title: 'Sharfians Hospital',
+      title: 'Sharfians Hospital PLC',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
