@@ -195,7 +195,6 @@
   "uploadPhoto": "ছবি আপলোড করুন",
   "uploading": "আপলোড হচ্ছে...",
   "photoRequirementsHint": "JPG অথবা PNG, সর্বোচ্চ ৫MB।",
-  "photoRequired": "একটি প্রোফাইল ছবি আবশ্যক।",
   "photoTooLarge": "ছবির আকার ৫MB এর বেশি হতে পারবে না।",
   "photoUploadFailed": "ছবি আপলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
   "editProfileTitle": "আমার প্রোফাইল সম্পাদনা করুন",

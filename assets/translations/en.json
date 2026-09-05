@@ -195,7 +195,6 @@
   "uploadPhoto": "Upload Photo",
   "uploading": "Uploading...",
   "photoRequirementsHint": "JPG or PNG, up to 5MB.",
-  "photoRequired": "A profile photo is required.",
   "photoTooLarge": "Image size must not exceed 5MB.",
   "photoUploadFailed": "Photo upload failed. Please try again.",
   "editProfileTitle": "Edit My Profile",

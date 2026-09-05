@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,18 @@ import '../../../core/utils/investor_category.dart';
 import '../../../core/widgets/language_toggle_button.dart';
 import '../../investor_auth/providers/investor_session_provider.dart';
 import '../../settings/providers/site_settings_provider.dart';
+
+// Combines a country dial code with a locally-typed number into E.164 form.
+// Strips a single leading trunk '0' if present — the shape investors are
+// used to typing for BD numbers ('01712345678') and the shape most other
+// countries' domestic mobile numbers use too (e.g. UK '07123456789') — so
+// concatenating it straight onto the dial code would produce a spurious
+// extra digit rather than the correct '+8801712345678' / '+447123456789'.
+String _buildE164Phone(String dialCode, String rawNumber) {
+  final digits = rawNumber.replaceAll(RegExp(r'\D'), '');
+  final trimmed = digits.startsWith('0') ? digits.substring(1) : digits;
+  return '$dialCode$trimmed';
+}
 
 class InvestorRegistrationScreen extends ConsumerStatefulWidget {
   const InvestorRegistrationScreen({super.key});
@@ -36,6 +49,7 @@ class _InvestorRegistrationScreenState
   final _fatherCtrl = TextEditingController();
   final _motherCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  String _phoneDialCode = '+880';
   final _emailCtrl = TextEditingController();
   final _nidCtrl = TextEditingController();
   final _etinCtrl = TextEditingController();
@@ -306,10 +320,6 @@ class _InvestorRegistrationScreenState
 
   Future<void> _submit(num minShareAmount) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_photoUrl == null) {
-      _showErrorSnackBar(context, t(ref, 'photoRequired'));
-      return;
-    }
     if (_gender == null) {
       _showErrorSnackBar(context, t(ref, 'genderRequired'));
       return;
@@ -355,7 +365,7 @@ class _InvestorRegistrationScreenState
         'father_name': _fatherCtrl.text.trim(),
         'mother_name': _motherCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
-        'phone': _phoneCtrl.text.trim(),
+        'phone': _buildE164Phone(_phoneDialCode, _phoneCtrl.text),
         'gender': _gender,
         if (_emailCtrl.text.trim().isNotEmpty)
           'email': _emailCtrl.text.trim(),
@@ -671,15 +681,31 @@ class _InvestorRegistrationScreenState
                                           ],
                                         ),
                                         const SizedBox(height: 10),
-                                        Text(
-                                          _photoUploading
-                                              ? '${t(ref, 'uploading')} ${(_photoProgress * 100).round()}%'
-                                              : (_photoUrl != null ? t(ref, 'changePhoto') : t(ref, 'uploadPhoto')),
-                                          style: GoogleFonts.publicSans(
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF316BF3),
-                                            fontSize: 14,
-                                          ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              _photoUploading
+                                                  ? '${t(ref, 'uploading')} ${(_photoProgress * 100).round()}%'
+                                                  : (_photoUrl != null ? t(ref, 'changePhoto') : t(ref, 'uploadPhoto')),
+                                              style: GoogleFonts.publicSans(
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF316BF3),
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            if (!_photoUploading) ...[
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                '(${t(ref, 'optional')})',
+                                                style: GoogleFonts.publicSans(
+                                                  fontSize: 12,
+                                                  color: context.textMed,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
@@ -731,13 +757,15 @@ class _InvestorRegistrationScreenState
                                       placeholder: 'Enter mother\'s name',
                                       isRequired: true,
                                     ),
-                                    _BespokeField(
+                                    _PhoneBespokeField(
                                       controller: _phoneCtrl,
                                       label: t(ref, 'phoneNumber'),
                                       icon: Icons.phone_iphone,
-                                      placeholder: '+880',
-                                      isRequired: true,
-                                      keyboardType: TextInputType.phone,
+                                      placeholder: '01XXXXXXXXX',
+                                      dialCode: _phoneDialCode,
+                                      locale: ref.watch(localeProvider),
+                                      onDialCodeChanged: (code) =>
+                                          setState(() => _phoneDialCode = code),
                                     ),
                                     _PickerFormField(
                                       label: t(ref, 'gender'),
@@ -1630,6 +1658,420 @@ class _BespokeFieldState extends State<_BespokeField> {
                 : null,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Same icon/label/underline chrome as [_BespokeField], but with a country
+/// dial-code picker (flag + calling code) ahead of the number input, so
+/// investors can register with a non-Bangladeshi number. Kept as its own
+/// widget rather than extending _BespokeField with an optional prefix slot,
+/// since only this one field needs it.
+class _PhoneBespokeField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData? icon;
+  final String? placeholder;
+  final String dialCode;
+  final Locale locale;
+  final ValueChanged<String> onDialCodeChanged;
+
+  const _PhoneBespokeField({
+    required this.controller,
+    required this.label,
+    this.icon,
+    this.placeholder,
+    required this.dialCode,
+    required this.locale,
+    required this.onDialCodeChanged,
+  });
+
+  @override
+  State<_PhoneBespokeField> createState() => _PhoneBespokeFieldState();
+}
+
+class _PhoneBespokeFieldState extends State<_PhoneBespokeField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = const Color(0xFF316BF3);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (widget.icon != null) ...[
+                Icon(
+                  widget.icon,
+                  size: 18,
+                  color: _isFocused ? activeColor : context.textMed,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                widget.label,
+                style: GoogleFonts.publicSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: _isFocused ? activeColor : context.textHigh,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: _isFocused ? activeColor : context.borderFill,
+                  width: _isFocused ? 2 : 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4, right: 4),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () async {
+                      final picked = await _showCountryPickerSheet(
+                        context,
+                        widget.locale,
+                      );
+                      if (picked != null) {
+                        widget.onDialCodeChanged(picked.dialCode ?? '+880');
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 2,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.dialCode,
+                            style: GoogleFonts.publicSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: context.textHigh,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: context.textMed,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    controller: widget.controller,
+                    focusNode: _focusNode,
+                    keyboardType: TextInputType.phone,
+                    style: GoogleFonts.publicSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: context.textHigh,
+                    ),
+                    decoration: InputDecoration(
+                      filled: false,
+                      hintText: widget.placeholder,
+                      hintStyle: GoogleFonts.publicSans(
+                        color: context.textMed,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      isDense: true,
+                    ),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Converts a 2-letter ISO country code to its flag emoji via Unicode Regional
+// Indicator Symbols (e.g. "BD" -> 🇧🇩) — each letter A-Z maps to one of 26
+// reserved codepoints starting at U+1F1E6, so a country code becomes the two
+// corresponding symbols side by side, which every current iOS/Android emoji
+// font already renders as the actual flag. No image assets or flag library
+// needed, and — unlike the CountryCodePicker's own flag rendering used
+// earlier — nothing here sits inside a box the OS or browser can draw its
+// own border/background onto.
+String _flagEmoji(String? countryCode) {
+  if (countryCode == null || countryCode.length != 2) return '';
+  return countryCode
+      .toUpperCase()
+      .codeUnits
+      .map((c) => String.fromCharCode(c + 127397))
+      .join();
+}
+
+Future<CountryCode?> _showCountryPickerSheet(
+  BuildContext context,
+  Locale locale,
+) {
+  return showModalBottomSheet<CountryCode>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => Localizations.override(
+      context: sheetContext,
+      locale: locale,
+      delegates: const [CountryLocalizations.delegate],
+      child: const _CountryPickerSheet(),
+    ),
+  );
+}
+
+/// The country selector, redesigned to match a supplied mockup: a header
+/// with a title and round close button, an always-highlighted search field,
+/// and a scrollable list where each row pairs an emoji flag + country name
+/// on the left with its dial code in a pill on the right.
+class _CountryPickerSheet extends StatefulWidget {
+  const _CountryPickerSheet();
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  static const _royal = Color(0xFF316BF3);
+
+  late final List<CountryCode> _allCountries = codes
+      .map((c) => CountryCode.fromJson(c))
+      .toList();
+  late List<CountryCode> _filtered = _allCountries;
+  final _searchCtrl = TextEditingController();
+
+  String _nameFor(CountryCode c) =>
+      CountryLocalizations.of(context)?.translate(c.code) ?? c.name ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    final term = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      _filtered = term.isEmpty
+          ? _allCountries
+          : _allCountries.where((c) {
+              final name = _nameFor(c).toLowerCase();
+              final dial = (c.dialCode ?? '').toLowerCase();
+              return name.contains(term) || dial.contains(term);
+            }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaHeight = MediaQuery.of(context).size.height;
+    return SafeArea(
+      child: Container(
+        height: mediaHeight * 0.85,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Country',
+                    style: GoogleFonts.publicSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Search
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: false,
+                style: GoogleFonts.publicSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search country or code',
+                  hintStyle: GoogleFonts.publicSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: _royal, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: _royal, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF1D55E0), width: 2),
+                  ),
+                ),
+              ),
+            ),
+            // List
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                itemCount: _filtered.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: Color(0xFFF8FAFC)),
+                itemBuilder: (context, index) {
+                  final country = _filtered[index];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.of(context).pop(country),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  _flagEmoji(country.code),
+                                  style: const TextStyle(fontSize: 24, height: 1),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _nameFor(country),
+                                    style: GoogleFonts.publicSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              country.dialCode ?? '',
+                              style: GoogleFonts.publicSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
