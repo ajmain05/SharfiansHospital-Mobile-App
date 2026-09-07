@@ -32,23 +32,20 @@ class DeleteAccountDialog {
   static Future<void> show(
     BuildContext context, {
     required String investorId,
-    required String phone,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _DeleteAccountSheet(investorId: investorId, phone: phone),
+      builder: (_) => _DeleteAccountSheet(investorId: investorId),
     );
   }
 }
 
 class _DeleteAccountSheet extends ConsumerStatefulWidget {
   final String investorId;
-  final String phone;
 
-  const _DeleteAccountSheet({required this.investorId, required this.phone});
+  const _DeleteAccountSheet({required this.investorId});
 
   @override
   ConsumerState<_DeleteAccountSheet> createState() =>
@@ -81,7 +78,6 @@ class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
           .read(investorRepositoryProvider)
           .requestAccountDeletion(
             id: widget.investorId,
-            phone: widget.phone,
             reason: _reason!,
             details: _detailsCtrl.text,
           );

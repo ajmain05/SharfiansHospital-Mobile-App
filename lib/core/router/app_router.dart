@@ -227,8 +227,15 @@ final appRouter = GoRouter(
         transitionDuration: const Duration(milliseconds: 350),
       ),
       redirect: (context, state) {
+        // A session cached before login started issuing tokens has a phone
+        // but no token — it can never pass the backend's investorAuth check
+        // again, so it doesn't count as logged in (matches the same check in
+        // InvestorSessionNotifier._restoreFromCache).
         final phone = LocalStorage.getInvestorPhone();
-        if (phone != null && phone.isNotEmpty) return '/investor/dashboard';
+        final token = LocalStorage.getInvestorToken();
+        if (phone != null && phone.isNotEmpty && token != null) {
+          return '/investor/dashboard';
+        }
         return null;
       },
     ),

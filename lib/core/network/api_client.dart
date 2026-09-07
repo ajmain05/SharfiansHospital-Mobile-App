@@ -43,9 +43,17 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          final token = LocalStorage.getAdminToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // A caller that already set its own Authorization header (the
+          // investor self-service calls below, via the `headers` param on
+          // post/put) knows better than this default — admin and investor
+          // sessions are separate tokens that can both exist on the same
+          // device (a staff member who's also an investor), so this must
+          // never blindly overwrite one with the other.
+          if (!options.headers.containsKey('Authorization')) {
+            final token = LocalStorage.getAdminToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
           return handler.next(options);
         },
@@ -68,18 +76,26 @@ class ApiClient {
     }
   }
 
-  Future<ApiResponse> post(String path, [dynamic body]) async {
+  Future<ApiResponse> post(String path, [dynamic body, Map<String, String>? headers]) async {
     try {
-      final res = await _dio.post(path, data: body);
+      final res = await _dio.post(
+        path,
+        data: body,
+        options: headers != null ? Options(headers: headers) : null,
+      );
       return _success(res);
     } on DioException catch (e) {
       return _fail(e);
     }
   }
 
-  Future<ApiResponse> put(String path, [dynamic body]) async {
+  Future<ApiResponse> put(String path, [dynamic body, Map<String, String>? headers]) async {
     try {
-      final res = await _dio.put(path, data: body);
+      final res = await _dio.put(
+        path,
+        data: body,
+        options: headers != null ? Options(headers: headers) : null,
+      );
       return _success(res);
     } on DioException catch (e) {
       return _fail(e);

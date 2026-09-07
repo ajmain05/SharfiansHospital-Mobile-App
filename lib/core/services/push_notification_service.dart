@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../network/api_client.dart';
 import '../router/app_router.dart';
+import '../storage/local_storage.dart';
 import '../../features/notifications/providers/notifications_provider.dart';
 
 final pushNotificationServiceProvider = Provider((ref) => PushNotificationService(ref));
@@ -197,20 +198,33 @@ class PushNotificationService {
     }
   }
 
-  /// Sends the FCM token to the backend
+  /// Sends the FCM token to the backend. When an investor is logged in, this
+  /// attaches their session token so the backend can verify the phone itself
+  /// (rather than trust the `phone` param below, which without it is the
+  /// only thing standing between an attacker and receiving a DIFFERENT
+  /// investor's targeted push notifications — payment reminders, event
+  /// info, etc. — just by knowing their phone number). The backend already
+  /// prefers a verified token over the raw param whenever one is present
+  /// (see routes/notifications.js's /register-token) — `phone` stays as a
+  /// fallback for the anonymous pre-login registration this also serves.
   Future<void> registerToken({String? phone, String? userId}) async {
     try {
       final token = await _fcm.getToken();
       if (token == null) return;
 
       final platform = Platform.isIOS ? 'ios' : Platform.isAndroid ? 'android' : 'web';
+      final investorToken = LocalStorage.getInvestorToken();
 
-      await _api.post('/notifications/register-token', {
-        'token': token,
-        'phone': phone,
-        'userId': userId,
-        'platform': platform,
-      });
+      await _api.post(
+        '/notifications/register-token',
+        {
+          'token': token,
+          'phone': phone,
+          'userId': userId,
+          'platform': platform,
+        },
+        investorToken != null ? {'Authorization': 'Bearer $investorToken'} : null,
+      );
     } catch (e) {
       // Fail silently, we don't want to break the app if FCM token registration fails
       debugPrint('Failed to register FCM token: $e');

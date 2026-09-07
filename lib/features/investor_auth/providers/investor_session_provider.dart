@@ -58,7 +58,12 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
 
   void _restoreFromCache() {
     final cached = LocalStorage.getInvestorAccounts();
-    if (cached == null || cached.isEmpty) return;
+    final token = LocalStorage.getInvestorToken();
+    // A session cached before login started issuing tokens has accounts but
+    // no token — it can never pass the backend's investorAuth check again,
+    // so treat it the same as logged out rather than showing stale data
+    // forever behind a silent refresh that will just keep failing quietly.
+    if (cached == null || cached.isEmpty || token == null) return;
     final accounts = cached.map(Investor.fromJson).toList();
     state = state.copyWith(
       accounts: accounts,
@@ -68,10 +73,9 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   }
 
   Future<void> _silentRefresh() async {
-    final phone = LocalStorage.getInvestorPhone();
-    if (phone == null) return;
+    if (LocalStorage.getInvestorToken() == null) return;
     try {
-      final raw = await _repo.loginWithPhone(phone);
+      final raw = await _repo.loginWithPhone();
       if (raw.isNotEmpty) {
         await LocalStorage.saveInvestorAccounts(raw);
         final accounts = raw.map(Investor.fromJson).toList();
@@ -85,33 +89,17 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
               : accounts.first.id,
         );
       }
-    } catch (_) {
-      // Keep showing cached data if the silent refresh fails.
-    }
-  }
-
-  /// Returns true on success, false if no account matched the phone.
-  Future<bool> loginWithPhone(String phone) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final raw = await _repo.loginWithPhone(phone);
-      if (raw.isEmpty) {
-        state = state.copyWith(isLoading: false);
-        return false;
-      }
-      await _applyLoggedInAccounts(raw, phone);
-      return true;
     } on ApiException catch (e) {
-      // A genuine "no such account" (404) leaves error null so the screen
-      // falls back to its own localized "no account found" text; anything
-      // else (network/server issue) surfaces here so the screen doesn't
-      // tell a real investor their account doesn't exist when the actual
-      // problem was connectivity or server load.
-      state = state.copyWith(isLoading: false, error: e.statusCode == 404 ? null : e.message);
-      return false;
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      return false;
+      // An expired/invalid session token (401/403) means the cached data can
+      // never actually refresh again until they log back in — unlike a
+      // plain network hiccup, silently keeping the stale cache forever would
+      // leave them stuck with no way back to the login screen.
+      if (e.statusCode == 401 || e.statusCode == 403) {
+        await logout();
+      }
+    } catch (_) {
+      // Keep showing cached data if the silent refresh fails for any other
+      // reason (offline, server hiccup).
     }
   }
 
@@ -131,7 +119,7 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
         state = state.copyWith(isLoading: false);
         return (otpRequired: false, loggedIn: false);
       }
-      await _applyLoggedInAccounts(result.accounts, phone);
+      await _applyLoggedInAccounts(result.accounts, phone, result.token);
       return (otpRequired: false, loggedIn: true);
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.statusCode == 404 ? null : e.message);
@@ -147,12 +135,12 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   Future<bool> verifyOtpAndLogin(String phone, String code) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final raw = await _repo.verifyPhoneAuthOtp(phone, code);
-      if (raw.isEmpty) {
+      final result = await _repo.verifyPhoneAuthOtp(phone, code);
+      if (result.accounts.isEmpty) {
         state = state.copyWith(isLoading: false);
         return false;
       }
-      await _applyLoggedInAccounts(raw, phone);
+      await _applyLoggedInAccounts(result.accounts, phone, result.token);
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
@@ -166,9 +154,15 @@ class InvestorSessionNotifier extends StateNotifier<InvestorSessionState> {
   Future<void> _applyLoggedInAccounts(
     List<Map<String, dynamic>> raw,
     String phone,
+    String? token,
   ) async {
     await LocalStorage.saveInvestorAccounts(raw);
     await LocalStorage.saveInvestorPhone(phone);
+    // Always present in practice (issued by both /auth-phone/start's non-BD
+    // branch and /auth-phone/verify) — the null case only guards against a
+    // stale/mismatched backend response shape rather than being an expected
+    // path, so this deliberately doesn't clear a session that already works.
+    if (token != null) await LocalStorage.saveInvestorToken(token);
     final accounts = raw.map(Investor.fromJson).toList();
     state = InvestorSessionState(
       accounts: accounts,

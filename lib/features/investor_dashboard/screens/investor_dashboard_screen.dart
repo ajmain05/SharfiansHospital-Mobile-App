@@ -501,7 +501,6 @@ class _OverviewTab extends ConsumerWidget {
             onTap: () => IncreaseShareDialog.show(
               context,
               investorId: account.id,
-              phone: account.phone,
               currentShareAmount: account.shareAmount,
             ),
             child: Container(
@@ -684,7 +683,6 @@ class _OverviewTab extends ConsumerWidget {
             onTap: () => DeleteAccountDialog.show(
               context,
               investorId: account.id,
-              phone: account.phone,
             ),
             child: Container(
               padding: const EdgeInsets.all(16),

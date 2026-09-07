@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/storage/local_storage.dart';
 
 /// Wraps every `/investors*` endpoint the app needs. Kept as raw
 /// `Map<String, dynamic>` returns (rather than parsed [Investor]s) so callers
@@ -8,11 +9,22 @@ import '../../../core/network/api_exception.dart';
 class InvestorRepository {
   final _api = ApiClient();
 
-  /// `POST /investors/auth-phone` — unchanged, still used for the silent
-  /// background refresh of an already-logged-in session (see
-  /// [InvestorSessionNotifier]), which must never itself trigger an OTP/SMS.
-  Future<List<Map<String, dynamic>>> loginWithPhone(String phone) async {
-    final res = await _api.post('/investors/auth-phone', {'phone': phone});
+  /// Every self-service call below attaches this explicitly (rather than
+  /// through [ApiClient]'s own admin-token interceptor) so an admin and
+  /// investor session can coexist on the same device without either call
+  /// site ever picking up the wrong token.
+  Map<String, String>? _investorAuthHeaders() {
+    final token = LocalStorage.getInvestorToken();
+    return token != null ? {'Authorization': 'Bearer $token'} : null;
+  }
+
+  /// `POST /investors/auth-phone` — the silent background refresh of an
+  /// already-logged-in session (see [InvestorSessionNotifier]), which must
+  /// never itself trigger an OTP/SMS — proven now by the saved session token
+  /// (from [startPhoneAuth]/[verifyPhoneAuthOtp]) rather than a re-sent phone
+  /// number.
+  Future<List<Map<String, dynamic>>> loginWithPhone() async {
+    final res = await _api.post('/investors/auth-phone', {}, _investorAuthHeaders());
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Login failed',
@@ -26,13 +38,14 @@ class InvestorRepository {
 
   /// `POST /investors/auth-phone/start` — the explicit login screen's entry
   /// point, OTP-gated for BD numbers only. Returns `otpRequired: false` with
-  /// `accounts` already populated for a non-BD number (login already
-  /// complete, identical to today's [loginWithPhone]), or `otpRequired: true`
-  /// with an empty `accounts` list when [verifyPhoneAuthOtp] must be called
-  /// next. Reads from `res.raw` (not `res.data`) because [ApiClient] only
-  /// populates `res.data` from the body's `data` key when present, which
-  /// would silently drop the `otpRequired` flag itself in the non-BD case.
-  Future<({bool otpRequired, List<Map<String, dynamic>> accounts})> startPhoneAuth(
+  /// `accounts`/`token` already populated for a non-BD number (login already
+  /// complete — the caller must save `token` just like the OTP path below),
+  /// or `otpRequired: true` with an empty `accounts` list and no token when
+  /// [verifyPhoneAuthOtp] must be called next. Reads from `res.raw` (not
+  /// `res.data`) because [ApiClient] only populates `res.data` from the
+  /// body's `data` key when present, which would silently drop the
+  /// `otpRequired`/`token` fields themselves in the non-BD case.
+  Future<({bool otpRequired, List<Map<String, dynamic>> accounts, String? token})> startPhoneAuth(
     String phone,
   ) async {
     final res = await _api.post('/investors/auth-phone/start', {'phone': phone});
@@ -50,13 +63,15 @@ class InvestorRepository {
       accounts: rawAccounts is List
           ? rawAccounts.cast<Map<String, dynamic>>()
           : const <Map<String, dynamic>>[],
+      token: body is Map ? body['token'] as String? : null,
     );
   }
 
   /// `POST /investors/auth-phone/verify` — verifies the code sent by
   /// [startPhoneAuth] and completes login, returning the same shape as
-  /// [loginWithPhone].
-  Future<List<Map<String, dynamic>>> verifyPhoneAuthOtp(
+  /// [loginWithPhone] plus the session `token` the caller must save before
+  /// any other investor call (including [loginWithPhone] itself) will work.
+  Future<({List<Map<String, dynamic>> accounts, String? token})> verifyPhoneAuthOtp(
     String phone,
     String code,
   ) async {
@@ -71,8 +86,11 @@ class InvestorRepository {
       );
     }
     final data = res.data;
-    if (data is List) return data.cast<Map<String, dynamic>>();
-    return const [];
+    final body = res.raw;
+    return (
+      accounts: data is List ? data.cast<Map<String, dynamic>>() : const <Map<String, dynamic>>[],
+      token: body is Map ? body['token'] as String? : null,
+    );
   }
 
   /// `POST /investors` — public registration.
@@ -88,12 +106,12 @@ class InvestorRepository {
   }
 
   /// `PUT /investors/public-update/:id` — nominee/charity-% self-edit,
-  /// gated by a phone match on the backend.
+  /// gated by the logged-in investor's session token on the backend.
   Future<Map<String, dynamic>> updatePublicProfile(
     String id,
     Map<String, dynamic> data,
   ) async {
-    final res = await _api.put('/investors/public-update/$id', data);
+    final res = await _api.put('/investors/public-update/$id', data, _investorAuthHeaders());
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Update failed',
@@ -108,15 +126,13 @@ class InvestorRepository {
   /// a superadmin actually approves the request from the admin dashboard.
   Future<void> requestAccountDeletion({
     required String id,
-    required String phone,
     required String reason,
     String? details,
   }) async {
     final res = await _api.post('/investors/$id/request-deletion', {
-      'phone': phone,
       'reason': reason,
       if (details != null && details.trim().isNotEmpty) 'details': details.trim(),
-    });
+    }, _investorAuthHeaders());
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Failed to submit deletion request',
@@ -130,15 +146,13 @@ class InvestorRepository {
   /// approval from the dashboard. Does not change share_amount itself yet.
   Future<void> requestShareIncrease({
     required String id,
-    required String phone,
     required num additionalAmount,
     String? reason,
   }) async {
     final res = await _api.post('/investors/$id/request-share-increase', {
-      'phone': phone,
       'additionalAmount': additionalAmount,
       if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-    });
+    }, _investorAuthHeaders());
     if (!res.success) {
       throw ApiException(
         res.error ?? 'Failed to submit share increase request',

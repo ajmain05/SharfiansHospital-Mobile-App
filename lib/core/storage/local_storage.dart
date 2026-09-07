@@ -19,6 +19,7 @@ class LocalStorage {
 
   static const _kInvestorData = 'sharfians_investor_data';
   static const _kInvestorPhone = 'sharfians_investor_phone';
+  static const _kInvestorToken = 'sharfians_investor_token';
   static const _kAdminToken = 'sharfians_admin_token';
   static const _kAdminData = 'sharfians_admin_data';
   static const _kAppLang = 'appLang';
@@ -29,6 +30,7 @@ class LocalStorage {
 
   static List<Map<String, dynamic>>? _investorAccounts;
   static String? _investorPhone;
+  static String? _investorToken;
   static String? _adminToken;
   static Map<String, dynamic>? _adminData;
 
@@ -76,9 +78,11 @@ class LocalStorage {
       migrate(_kInvestorPhone),
       migrate(_kAdminData),
       migrate(_kInvestorData),
+      migrate(_kInvestorToken),
     ]);
     _adminToken = results[0];
     _investorPhone = results[1];
+    _investorToken = results[4];
 
     final adminDataRaw = results[2];
     if (adminDataRaw != null) {
@@ -113,11 +117,26 @@ class LocalStorage {
 
   static String? getInvestorPhone() => _investorPhone;
 
+  /// Issued at login (OTP-verified for a BD number, or immediately for a
+  /// non-BD one) — proves this device actually passed that gate, replacing
+  /// the old design where every investor-facing request just re-sent the
+  /// phone number itself as "proof." Required on every self-service call
+  /// from here on (profile update, deletion/share-increase requests, the
+  /// silent session refresh) — see ApiClient's auth interceptor.
+  static Future<void> saveInvestorToken(String token) async {
+    _investorToken = token;
+    await _secure.write(key: _kInvestorToken, value: token);
+  }
+
+  static String? getInvestorToken() => _investorToken;
+
   static Future<void> clearInvestorSession() async {
     _investorAccounts = null;
     _investorPhone = null;
+    _investorToken = null;
     await _secure.delete(key: _kInvestorData);
     await _secure.delete(key: _kInvestorPhone);
+    await _secure.delete(key: _kInvestorToken);
   }
 
   static Future<void> saveLang(String lang) => _p.setString(_kAppLang, lang);

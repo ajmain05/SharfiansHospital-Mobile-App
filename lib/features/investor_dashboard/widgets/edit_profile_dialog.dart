@@ -117,7 +117,6 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       final updated = await ref.read(investorRepositoryProvider).updatePublicProfile(
         widget.account.id,
         {
-          'phone': widget.account.phone,
           'address': _addressCtrl.text.trim(),
           'photo_url': _photoUrl,
           'nominee_name': _nomineeNameCtrl.text.trim(),

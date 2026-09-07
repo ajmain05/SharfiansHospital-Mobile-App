@@ -16,7 +16,6 @@ class IncreaseShareDialog {
   static Future<void> show(
     BuildContext context, {
     required String investorId,
-    required String phone,
     required num currentShareAmount,
   }) {
     return showModalBottomSheet(
@@ -25,7 +24,6 @@ class IncreaseShareDialog {
       backgroundColor: Colors.transparent,
       builder: (_) => _IncreaseShareSheet(
         investorId: investorId,
-        phone: phone,
         currentShareAmount: currentShareAmount,
       ),
     );
@@ -34,12 +32,10 @@ class IncreaseShareDialog {
 
 class _IncreaseShareSheet extends ConsumerStatefulWidget {
   final String investorId;
-  final String phone;
   final num currentShareAmount;
 
   const _IncreaseShareSheet({
     required this.investorId,
-    required this.phone,
     required this.currentShareAmount,
   });
 
@@ -76,7 +72,6 @@ class _IncreaseShareSheetState extends ConsumerState<_IncreaseShareSheet> {
           .read(investorRepositoryProvider)
           .requestShareIncrease(
             id: widget.investorId,
-            phone: widget.phone,
             additionalAmount: amount,
             reason: _reasonCtrl.text,
           );
