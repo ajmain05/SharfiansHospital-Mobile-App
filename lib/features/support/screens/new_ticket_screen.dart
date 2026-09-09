@@ -51,7 +51,10 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   }
 
   Future<void> _pickPhoto() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (picked == null) return;
     final file = File(picked.path);
     if (await file.length() > 5 * 1024 * 1024) {
@@ -99,7 +102,9 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
       _error = null;
     });
     try {
-      await ref.read(supportRepositoryProvider).createTicket(
+      await ref
+          .read(supportRepositoryProvider)
+          .createTicket(
             investorId: investorId,
             category: _category!,
             subject: _subjectCtrl.text,
@@ -112,9 +117,17 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
       showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(t(ref, 'supportSubmitSuccessTitle'), style: GoogleFonts.publicSans(fontWeight: FontWeight.w700)),
-          content: Text(t(ref, 'supportSubmitSuccessBody'), style: GoogleFonts.publicSans(fontSize: 14, height: 1.4)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            t(ref, 'supportSubmitSuccessTitle'),
+            style: GoogleFonts.publicSans(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            t(ref, 'supportSubmitSuccessBody'),
+            style: GoogleFonts.publicSans(fontSize: 14, height: 1.4),
+          ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -138,18 +151,23 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final resolvedCategoryIds = ref.watch(supportCategoriesProvider).maybeWhen(
-          data: (list) => list.isNotEmpty ? list.map((c) => c.id).toList() : _kDefaultCategoryIds,
+    final resolvedCategoryIds = ref
+        .watch(supportCategoriesProvider)
+        .maybeWhen(
+          data: (list) => list.isNotEmpty
+              ? list.map((c) => c.id).toList()
+              : _kDefaultCategoryIds,
           orElse: () => _kDefaultCategoryIds,
         );
-    // DropdownButtonFormField asserts its current value is present in
-    // `items` on every build — if the category list resolves (or an admin
-    // edits it) to something that no longer includes whatever the user
-    // already picked from the pre-resolve fallback, that assertion would
-    // otherwise crash the screen. Keeping the current pick in the list
-    // defensively (even if the "official" list no longer has it) avoids that
-    // without needing to silently clear the user's selection mid-form.
-    final categoryIds = (_category != null && !resolvedCategoryIds.contains(_category))
+    // If the category list resolves (or an admin edits it) to something that
+    // no longer includes whatever the user already picked from the
+    // pre-resolve fallback, its chip would otherwise just vanish from the
+    // row with no explanation for why their selection is no longer visibly
+    // highlighted. Keeping the current pick in the list defensively (even if
+    // the "official" list no longer has it) avoids that without needing to
+    // silently clear the user's selection mid-form.
+    final categoryIds =
+        (_category != null && !resolvedCategoryIds.contains(_category))
         ? [...resolvedCategoryIds, _category!]
         : resolvedCategoryIds;
     return Scaffold(
@@ -157,10 +175,17 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
       appBar: AppBar(
         backgroundColor: context.cardFill,
         elevation: 0,
-        leading: BackButton(color: context.textHigh, onPressed: () => context.pop()),
+        leading: BackButton(
+          color: context.textHigh,
+          onPressed: () => context.pop(),
+        ),
         title: Text(
           t(ref, 'newQuery'),
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: context.textHigh),
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: context.textHigh,
+          ),
         ),
       ),
       body: SafeArea(
@@ -169,28 +194,63 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
           children: [
             Text(
               t(ref, 'supportCategoryLabel'),
-              style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w700, color: context.textHigh),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _category,
-              isExpanded: true,
-              hint: Text(t(ref, 'supportSelectCategoryHint'), style: GoogleFonts.publicSans(color: context.textLow)),
-              items: categoryIds
-                  .map((c) => DropdownMenuItem(value: c, child: Text(supportCategoryLabel(ref, c), style: GoogleFonts.publicSans(fontSize: 14))))
-                  .toList(),
-              onChanged: (v) => setState(() => _category = v),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: context.cardFill3,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              style: GoogleFonts.publicSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.textHigh,
               ),
+            ),
+            const SizedBox(height: 10),
+            Column(
+              children: [
+                for (var i = 0; i < categoryIds.length; i += 2)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: i + 2 < categoryIds.length ? 10 : 0,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _CategoryChip(
+                              icon: _categoryIcon(categoryIds[i]),
+                              label: supportCategoryLabel(ref, categoryIds[i]),
+                              selected: _category == categoryIds[i],
+                              onTap: () =>
+                                  setState(() => _category = categoryIds[i]),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: i + 1 < categoryIds.length
+                                ? _CategoryChip(
+                                    icon: _categoryIcon(categoryIds[i + 1]),
+                                    label: supportCategoryLabel(
+                                      ref,
+                                      categoryIds[i + 1],
+                                    ),
+                                    selected: _category == categoryIds[i + 1],
+                                    onTap: () => setState(
+                                      () => _category = categoryIds[i + 1],
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 20),
             Text(
               t(ref, 'supportSubjectLabel'),
-              style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w700, color: context.textHigh),
+              style: GoogleFonts.publicSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.textHigh,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -202,13 +262,20 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                 filled: true,
                 fillColor: context.cardFill3,
                 contentPadding: const EdgeInsets.all(14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 20),
             Text(
               t(ref, 'supportMessageLabel'),
-              style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w700, color: context.textHigh),
+              style: GoogleFonts.publicSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.textHigh,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -222,13 +289,20 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                 filled: true,
                 fillColor: context.cardFill3,
                 contentPadding: const EdgeInsets.all(14),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 20),
             Text(
               t(ref, 'supportAttachPhoto'),
-              style: GoogleFonts.publicSans(fontSize: 13, fontWeight: FontWeight.w700, color: context.textHigh),
+              style: GoogleFonts.publicSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: context.textHigh,
+              ),
             ),
             const SizedBox(height: 8),
             if (_photoUrl != null)
@@ -236,7 +310,12 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.network(_photoUrl!, height: 160, width: double.infinity, fit: BoxFit.cover),
+                    child: Image.network(
+                      _photoUrl!,
+                      height: 160,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   Positioned(
                     top: 8,
@@ -246,7 +325,11 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
                       shape: const CircleBorder(),
                       child: IconButton(
                         tooltip: t(ref, 'supportRemovePhoto'),
-                        icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         onPressed: () => setState(() => _photoUrl = null),
                       ),
                     ),
@@ -257,18 +340,40 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
               OutlinedButton.icon(
                 onPressed: _photoUploading ? null : _pickPhoto,
                 icon: _photoUploading
-                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, value: _photoProgress > 0 ? _photoProgress : null))
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          value: _photoProgress > 0 ? _photoProgress : null,
+                        ),
+                      )
                     : const Icon(Icons.add_a_photo_rounded, size: 18),
-                label: Text(t(ref, 'supportAttachPhoto'), style: GoogleFonts.publicSans(fontWeight: FontWeight.w600, fontSize: 13)),
+                label: Text(
+                  t(ref, 'supportAttachPhoto'),
+                  style: GoogleFonts.publicSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   side: BorderSide(color: colorScheme.outlineVariant),
                 ),
               ),
             if (_error != null) ...[
               const SizedBox(height: 14),
-              Text(_error!, style: GoogleFonts.publicSans(color: colorScheme.error, fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                _error!,
+                style: GoogleFonts.publicSans(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
             ],
             const SizedBox(height: 24),
             FilledButton(
@@ -279,13 +384,107 @@ class _NewTicketScreenState extends ConsumerState<NewTicketScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary700,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: _submitting
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text(t(ref, 'supportSubmit'), style: GoogleFonts.publicSans(fontWeight: FontWeight.w700)),
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      t(ref, 'supportSubmit'),
+                      style: GoogleFonts.publicSans(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+IconData _categoryIcon(String id) {
+  switch (id) {
+    case 'payment':
+      return Icons.payments_rounded;
+    case 'share_certificate':
+      return Icons.workspace_premium_rounded;
+    case 'account_update':
+      return Icons.manage_accounts_rounded;
+    case 'technical':
+      return Icons.build_rounded;
+    case 'complaint':
+      return Icons.report_problem_rounded;
+    case 'general':
+      return Icons.help_rounded;
+    case 'other':
+      return Icons.category_rounded;
+    default:
+      // Custom, admin-added category — no dedicated icon for it.
+      return Icons.label_important_rounded;
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary700 : context.cardFill3,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? AppColors.primary700 : context.borderFill,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: selected ? Colors.white : AppColors.primary700,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.publicSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : context.textHigh,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
