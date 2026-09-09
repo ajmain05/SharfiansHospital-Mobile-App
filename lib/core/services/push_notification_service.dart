@@ -67,9 +67,16 @@ const _generalChannel = AndroidNotificationChannel(
   description: 'Announcements and other notifications.',
   importance: Importance.max,
 );
+const _supportChannel = AndroidNotificationChannel(
+  'support_channel',
+  'Support',
+  description: 'Replies to your support queries and complaints.',
+  importance: Importance.max,
+);
 const _channelsByCategory = {
   'payment': _paymentChannel,
   'event': _eventChannel,
+  'support': _supportChannel,
 };
 
 class PushNotificationService {
@@ -110,7 +117,7 @@ class PushNotificationService {
     // system notification settings even before the first push of each kind
     // ever arrives.
     final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    for (final channel in [_paymentChannel, _eventChannel, _generalChannel]) {
+    for (final channel in [_paymentChannel, _eventChannel, _generalChannel, _supportChannel]) {
       await androidPlugin?.createNotificationChannel(channel);
     }
 

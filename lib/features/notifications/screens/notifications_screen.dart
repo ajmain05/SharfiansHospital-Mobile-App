@@ -22,6 +22,7 @@ class _CategoryStyle {
 const _categoryStyles = {
   'payment': _CategoryStyle(Icons.payments_rounded, Color(0xFF16A34A)),
   'event': _CategoryStyle(Icons.event_rounded, AppColors.primary700),
+  'support': _CategoryStyle(Icons.support_agent_rounded, Color(0xFF0EA5E9)),
 };
 const _defaultCategoryStyle = _CategoryStyle(
   Icons.campaign_rounded,

@@ -1062,12 +1062,21 @@ class _ExploreSection extends StatelessWidget {
         ? (lang == 'bn' ? 'আমাদের দলে যোগ দিন' : 'Join our team')
         : (lang == 'bn' ? 'সাময়িকভাবে বন্ধ' : 'Currently Closed');
 
+    final isInvestorLoggedIn = ref.watch(investorSessionProvider).isLoggedIn;
+
     final items = [
       _ExploreItem(Icons.photo_library_rounded, t(ref, 'gallery'), '/gallery', AppColors.cardGradientTeal, 'View photos & moments'),
       _ExploreItem(Icons.help_rounded, t(ref, 'faq'), '/faq', const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFFA78BFA)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Common questions'),
       _ExploreItem(Icons.account_balance_rounded, t(ref, 'bankDetails'), '/bank-details', AppColors.cardGradientGold, 'Official payment details'),
       _ExploreItem(Icons.work_rounded, t(ref, 'career'), '/career', const LinearGradient(colors: [Color(0xFFDB2777), Color(0xFFF472B6)], begin: Alignment.topLeft, end: Alignment.bottomRight), careerSubtitle),
-      _ExploreItem(Icons.event_rounded, t(ref, 'events'), '/events', AppColors.cardGradientGreen, 'Upcoming programs'),
+      // Events deliberately NOT repeated here — it's already its own bottom
+      // nav tab, so listing it again in Explore would just be a redundant
+      // second path to the exact same screen.
+      // Needs an investor session (submitting/viewing queries is tied to the
+      // logged-in account) — hidden rather than shown-then-dead-ended for a
+      // signed-out visitor.
+      if (isInvestorLoggedIn)
+        _ExploreItem(Icons.support_agent_rounded, t(ref, 'support'), '/support', const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF38BDF8)], begin: Alignment.topLeft, end: Alignment.bottomRight), t(ref, 'supportSubtitle')),
       _ExploreItem(Icons.shield_rounded, t(ref, 'staffPortal'), '/admin/login', const LinearGradient(colors: [Color(0xFF475569), Color(0xFF64748B)], begin: Alignment.topLeft, end: Alignment.bottomRight), 'Admin & Staff access'),
     ];
 

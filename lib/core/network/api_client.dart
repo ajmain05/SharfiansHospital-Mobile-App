@@ -67,9 +67,26 @@ class ApiClient {
     }
   }
 
-  Future<ApiResponse> get(String path, {Map<String, dynamic>? query}) async {
+  Future<ApiResponse> get(String path, {Map<String, dynamic>? query, Map<String, String>? headers}) async {
     try {
-      final res = await _dio.get(path, queryParameters: query);
+      final res = await _dio.get(
+        path,
+        queryParameters: query,
+        options: headers != null ? Options(headers: headers) : null,
+      );
+      return _success(res);
+    } on DioException catch (e) {
+      return _fail(e);
+    }
+  }
+
+  Future<ApiResponse> patch(String path, [dynamic body, Map<String, String>? headers]) async {
+    try {
+      final res = await _dio.patch(
+        path,
+        data: body,
+        options: headers != null ? Options(headers: headers) : null,
+      );
       return _success(res);
     } on DioException catch (e) {
       return _fail(e);

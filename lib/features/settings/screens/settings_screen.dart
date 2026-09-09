@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'about_screen.dart';
@@ -7,6 +8,7 @@ import 'contact_us_screen.dart';
 import 'investment_guidelines_screen.dart';
 import '../../../core/l10n/locale_provider.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../investor_auth/providers/investor_session_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -14,6 +16,10 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Same login-gate as the Home screen's Explore card — submitting/viewing
+    // queries is tied to the logged-in investor account, so a signed-out
+    // visitor shouldn't be led into a screen with nothing to show.
+    final isInvestorLoggedIn = ref.watch(investorSessionProvider).isLoggedIn;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
@@ -74,6 +80,15 @@ class SettingsScreen extends ConsumerWidget {
                 );
               },
             ),
+            if (isInvestorLoggedIn) ...[
+              const SizedBox(height: 12),
+              _SettingsTile(
+                icon: Icons.support_agent_rounded,
+                title: 'Support',
+                subtitle: 'Ask a question or file a complaint',
+                onTap: () => context.push('/support'),
+              ),
+            ],
             const SizedBox(height: 36),
             const _SectionHeader(title: 'Preferences'),
             const SizedBox(height: 16),
