@@ -19,6 +19,20 @@ class StaffDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(staffStatsProvider);
+    final user = ref.watch(adminSessionProvider).user;
+    final role = user?['role'] as String?;
+    final permissions = (user?['permissions'] as List?)?.cast<String>() ?? const [];
+    // Mirrors the backend's own access checks (requireScannerOrAdmin in
+    // eventRegistrations.js, and GET /investors' inline role/permission
+    // check in investors.js) — a role/permission combo that can't actually
+    // use the endpoint behind a card would otherwise see the card, tap it,
+    // and only then hit a 403.
+    final canScan = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'SCANNER'].contains(role) ||
+        permissions.contains('events.scan');
+    final canSearchDirectory = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'BRANCH_STAFF'].contains(role) ||
+        permissions.contains('investors.read') ||
+        permissions.contains('events.branch_register') ||
+        permissions.contains('sms.send');
 
     return Scaffold(
       backgroundColor: context.bgFill,
@@ -70,31 +84,34 @@ class StaffDashboardScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
-              sliver: SliverGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 1.0,
-                children: [
-                  _ActionCard(
-                    title: 'QR Scanner',
-                    subtitle: 'Scan event tickets',
-                    icon: Icons.qr_code_scanner_rounded,
-                    gradient: AppColors.cardGradientGreen,
-                    onTap: () => context.push('/admin/scanner'),
-                  ),
-                  _ActionCard(
-                    title: 'Directory',
-                    subtitle: 'Search investors',
-                    icon: Icons.contact_phone_rounded,
-                    gradient: AppColors.cardGradientTeal,
-                    onTap: () => context.push('/admin/directory'),
-                  ),
-                ],
+            if (canScan || canSearchDirectory)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
+                sliver: SliverGrid.count(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 1.0,
+                  children: [
+                    if (canScan)
+                      _ActionCard(
+                        title: 'QR Scanner',
+                        subtitle: 'Scan event tickets',
+                        icon: Icons.qr_code_scanner_rounded,
+                        gradient: AppColors.cardGradientGreen,
+                        onTap: () => context.push('/admin/scanner'),
+                      ),
+                    if (canSearchDirectory)
+                      _ActionCard(
+                        title: 'Directory',
+                        subtitle: 'Search investors',
+                        icon: Icons.contact_phone_rounded,
+                        gradient: AppColors.cardGradientTeal,
+                        onTap: () => context.push('/admin/directory'),
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
